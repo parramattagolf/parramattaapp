@@ -1,0 +1,507 @@
+@import "tailwindcss";
+
+/* ============================================
+   PARRAMATTA GOLF - LPGA Style Brand System
+   Primary: Navy (#002D56)
+   Accent: Red (#D50032)
+   Background: White (#FFFFFF)
+   ============================================ */
+
+:root {
+  /* Premium Black Theme */
+  --color-bg: #121212;
+  --color-surface: #1c1c1e;
+  --color-surface-hover: #2c2c2e;
+  --color-divider: rgba(255, 255, 255, 0.1);
+
+  --color-navy: #002D56;
+  /* LPGA Navy */
+  --color-red: #D50032;
+  /* LPGA Red */
+  --color-white: #FFFFFF;
+
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: rgba(255, 255, 255, 0.7);
+  --color-text-desc: rgba(255, 255, 255, 0.5);
+
+  --color-gray-100: #1c1c1e;
+  --color-gray-200: #2c2c2e;
+  --color-gray-300: #3a3a3c;
+
+  /* Typography - LPGA Inspired (Clean, Sharp) */
+  --font-size-xs: 11px;
+  --font-size-sm: 13px;
+  --font-size-base: 15px;
+  --font-size-lg: 18px;
+  --font-size-xl: 22px;
+  --font-size-2xl: 26px;
+  --font-size-3xl: 32px;
+
+  /* Spacing */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 20px;
+  --spacing-xl: 32px;
+
+  /* Border Radius - Toss Rounded Style */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  --nav-height: 60px;
+}
+
+/* Base Styles */
+html {
+  color-scheme: dark;
+  background-color: var(--color-bg);
+}
+
+body {
+  font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  color: var(--color-text-primary);
+  background: var(--color-bg);
+  font-size: var(--font-size-base);
+  line-height: 1.5;
+  letter-spacing: -0.02em;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Typography - Toss Style (Large, Bold Titles) */
+h1,
+.h1 {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+h2,
+.h2 {
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+h3,
+.h3 {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+p,
+.body {
+  font-size: var(--font-size-base);
+  color: var(--color-text-secondary);
+}
+
+.text-sm {
+  font-size: var(--font-size-sm);
+}
+
+.text-xs {
+  font-size: var(--font-size-xs);
+}
+
+/* Card Component - Toss Style */
+.card {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-divider);
+  transition: transform 0.1s ease, background 0.2s ease;
+}
+
+.card:active {
+  background: var(--color-surface-hover);
+  transform: scale(0.97);
+}
+
+.card-flat {
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-divider);
+}
+
+/* Button Styles - LPGA + Toss */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  border-radius: var(--radius-md);
+  padding: 14px 24px;
+  font-size: var(--font-size-base);
+  transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  border: none;
+}
+
+.btn:active {
+  transform: scale(0.95);
+  opacity: 0.9;
+}
+
+.btn-primary {
+  background: var(--color-navy);
+  color: #FFFFFF;
+}
+
+.btn-accent {
+  background: var(--color-red);
+  color: var(--color-white);
+}
+
+.btn-accent:hover {
+  background: var(--color-red-light);
+}
+
+.btn-secondary {
+  background: var(--color-gray-100);
+  color: var(--color-gray-700);
+}
+
+.btn-secondary:hover {
+  background: var(--color-gray-200);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--color-gray-600);
+}
+
+.btn-ghost:hover {
+  background: var(--color-gray-100);
+}
+
+.btn-sm {
+  padding: 10px 16px;
+  font-size: var(--font-size-sm);
+}
+
+.btn-lg {
+  padding: 18px 32px;
+  font-size: var(--font-size-lg);
+}
+
+/* Input Styles - Toss Style */
+input,
+textarea,
+select {
+  background: #2b2b2b;
+  border: 1px solid var(--color-divider);
+  color: var(--color-text-primary);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-size: var(--font-size-base);
+  width: 100%;
+}
+
+input:focus,
+textarea:focus {
+  outline: none;
+  border-color: #555;
+}
+
+input::placeholder {
+  color: var(--color-text-desc);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-gray-400);
+}
+
+/* Badge Styles - LPGA Scoreboard Style */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+}
+
+.badge-confirmed {
+  background: rgba(46, 125, 50, 0.2);
+  color: #81c784;
+}
+
+.badge-pending {
+  background: rgba(230, 81, 0, 0.2);
+  color: #ffb74d;
+}
+
+.badge-overdue {
+  background: rgba(198, 40, 40, 0.2);
+  color: #e57373;
+}
+
+.badge-navy {
+  background: var(--color-navy);
+  color: var(--color-white);
+}
+
+.badge-red {
+  background: var(--color-red);
+  color: var(--color-white);
+}
+
+/* Data Table - LPGA Desktop Style */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+  background: var(--color-bg);
+}
+
+.data-table th {
+  background: #212121;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.data-table td {
+  padding: 12px;
+  border-bottom: 1px solid var(--color-divider);
+  vertical-align: middle;
+  color: var(--color-text-primary);
+}
+
+.data-table tbody tr:active {
+  background: var(--color-surface-hover);
+}
+
+.data-table tbody tr.overdue {
+  background: #FFF5F5;
+}
+
+.top-nav {
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+  padding: 0 16px;
+  height: var(--nav-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  border-bottom: 1px solid var(--color-divider);
+}
+
+.nav-lpga-link {
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+}
+
+.nav-lpga-link:hover {
+  color: var(--color-white);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.nav-lpga-link.active {
+  color: var(--color-white);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 500px;
+  background: var(--color-bg);
+  border-top: 1px solid var(--color-divider);
+  height: var(--nav-height);
+  padding-bottom: env(safe-area-inset-bottom);
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  z-index: 50;
+}
+
+.bottom-nav-item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #D1D5DB;
+  /* Light gray for inactive */
+  transition: color 0.2s ease;
+  padding: 0;
+}
+
+.bottom-nav-item:hover,
+.bottom-nav-item.active {
+  color: var(--color-gray-900);
+  /* Dark for active (Kakao style) */
+}
+
+/* Override for specific brand color if needed, but Kakao is usually black/dark gray icons */
+.bottom-nav-item.active {
+  color: var(--color-navy);
+}
+
+.bottom-nav-item .icon {
+  font-size: 26px;
+  /* Larger icons */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bottom-nav-item .label {
+  display: none;
+  /* Hide labels */
+}
+
+/* Utility Classes */
+.text-navy {
+  color: var(--color-navy);
+}
+
+.text-red {
+  color: var(--color-red);
+}
+
+.bg-navy {
+  background-color: var(--color-navy);
+}
+
+.bg-red {
+  background-color: var(--color-red);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-gray-100);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-gray-300);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-gray-400);
+}
+
+/* Hide scrollbar utility */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Line Clamp */
+.line-clamp-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+.line-clamp-2 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+/* Safe Area */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Animation */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
+@keyframes netflix-intro {
+  0% {
+    transform: scale(0.1);
+    opacity: 0;
+  }
+
+  25% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  65% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+.animate-netflix-intro {
+  animation: netflix-intro 1.5s ease-in-out forwards;
+}
+@keyframes pulse-gentle {
+  0%, 100% { opacity: 0.8; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+.animate-pulse-gentle {
+  animation: pulse-gentle 2s ease-in-out infinite;
+}
+
+@keyframes bounce-subtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+.animate-bounce-subtle {
+  animation: bounce-subtle 2s ease-in-out infinite;
+}

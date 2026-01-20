@@ -1,0 +1,202 @@
+'use client'
+
+import React, { useState } from 'react'
+import Link from 'next/link'
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, getDay, isWithinInterval, startOfDay, addDays } from 'date-fns'
+import { ko } from 'date-fns/locale'
+import { Calendar, List } from 'lucide-react'
+
+// Shared logic for day color
+const getDayColor = (date: Date) => {
+    const year = date.getFullYear()
+    const month = date.getMonth() + 1
+    const day = date.getDate()
+    const dayOfWeek = date.getDay() // 0: Sun, 6: Sat
+    const dateStr = `${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`
+
+    // Simple fixed holidays (Solar)
+    const holidays = [
+        '01-01', '03-01', '05-05', '06-06', '08-15', '10-03', '10-09', '12-25'
+    ]
+
+    // 2026/2025 Specific Major Lunar Holidays (Seollal, Chuseok, Buddha)
+    const variableHolidays = [
+        '2025-01-28', '2025-01-29', '2025-01-30', '2025-05-05', '2025-10-05', '2025-10-06', '2025-10-07',
+        '2026-02-16', '2026-02-17', '2026-02-18', '2026-05-24', '2026-09-24', '2026-09-25', '2026-09-26'
+    ]
+
+    const fullDateStr = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`
+
+    if (dayOfWeek === 0 || holidays.includes(dateStr) || variableHolidays.includes(fullDateStr)) return 'text-red-500'
+    if (dayOfWeek === 6) return 'text-blue-400'
+    return 'text-white'
+}
+
+interface MonthSectionProps {
+    month: string
+    events: any[]
+    view?: string
+}
+
+export default function MonthSection({ month, events, view }: MonthSectionProps) {
+    const [mode, setMode] = useState<'list' | 'calendar'>('list')
+
+    // Parse month string "yyyy년 M월" to Date
+    const [yearStr, monthStr] = month.replace('년', '').replace('월', '').split(' ')
+    const monthDate = new Date(parseInt(yearStr), parseInt(monthStr) - 1, 1)
+
+    const monthStart = startOfMonth(monthDate)
+    const monthEnd = endOfMonth(monthDate)
+    const days = eachDayOfInterval({ start: monthStart, end: monthEnd })
+    const startPadding = getDay(monthStart)
+    const paddingDays = Array.from({ length: startPadding })
+
+    return (
+        <section>
+            <div className="px-6 mb-5 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <span className={`h-[3px] w-5 rounded-full shadow-[0_0_10px_rgba(234,179,8,0.5)] ${view === 'past' ? 'bg-white/20' : 'bg-yellow-500'}`}></span>
+                    <h2 className={`text-xl font-extrabold tracking-tight uppercase ${view === 'past' ? 'text-white/40' : 'text-white'}`}>{month}</h2>
+                    <button
+                        onClick={() => setMode(mode === 'list' ? 'calendar' : 'list')}
+                        className="w-8 h-8 flex items-center justify-center rounded-full bg-white/5 border border-white/5 text-white/40 hover:text-white hover:bg-white/10 hover:border-white/20 transition-all active:scale-90 ml-1"
+                    >
+                        {mode === 'list' ? <Calendar size={14} strokeWidth={2.5} /> : <List size={14} strokeWidth={2.5} />}
+                    </button>
+                </div>
+            </div>
+
+            {mode === 'list' ? (
+                <div className="space-y-4 px-0">
+                    {events.map((event) => (
+                        <Link
+                            key={event.id}
+                            href={`/rounds/${event.id}`}
+                            className={`block transition-all duration-150 active:scale-[0.96] ${view === 'past' ? 'opacity-60 grayscale' : ''}`}
+                        >
+                            <div className={`card-flat border border-white/10 rounded-[24px] py-4 px-6 shadow-xl transition-all ${view === 'past' ? 'bg-[#18181a]' : 'bg-[#1c1c1e] hover:bg-[#252527]'}`}>
+                                <div className="flex items-start gap-5">
+                                    <div className="flex flex-col items-center gap-2 shrink-0">
+                                        <div className={`flex flex-col items-center justify-center w-15 h-15 rounded-2xl border border-white/5 shadow-inner p-3 ${view === 'past' ? 'bg-[#252527]' : 'bg-[#2c2c2e]'}`}>
+                                            <span className={`text-[15px] font-black uppercase leading-none mb-1.5 ${view === 'past' ? 'text-white/30' : getDayColor(new Date(event.start_date))}`}>
+                                                {format(new Date(event.start_date), 'EEE', { locale: ko })}
+                                            </span>
+                                            <span className="text-2xl font-black text-white leading-none tracking-tighter">
+                                                {format(new Date(event.start_date), 'd')}
+                                            </span>
+                                        </div>
+                                        {view !== 'past' && (
+                                            <span className="text-[12px] font-black text-blue-400 tracking-tighter">
+                                                {event.current_participants || 0}/{event.max_participants || 4}명
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    <div className="flex-1 min-w-0 pt-0.5">
+                                        <div className="flex items-center gap-2 mb-2">
+                                            {event.sponsor && !view && (
+                                                <span className="text-[10px] font-black bg-blue-600 text-white px-2 py-0.5 rounded-md uppercase tracking-widest shadow-[0_0_15px_rgba(37,99,235,0.4)]">
+                                                    Premium
+                                                </span>
+                                            )}
+                                        </div>
+
+                                        <h3 className={`text-[18px] font-black leading-tight mb-2 tracking-tight ${view === 'past' ? 'text-white/40' : 'text-white'}`}>
+                                            {event.title}
+                                        </h3>
+
+                                        {view !== 'past' && (
+                                            <div className="flex items-center gap-1.5 mt-4">
+                                                {[...Array(event.max_participants || 4)].map((_, i) => (
+                                                    <div
+                                                        key={i}
+                                                        className={`h-1 flex-1 rounded-full transition-all duration-500 ${i < (event.current_participants || 0)
+                                                            ? 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.4)]'
+                                                            : 'bg-white/10 border border-white/5'
+                                                            }`}
+                                                    />
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </Link>
+                    ))}
+                </div>
+            ) : (
+                <div className="px-6 animate-fade-in">
+                    <div className="bg-[#1c1c1e] rounded-[32px] p-6 border border-white/10 shadow-xl">
+                        <div className="grid grid-cols-7 gap-y-4 text-center mb-2">
+                            {['일', '월', '화', '수', '목', '금', '토'].map((day, i) => (
+                                <div key={day} className={`text-[12px] font-bold uppercase ${i === 0 ? 'text-red-500' : i === 6 ? 'text-blue-400' : 'text-white/30'}`}>
+                                    {day}
+                                </div>
+                            ))}
+                        </div>
+                        <div className="w-full h-[1px] bg-white/5 mb-6"></div>
+                        <div className="grid grid-cols-7 gap-y-6 text-center">
+                            {paddingDays.map((_, i) => <div key={`padding-${i}`} />)}
+                            {days.map((day) => {
+                                const dayColor = getDayColor(day)
+                                const isToday = isSameDay(day, new Date())
+
+                                // Find relevant events that intersect with this day
+                                const dayEvents = events.filter(e => {
+                                    const eventStart = startOfDay(new Date(e.start_date))
+                                    const eventEnd = startOfDay(e.end_date ? new Date(e.end_date) : new Date(e.start_date))
+                                    return isWithinInterval(day, { start: eventStart, end: eventEnd })
+                                })
+
+                                // Calculate the visual indicator for each event
+                                const indicators = dayEvents.map(e => {
+                                    const eventStart = startOfDay(new Date(e.start_date))
+                                    const eventEnd = startOfDay(e.end_date ? new Date(e.end_date) : new Date(e.start_date))
+                                    const isSingleDay = isSameDay(eventStart, eventEnd)
+                                    const isStartNode = isSameDay(day, eventStart)
+                                    const isEndNode = isSameDay(day, eventEnd)
+
+                                    return {
+                                        id: e.id,
+                                        isSingleDay,
+                                        isStartNode,
+                                        isEndNode
+                                    }
+                                })
+
+                                return (
+                                    <div key={day.toString()} className="flex flex-col items-center gap-1 min-h-[44px] relative">
+                                        <span className={`text-[14px] font-bold z-10 ${dayColor} ${isToday ? 'bg-white/10 w-7 h-7 flex items-center justify-center rounded-full -my-1' : ''}`}>
+                                            {format(day, 'd')}
+                                        </span>
+
+                                        {/* Event Indicators Stacking Context */}
+                                        <div className="w-full flex flex-col items-center gap-1 mt-1">
+                                            {indicators.map((ind, idx) => (
+                                                <Link
+                                                    key={ind.id}
+                                                    href={`/rounds/${ind.id}`}
+                                                    className="w-full h-1.5 flex items-center justify-center relative active:opacity-70"
+                                                >
+                                                    {ind.isSingleDay ? (
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_5px_rgba(59,130,246,0.8)]"></div>
+                                                    ) : (
+                                                        <div className={`h-1.5 bg-blue-500 shadow-[0_0_5px_rgba(59,130,246,0.5)] 
+                                                            ${ind.isStartNode ? 'w-1/2 ml-auto rounded-l-full' : ''}
+                                                            ${ind.isEndNode ? 'w-1/2 mr-auto rounded-r-full' : ''}
+                                                            ${!ind.isStartNode && !ind.isEndNode ? 'w-full' : ''}
+                                                        `}></div>
+                                                    )}
+                                                </Link>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
+                    </div>
+                </div>
+            )}
+        </section>
+    )
+}
