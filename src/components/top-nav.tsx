@@ -70,7 +70,14 @@ function TopNavContent() {
     const handleScroll = () => {
       const currentScrollY = window.scrollY
 
-      // Intelligent Hide/Show Logic
+      // Fixed header for main pages
+      if (pathname === '/rounds' || pathname === '/members' || pathname === '/sponsors' || pathname === '/my') {
+        setIsVisible(true)
+        setLastScrollY(currentScrollY)
+        return
+      }
+
+      // Intelligent Hide/Show Logic for other pages
       if (currentScrollY > lastScrollY && currentScrollY > 100) {
         setIsVisible(false)
       } else {
@@ -82,7 +89,7 @@ function TopNavContent() {
 
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
-  }, [lastScrollY])
+  }, [lastScrollY, pathname])
 
   // Hide on certain pages
   const isDetailPage = pathname.includes('/[id]') ||
