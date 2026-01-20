@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
-import { Bell, Settings, Search } from 'lucide-react'
+import { Bell, Settings } from 'lucide-react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 
@@ -110,7 +110,7 @@ function TopNavContent() {
   }
 
   const getTitle = () => {
-    if (pathname === '/rounds') return '테마가 있는 라운딩'
+    if (pathname === '/rounds') return '프라이빗 라운딩 일정'
     if (pathname === '/members') return '비지니스 인맥 넓히기'
     if (pathname === '/sponsors') return '프로처럼 스폰받기'
     if (pathname === '/notifications') return '알림'
@@ -122,7 +122,7 @@ function TopNavContent() {
     <nav className={`fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[500px] z-[100] transition-all duration-300 ease-in-out flex items-center justify-between px-6 bg-[#121212]/90 backdrop-blur-2xl border-b border-white/10 py-3 ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}
     >
       <div className="flex flex-col">
-        <h1 className="text-xl font-black text-white tracking-tighter leading-none">
+        <h1 className={`leading-none ${pathname === '/rounds' ? 'text-[17px] font-bold text-white/90 tracking-normal' : 'text-xl font-black text-white tracking-tighter'}`}>
           {getTitle()}
         </h1>
       </div>
@@ -158,9 +158,9 @@ function TopNavContent() {
         {pathname === '/my' && (
           <Link
             href="/settings"
-            className="w-10 h-10 flex items-center justify-center rounded-2xl transition-all active:scale-90 bg-white/5 border border-white/10 text-white hover:text-blue-400"
+            className="w-8 h-8 flex items-center justify-center rounded-xl transition-all active:scale-90 bg-white/5 border border-white/10 text-white hover:text-blue-400"
           >
-            <Settings size={20} strokeWidth={2.5} />
+            <Settings size={18} strokeWidth={2.5} />
           </Link>
         )}
 

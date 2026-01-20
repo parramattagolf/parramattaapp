@@ -44,7 +44,7 @@ function LoginContent() {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-white overflow-hidden">
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#121212] overflow-hidden">
 
       {/* Intro Animation */}
       <div
@@ -60,10 +60,10 @@ function LoginContent() {
         className={`w-full max-w-sm px-6 transition-all duration-1000 transform ${showLogin ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}`}
       >
         <div className="text-center mb-12">
-          <div className="w-20 h-20 bg-[#002D56] rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+          <div className="w-20 h-20 bg-[#002D56] rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg border border-white/10">
             <span className="text-white text-4xl font-bold">P</span>
           </div>
-          <h2 className="text-3xl font-bold text-[#002D56] mb-2 tracking-tight">PARRAMATTA</h2>
+          <h2 className="text-3xl font-bold text-white mb-2 tracking-tight">PARRAMATTA</h2>
           <p className="text-gray-400 text-xs tracking-[0.3em] uppercase">Private Golf & Social</p>
         </div>
 
