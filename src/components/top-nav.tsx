@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { Bell, Settings, Search } from 'lucide-react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 
-export default function TopNav() {
+function TopNavContent() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const view = searchParams.get('view')
@@ -172,5 +172,13 @@ export default function TopNav() {
         )}
       </div>
     </nav>
+  )
+}
+
+export default function TopNav() {
+  return (
+    <Suspense fallback={null}>
+      <TopNavContent />
+    </Suspense>
   )
 }
