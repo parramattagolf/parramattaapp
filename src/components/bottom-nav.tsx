@@ -27,7 +27,7 @@ export default function BottomNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={`bottom-nav-item ${isActive ? 'text-white opacity-100' : 'text-gray-400 opacity-50'}`}
+              className={`bottom-nav-item ${isActive ? (item.href === '/rounds' ? 'text-green-500 opacity-100' : item.href === '/members' ? 'text-blue-500 opacity-100' : item.href === '/sponsors' ? 'text-yellow-500 opacity-100' : item.href === '/my' ? 'text-red-500 opacity-100' : 'text-white opacity-100') : 'text-gray-400 opacity-50'}`}
               aria-label={item.label}
             >
               <Icon

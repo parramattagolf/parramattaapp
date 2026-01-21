@@ -56,7 +56,7 @@ export default function MonthSection({ month, events, view }: MonthSectionProps)
             <div className="px-6 mb-5 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <span className={`h-[3px] w-5 rounded-full shadow-[0_0_10px_rgba(234,179,8,0.5)] ${view === 'past' ? 'bg-white/20' : 'bg-yellow-500'}`}></span>
-                    <h2 className={`text-xl font-extrabold tracking-tight uppercase ${view === 'past' ? 'text-white/40' : 'text-white'}`}>{month}</h2>
+                    <h2 className={`text-sm font-bold tracking-normal uppercase ${view === 'past' ? 'text-white/30' : 'text-white/60'}`}>{month}</h2>
                     <button
                         onClick={() => setMode(mode === 'list' ? 'calendar' : 'list')}
                         className="w-8 h-8 flex items-center justify-center rounded-full bg-white/5 border border-white/5 text-white/40 hover:text-white hover:bg-white/10 hover:border-white/20 transition-all active:scale-90 ml-1"
