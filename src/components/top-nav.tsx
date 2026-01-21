@@ -130,10 +130,10 @@ function TopNavContent() {
       <div className="flex flex-col">
         <div
           onClick={() => {
-            if (pathname === '/rounds') showToast('테마가 있는 라운딩 날짜를 선택하세요')
-            if (pathname === '/members') showToast('내가 만나고 싶은 사람을 찾아보세요')
-            if (pathname === '/sponsors') showToast('운과 실력으로 프로처럼 스폰을 받아보세요')
-            if (pathname === '/my') showToast('매너와 신뢰를 쌓아보세요')
+            if (pathname === '/rounds') showToast('특별한 행사에 참여하세요')
+            if (pathname === '/members') showToast('셀럽, 인플루언서와 라운딩을...')
+            if (pathname === '/sponsors') showToast('프로처럼 스폰을 받을 수 있어요')
+            if (pathname === '/my') showToast('매너와 포인트를 쌓아보세요')
           }}
           className={`flex items-center ${pathname === '/rounds' || pathname === '/members' || pathname === '/sponsors' || pathname === '/my' ? 'cursor-pointer' : ''}`}
         >
