@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getUserBadges } from '@/actions/sponsor-actions'
 import { Bell } from 'lucide-react'
+import MyScoreDashboard from '@/components/my/my-score-dashboard'
 
 // ============================================
 // 🔒 개발용: SHOW_KAKAO_ID를 false로 설정하면 
@@ -65,6 +66,27 @@ export default async function MyPage() {
     // 카카오 ID: DB에서 가져오거나 메타데이터에서 추출
     const displayKakaoId = userData?.kakao_id || kakaoId
 
+    // Calculate Manner Score Percentile
+    const { count: totalUsers } = await supabase
+        .from('users')
+        .select('*', { count: 'exact', head: true })
+
+    const { count: higherScorers } = await supabase
+        .from('users')
+        .select('*', { count: 'exact', head: true })
+        .gt('manner_score', mannerScore)
+
+    const rank = (higherScorers || 0) + 1
+    const percentile = totalUsers ? Math.ceil((rank / totalUsers) * 100) : 100
+
+    // Calculate Point Rank (Seed Rank)
+    const { count: higherPointScorers } = await supabase
+        .from('users')
+        .select('*', { count: 'exact', head: true })
+        .gt('best_dresser_score', bestDresserScore)
+
+    const pointRank = (higherPointScorers || 0) + 1
+
     // Get badges
     const badges = await getUserBadges(user.id)
 
@@ -122,28 +144,12 @@ export default async function MyPage() {
                 </div>
 
                 {/* Score Cards (Kakao Style - Minimal) */}
-                <div className="px-5 pb-8 grid grid-cols-2 gap-3">
-                    <div className="bg-[var(--color-gray-100)] p-4 rounded-xl border border-[var(--color-divider)]">
-                        <div className="text-[11px] text-[var(--color-text-desc)] mb-1 font-bold">매너 점수</div>
-                        <div className="text-2xl font-bold text-emerald-500">{mannerScore}</div>
-                        <div className="mt-2 h-1 bg-[var(--color-divider)] rounded-full overflow-hidden">
-                            <div
-                                className="h-full bg-emerald-500 rounded-full transition-all"
-                                style={{ width: `${Math.min(100, mannerScore)}%` }}
-                            />
-                        </div>
-                    </div>
-                    <div className="bg-[var(--color-gray-100)] p-4 rounded-xl border border-[var(--color-divider)]">
-                        <div className="text-[11px] text-[var(--color-text-desc)] mb-1 font-bold">베스트 드레서</div>
-                        <div className="text-2xl font-bold text-pink-500">{bestDresserScore}</div>
-                        <div className="mt-2 h-1 bg-[var(--color-divider)] rounded-full overflow-hidden">
-                            <div
-                                className="h-full bg-pink-500 rounded-full transition-all"
-                                style={{ width: `${Math.min(100, bestDresserScore)}%` }}
-                            />
-                        </div>
-                    </div>
-                </div>
+                <MyScoreDashboard
+                    mannerScore={mannerScore}
+                    points={bestDresserScore}
+                    mannerPercentile={percentile}
+                    pointRank={pointRank}
+                />
             </div>
 
 
@@ -178,6 +184,16 @@ export default async function MyPage() {
 
             {/* Quick Actions (Kakao Style List) */}
             <div className="px-5 mt-4 space-y-2">
+                <Link href="/my/rounds" className="flex items-center justify-between p-4 bg-[var(--color-gray-100)] rounded-xl border border-[var(--color-divider)] active:bg-[var(--color-surface-hover)]">
+                    <div className="flex items-center gap-3">
+                        <span className="text-lg">⛳</span>
+                        <span className="text-[14px] font-bold text-[var(--color-text-primary)]">라운딩 참여 기록</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-[13px] font-bold text-blue-400">{rounds?.length || 0}건</span>
+                        <span className="text-[var(--color-text-desc)] text-xs">→</span>
+                    </div>
+                </Link>
                 <Link href="/my/network" className="flex items-center justify-between p-4 bg-[var(--color-gray-100)] rounded-xl border border-[var(--color-divider)] active:bg-[var(--color-surface-hover)]">
                     <div className="flex items-center gap-3">
                         <span className="text-lg">🤝</span>
@@ -188,13 +204,13 @@ export default async function MyPage() {
                         <span className="text-[var(--color-text-desc)] text-xs">→</span>
                     </div>
                 </Link>
-                <Link href="/my/rounds" className="flex items-center justify-between p-4 bg-[var(--color-gray-100)] rounded-xl border border-[var(--color-divider)] active:bg-[var(--color-surface-hover)]">
+                <Link href="/sponsors" className="flex items-center justify-between p-4 bg-[var(--color-gray-100)] rounded-xl border border-[var(--color-divider)] active:bg-[var(--color-surface-hover)]">
                     <div className="flex items-center gap-3">
-                        <span className="text-lg">⛳</span>
-                        <span className="text-[14px] font-bold text-[var(--color-text-primary)]">라운딩 참여 기록</span>
+                        <span className="text-lg">🏆</span>
+                        <span className="text-[14px] font-bold text-[var(--color-text-primary)]">나의 스폰서</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <span className="text-[13px] font-bold text-blue-400">{rounds?.length || 0}건</span>
+                        <span className="text-[13px] font-bold text-yellow-500">{badges.length}개</span>
                         <span className="text-[var(--color-text-desc)] text-xs">→</span>
                     </div>
                 </Link>
