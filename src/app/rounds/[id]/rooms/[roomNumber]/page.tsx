@@ -40,7 +40,7 @@ export default async function RoomDetailPage({ params }: { params: Promise<{ id:
     // Calculate room name
     const maxParticipants = event.max_participants || 4
     const totalRooms = Math.ceil(maxParticipants / 4)
-    const roomTitle = totalRooms === 1 ? '조인방 상세' : `${roomNumber}번 조인방 상세`
+    const roomTitle = totalRooms === 1 ? '조인방' : `${roomNumber}번 조인방`
 
     return (
         <div className="min-h-screen bg-[#121212] font-sans pb-32">

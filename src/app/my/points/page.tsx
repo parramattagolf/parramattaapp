@@ -30,33 +30,31 @@ export default async function PointsHistoryPage() {
 
     return (
         <div className="min-h-screen bg-[var(--color-bg)] font-sans pb-12">
-            <PremiumSubHeader title="포인트 내역" backHref="/my" />
+            <PremiumSubHeader title="" backHref="/my" />
 
             <div className="pt-20 px-5">
+                <div className="mb-6 text-[15px] font-bold text-white text-center leading-relaxed whitespace-pre-line break-keep opacity-90">
+                    상위 144명 포인트 회원에게는 <span className="text-yellow-400">스폰서 경품골프대회</span>에 참가자격을 부여합니다.
+                </div>
                 {/* Balance Card */}
-                <div className="bg-gradient-to-br from-pink-600 to-pink-800 rounded-2xl p-6 shadow-xl mb-8 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-8 opacity-10 text-9xl transform translate-x-10 -translate-y-10 rotate-12">
+                <div className="bg-gradient-to-br from-pink-600 to-pink-800 rounded-2xl p-8 shadow-xl mb-8 relative overflow-hidden flex flex-col items-center justify-center min-h-[200px]">
+                    <div className="absolute top-0 right-0 p-8 opacity-10 text-9xl transform translate-x-10 -translate-y-10 rotate-12 pointer-events-none">
                         P
                     </div>
-                    <div className="relative z-10">
-                        <span className="text-pink-100 text-sm font-medium tracking-wider uppercase">Current Balance</span>
-                        <div className="text-4xl font-black text-white mt-1">
-                            {(userData?.points || 0).toLocaleString()} <span className="text-2xl font-bold opacity-80">P</span>
+                    <div className="relative z-10 flex flex-col items-center">
+                        <div className="text-7xl font-black text-white tracking-tight">
+                            {(userData?.points || 0).toLocaleString()}
                         </div>
-                        <div className="mt-4 flex gap-2">
-                            <span className="text-xs bg-black/20 text-white/80 px-2 py-1 rounded backdrop-blur-sm">
-                                1P = 1원
-                            </span>
-                        </div>
+                        {transactions && transactions.length > 0 && (
+                            <div className={`mt-2 flex items-center gap-1 text-lg font-bold ${transactions[0].amount > 0 ? 'text-red-300' : 'text-blue-300'}`}>
+                                <span>{transactions[0].amount > 0 ? '▲' : '▼'}</span>
+                                <span>{Math.abs(transactions[0].amount).toLocaleString()}</span>
+                            </div>
+                        )}
                     </div>
                 </div>
 
                 {/* Transaction List */}
-                <h2 className="text-lg font-bold text-[var(--color-text-primary)] mb-4 flex items-center gap-2">
-                    <span className="w-1 h-5 bg-pink-500 rounded-full"></span>
-                    입출금 내역
-                </h2>
-
                 <div className="bg-[var(--color-gray-100)] rounded-2xl border border-[var(--color-divider)] overflow-hidden">
                     {!transactions || transactions.length === 0 ? (
                         <div className="p-12 text-center text-[var(--color-text-desc)] text-sm">
@@ -66,7 +64,7 @@ export default async function PointsHistoryPage() {
                         <div className="divide-y divide-[var(--color-divider)]">
                             {transactions.map((tx) => (
                                 <div key={tx.id} className="p-5 flex justify-between items-center group hover:bg-[var(--color-surface-hover)] transition-colors">
-                                    <div className="flex flex-col gap-1">
+                                    <div className="flex flex-col gap-1 flex-1 pr-4">
                                         <span className="text-[14px] font-bold text-[var(--color-text-primary)]">
                                             {tx.description}
                                         </span>
@@ -74,13 +72,13 @@ export default async function PointsHistoryPage() {
                                             {format(new Date(tx.created_at), 'yyyy.MM.dd HH:mm', { locale: ko })}
                                         </span>
                                     </div>
-                                    <div className="text-right">
+                                    <div className="text-right shrink-0">
                                         <div className={`text-[15px] font-black ${tx.amount > 0 ? 'text-pink-500' : 'text-[var(--color-text-primary)]'}`}>
-                                            {tx.amount > 0 ? '+' : ''}{tx.amount.toLocaleString()} P
+                                            {tx.amount > 0 ? '+' : ''}{tx.amount.toLocaleString()}
                                         </div>
                                         {tx.balance_snapshot !== undefined && tx.balance_snapshot !== null && (
                                             <div className="text-[10px] text-[var(--color-text-desc)] mt-0.5">
-                                                잔액 {tx.balance_snapshot.toLocaleString()} P
+                                                T {tx.balance_snapshot.toLocaleString()}
                                             </div>
                                         )}
                                     </div>

@@ -3,7 +3,7 @@
 import { createClient } from '@/utils/supabase/server'
 
 // Notification template codes
-export type NotificationCode = 
+export type NotificationCode =
     | 'reservation_confirmed'
     | 'payment_pending'
     | 'payment_reminder_1h'
@@ -107,16 +107,16 @@ export async function notifyMannerReviewRequest(userId: string, eventTitle: stri
 
 // Send friend invite notification
 export async function notifyFriendInvite(userId: string, senderName: string, eventTitle: string) {
-    return sendTemplateNotification(userId, 'friend_invite', { 
-        sender_name: senderName, 
-        event_title: eventTitle 
+    return sendTemplateNotification(userId, 'friend_invite', {
+        sender_name: senderName,
+        event_title: eventTitle
     })
 }
 
 // Get users with payment expiring soon (within 1 hour)
 export async function getUsersWithExpiringPayment() {
     const supabase = await createClient()
-    
+
     const { data, error } = await supabase
         .from('participants')
         .select(`
@@ -128,7 +128,7 @@ export async function getUsersWithExpiringPayment() {
         .eq('payment_status', 'pending')
         .gt('joined_at', new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString()) // joined 2h+ ago
         .lt('joined_at', new Date(Date.now() - 2 * 60 * 60 * 1000 + 10 * 60 * 1000).toISOString()) // but less than 2h10m
-    
+
     if (error) {
         console.error('Failed to get expiring users:', error)
         return []
@@ -140,16 +140,37 @@ export async function getUsersWithExpiringPayment() {
 // API endpoint for n8n to trigger reminder notifications
 export async function sendExpiringReminders() {
     const users = await getUsersWithExpiringPayment()
-    
+
     const results = await Promise.all(
         users.map(async (u: any) => {
             return sendTemplateNotification(
-                u.user_id, 
-                'payment_reminder_1h', 
+                u.user_id,
+                'payment_reminder_1h',
                 { event_title: u.events?.title || '라운딩' }
             )
         })
     )
-    
+
     return { sent: results.length, results }
+}
+
+// Check for unread notifications for the current user
+export async function checkUnreadNotifications() {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return { count: 0 }
+
+    const { count, error } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('is_read', false)
+
+    if (error) {
+        console.error('Failed to check unread notifications:', error)
+        return { count: 0 }
+    }
+
+    return { count: count || 0 }
 }

@@ -225,6 +225,34 @@ export default async function MyPage() {
                 </Link>
             </div>
 
+            {/* Host Stats Dashboard */}
+            <div className="px-5 mt-6">
+                <div className="bg-gradient-to-br from-yellow-500/10 to-orange-500/5 rounded-2xl border border-yellow-500/20 p-5">
+                    <div className="flex items-center gap-2 mb-4">
+                        <span className="text-xl">👑</span>
+                        <h3 className="text-base font-black text-yellow-500">호스트 활동</h3>
+                        {userData?.is_vip && (
+                            <span className="ml-auto text-[10px] font-bold bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded-full border border-purple-500/30">
+                                VIP
+                            </span>
+                        )}
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-black/20 rounded-xl p-4 text-center">
+                            <div className="text-3xl font-black text-yellow-500">{userData?.host_count || 0}</div>
+                            <div className="text-[11px] text-white/40 font-bold mt-1">조인방 호스트 횟수</div>
+                        </div>
+                        <div className="bg-black/20 rounded-xl p-4 text-center">
+                            <div className="text-3xl font-black text-blue-400">{userData?.invite_count || 0}</div>
+                            <div className="text-[11px] text-white/40 font-bold mt-1">친구 초대 성공</div>
+                        </div>
+                    </div>
+                    <p className="text-[11px] text-white/30 mt-3 text-center">
+                        조인방에 가장 먼저 참가하면 호스트가 됩니다!
+                    </p>
+                </div>
+            </div>
+
         </div>
     )
 }

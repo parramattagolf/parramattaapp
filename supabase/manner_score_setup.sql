@@ -13,9 +13,15 @@ CREATE INDEX IF NOT EXISTS idx_manner_score_history_user_id ON public.manner_sco
 -- 2. RLS 정책 설정
 ALTER TABLE public.manner_score_history ENABLE ROW LEVEL SECURITY;
 
+-- 유저는 자신의 매너 점수 내역만 볼 수 있음
 CREATE POLICY "Users can view their own manner history" 
 ON public.manner_score_history FOR SELECT 
 USING (auth.uid() = user_id);
+
+-- 유저는 자신의 매너 점수 내역을 추가할 수 있음 (서버 액션에서 사용)
+CREATE POLICY "Users can insert their own manner history" 
+ON public.manner_score_history FOR INSERT 
+WITH CHECK (auth.uid() = user_id);
 
 -- 3. 유저 테이블에 manner_score 컬럼이 없으면 추가 (기본값 100)
 ALTER TABLE public.users ADD COLUMN IF NOT EXISTS manner_score INTEGER DEFAULT 100;

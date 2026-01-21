@@ -4,6 +4,8 @@ import RoundDetailContent from '@/components/round-detail-content'
 import PremiumSubHeader from '@/components/premium-sub-header'
 import RoundInfoCard from '@/components/round-info-card'
 import EventChat from '@/components/event-chat'
+import PreReservationButton from '@/components/pre-reservation-button'
+import PreReservationList from '@/components/pre-reservation-list'
 
 export default async function RoundDetailPage({ params }: { params: Promise<{ id: string }> }) {
     // In Next.js 15+, params is a Promise. 
@@ -36,8 +38,19 @@ export default async function RoundDetailPage({ params }: { params: Promise<{ id
         `)
         .eq('event_id', id)
 
+    // 3. Fetch Pre-reservations
+    const { data: preReservations } = await supabase
+        .from('pre_reservations')
+        .select(`
+            *,
+            user:users (id, nickname, profile_img)
+        `)
+        .eq('event_id', id)
+        .order('created_at', { ascending: true })
+
     const { data: { user } } = await supabase.auth.getUser()
     const isJoined = participants?.some(p => p.user_id === user?.id)
+    const isPreReserved = preReservations?.some(p => p.user_id === user?.id)
 
     return (
         <div className="min-h-screen bg-[#121212] pb-32 font-sans overflow-x-hidden">
@@ -46,9 +59,7 @@ export default async function RoundDetailPage({ params }: { params: Promise<{ id
                 title=""
                 backHref="/rounds"
                 rightElement={
-                    <button className="bg-blue-600 text-[11px] font-black text-white px-4 py-2 rounded-xl active:scale-95 transition-transform shadow-[0_4px_12px_rgba(37,99,235,0.3)] tracking-tight">
-                        사전예약
-                    </button>
+                    <PreReservationButton eventId={event.id} isReserved={!!isPreReserved} />
                 }
             />
             {/* Dynamic Height Header */}
@@ -70,7 +81,10 @@ export default async function RoundDetailPage({ params }: { params: Promise<{ id
 
             <main className="px-6 space-y-12">
                 {/* Master Info Card (Client Component with Interaction) */}
-                <RoundInfoCard event={event} participants={participants || []} />
+                <div>
+                    <RoundInfoCard event={event} participants={participants || []} />
+                    <PreReservationList reservations={preReservations || []} />
+                </div>
 
                 {/* Chat Section (Moved from Content) */}
 

@@ -5,23 +5,28 @@ import { createClient } from '@/utils/supabase/client'
 import Link from 'next/link'
 import { Bell, ArrowLeft } from 'lucide-react'
 import { format } from 'date-fns'
+import { useRouter } from 'next/navigation'
 
 interface Notification {
     id: string
-    type: 'global' | 'individual' | string
+    type: 'global' | 'individual' | 'invite' | string
+    action_type: string | null
     title: string | null
     content: string | null
     is_read: boolean
     created_at: string
     receiver_id: string | null
     sender_id: string | null
+    link_url: string | null
 }
 
 export default function NotificationsPage() {
     const [notifications, setNotifications] = useState<Notification[]>([])
     const [loading, setLoading] = useState(true)
-    const [user, setUser] = useState<any>(null) // user metadata is complex, any is okay for now or use User from supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [user, setUser] = useState<any>(null)
     const supabase = createClient()
+    const router = useRouter()
 
     const fetchNotifications = React.useCallback(async (userId: string) => {
         const { data, error } = await supabase
@@ -76,6 +81,24 @@ export default function NotificationsPage() {
         }
     }
 
+    const handleAcceptInvite = async (notif: Notification) => {
+        await markAsRead(notif.id)
+        if (notif.link_url) {
+            router.push(notif.link_url)
+        }
+    }
+
+    const getNotifStyle = (type: string) => {
+        switch (type) {
+            case 'global':
+                return { dot: 'bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.5)]', label: 'text-yellow-500', labelText: '공지사항' }
+            case 'invite':
+                return { dot: 'bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]', label: 'text-green-500', labelText: '초대' }
+            default:
+                return { dot: 'bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]', label: 'text-blue-500', labelText: '알림' }
+        }
+    }
+
     if (loading) {
         return (
             <div className="min-h-screen bg-[#121212] flex items-center justify-center">
@@ -106,44 +129,58 @@ export default function NotificationsPage() {
 
             <div className="p-6 space-y-4">
                 {notifications.length > 0 ? (
-                    notifications.map((notif) => (
-                        <div
-                            key={notif.id}
-                            onClick={() => !notif.is_read && markAsRead(notif.id)}
-                            className={`relative p-5 rounded-[24px] border transition-all active:scale-[0.98] ${notif.is_read
-                                ? 'bg-[#1c1c1e]/50 border-white/5 opacity-60'
-                                : 'bg-[#1c1c1e] border-white/10 shadow-xl'
-                                }`}
-                        >
-                            <div className="flex items-start justify-between mb-3">
-                                <div className="flex items-center gap-2">
-                                    <div className={`w-2 h-2 rounded-full ${notif.type === 'global' ? 'bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.5)]' : 'bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]'
-                                        }`}></div>
-                                    <span className={`text-[10px] font-black uppercase tracking-widest ${notif.type === 'global' ? 'text-yellow-500' : 'text-blue-500'
-                                        }`}>
-                                        {notif.type === 'global' ? 'System Announcement' : 'Direct Message'}
+                    notifications.map((notif) => {
+                        const style = getNotifStyle(notif.type)
+                        return (
+                            <div
+                                key={notif.id}
+                                onClick={() => !notif.is_read && markAsRead(notif.id)}
+                                className={`relative p-5 rounded-[24px] border transition-all active:scale-[0.98] ${notif.is_read
+                                    ? 'bg-[#1c1c1e]/50 border-white/5 opacity-60'
+                                    : 'bg-[#1c1c1e] border-white/10 shadow-xl'
+                                    }`}
+                            >
+                                <div className="flex items-start justify-between mb-3">
+                                    <div className="flex items-center gap-2">
+                                        <div className={`w-2 h-2 rounded-full ${style.dot}`}></div>
+                                        <span className={`text-[10px] font-black uppercase tracking-widest ${style.label}`}>
+                                            {style.labelText}
+                                        </span>
+                                    </div>
+                                    <span className="text-[10px] font-medium text-white/20">
+                                        {format(new Date(notif.created_at), 'MM.dd HH:mm')}
                                     </span>
                                 </div>
-                                <span className="text-[10px] font-medium text-white/20">
-                                    {format(new Date(notif.created_at), 'MM.dd HH:mm')}
-                                </span>
+
+                                <h3 className={`text-[15px] font-bold mb-1 tracking-tight ${notif.type === 'global' ? 'text-yellow-100/90' : 'text-white'
+                                    }`}>
+                                    {notif.title || (notif.type === 'global' ? '공지사항' : '알림')}
+                                </h3>
+                                <p className="text-[13px] text-white/40 leading-relaxed tracking-tight">
+                                    {notif.content || '내용이 없습니다.'}
+                                </p>
+
+                                {/* Action Button for Invite Type */}
+                                {notif.type === 'invite' && notif.link_url && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            handleAcceptInvite(notif)
+                                        }}
+                                        className="mt-4 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl text-sm active:scale-95 transition-all"
+                                    >
+                                        수락하고 조인방 확인하기
+                                    </button>
+                                )}
+
+                                {!notif.is_read && (
+                                    <div className="absolute top-5 right-5">
+                                        <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                                    </div>
+                                )}
                             </div>
-
-                            <h3 className={`text-[15px] font-bold mb-1 tracking-tight ${notif.type === 'global' ? 'text-yellow-100/90' : 'text-white'
-                                }`}>
-                                {notif.title || (notif.type === 'global' ? '공지사항' : '알림')}
-                            </h3>
-                            <p className="text-[13px] text-white/40 leading-relaxed tracking-tight">
-                                {notif.content || '내용이 없습니다.'}
-                            </p>
-
-                            {!notif.is_read && (
-                                <div className="absolute top-5 right-5">
-                                    <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                                </div>
-                            )}
-                        </div>
-                    ))
+                        )
+                    })
                 ) : (
                     <div className="py-24 flex flex-col items-center text-center opacity-20">
                         <div className="w-16 h-16 bg-white/5 rounded-[24px] flex items-center justify-center mb-6">

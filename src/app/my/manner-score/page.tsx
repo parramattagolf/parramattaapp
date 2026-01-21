@@ -30,33 +30,31 @@ export default async function MannerScoreHistoryPage() {
 
     return (
         <div className="min-h-screen bg-[var(--color-bg)] font-sans pb-12">
-            <PremiumSubHeader title="매너 점수 내역" backHref="/my" />
+            <PremiumSubHeader title="" backHref="/my" />
 
             <div className="pt-20 px-5">
+                <div className="mb-6 text-[15px] font-bold text-white text-center leading-relaxed whitespace-pre-line break-keep opacity-90">
+                    상위10% 매너 회원에게는 <span className="text-yellow-400">연예인/셀럽초청 골프행사</span> 우선참가권을 부여합니다.
+                </div>
                 {/* Score Card */}
-                <div className="bg-gradient-to-br from-emerald-600 to-emerald-800 rounded-2xl p-6 shadow-xl mb-8 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-8 opacity-10 text-9xl transform translate-x-10 -translate-y-10 rotate-12">
+                <div className="bg-gradient-to-br from-emerald-600 to-emerald-800 rounded-2xl p-8 shadow-xl mb-8 relative overflow-hidden flex flex-col items-center justify-center min-h-[200px]">
+                    <div className="absolute top-0 right-0 p-8 opacity-10 text-9xl transform translate-x-10 -translate-y-10 rotate-12 pointer-events-none">
                         M
                     </div>
-                    <div className="relative z-10">
-                        <span className="text-emerald-100 text-sm font-medium tracking-wider uppercase">Current Score</span>
-                        <div className="text-4xl font-black text-white mt-1">
-                            {(userData?.manner_score || 0)} <span className="text-2xl font-bold opacity-80">점</span>
+                    <div className="relative z-10 flex flex-col items-center">
+                        <div className="text-7xl font-black text-white tracking-tight">
+                            {(userData?.manner_score || 0)}
                         </div>
-                        <div className="mt-4 flex gap-2">
-                            <span className="text-xs bg-black/20 text-white/80 px-2 py-1 rounded backdrop-blur-sm">
-                                기본 점수 100점
-                            </span>
-                        </div>
+                        {history && history.length > 0 && (
+                            <div className={`mt-2 flex items-center gap-1 text-lg font-bold ${history[0].amount > 0 ? 'text-red-300' : 'text-blue-300'}`}>
+                                <span>{history[0].amount > 0 ? '▲' : '▼'}</span>
+                                <span>{Math.abs(history[0].amount)}</span>
+                            </div>
+                        )}
                     </div>
                 </div>
 
                 {/* History List */}
-                <h2 className="text-lg font-bold text-[var(--color-text-primary)] mb-4 flex items-center gap-2">
-                    <span className="w-1 h-5 bg-emerald-500 rounded-full"></span>
-                    점수 변동 내역
-                </h2>
-
                 <div className="bg-[var(--color-gray-100)] rounded-2xl border border-[var(--color-divider)] overflow-hidden">
                     {!history || history.length === 0 ? (
                         <div className="p-12 text-center text-[var(--color-text-desc)] text-sm">
@@ -66,7 +64,7 @@ export default async function MannerScoreHistoryPage() {
                         <div className="divide-y divide-[var(--color-divider)]">
                             {history.map((item) => (
                                 <div key={item.id} className="p-5 flex justify-between items-center group hover:bg-[var(--color-surface-hover)] transition-colors">
-                                    <div className="flex flex-col gap-1">
+                                    <div className="flex flex-col gap-1 flex-1 pr-4">
                                         <span className="text-[14px] font-bold text-[var(--color-text-primary)]">
                                             {item.description}
                                         </span>
@@ -74,13 +72,13 @@ export default async function MannerScoreHistoryPage() {
                                             {format(new Date(item.created_at), 'yyyy.MM.dd HH:mm', { locale: ko })}
                                         </span>
                                     </div>
-                                    <div className="text-right">
+                                    <div className="text-right shrink-0">
                                         <div className={`text-[15px] font-black ${item.amount > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-                                            {item.amount > 0 ? '+' : ''}{item.amount} 점
+                                            {item.amount > 0 ? '+' : ''}{item.amount}
                                         </div>
                                         {item.score_snapshot !== undefined && item.score_snapshot !== null && (
                                             <div className="text-[10px] text-[var(--color-text-desc)] mt-0.5">
-                                                현재 {item.score_snapshot} 점
+                                                T {item.score_snapshot}
                                             </div>
                                         )}
                                     </div>

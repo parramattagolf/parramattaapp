@@ -4,6 +4,7 @@ import "./globals.css";
 import TopNav from '@/components/top-nav'
 import BottomNav from '@/components/bottom-nav'
 import NotificationListener from '@/components/notification-listener'
+import UnreadMessagePopup from '@/components/unread-message-popup'
 
 const inter = Inter({
   subsets: ["latin"],
@@ -30,6 +31,7 @@ export default function RootLayout({
             {/* Top Navigation */}
             <TopNav />
             <NotificationListener />
+            <UnreadMessagePopup />
 
             {/* Main Content */}
             <div className="flex-1 pb-16">
