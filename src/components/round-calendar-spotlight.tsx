@@ -25,7 +25,7 @@ export default function RoundCalendarSpotlight({ date }: RoundCalendarSpotlightP
 
             <div className="flex items-center justify-between mb-8">
                 <div className="flex flex-col">
-                    <h2 className="text-[16px] font-black text-white tracking-[0.2em] uppercase opacity-80">Round Spotlight</h2>
+                    <h2 className="text-[16px] font-black text-white tracking-tight leading-tight">라운딩 날짜를 확인하세요</h2>
                     <span className="text-[12px] font-bold text-blue-500 mt-1 uppercase tracking-wider">
                         {format(date, 'MMMM yyyy', { locale: ko })}
                     </span>
@@ -63,13 +63,6 @@ export default function RoundCalendarSpotlight({ date }: RoundCalendarSpotlightP
                         </div>
                     )
                 })}
-            </div>
-
-            <div className="mt-8 pt-6 border-t border-white/5 flex items-center gap-3">
-                <div className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]"></div>
-                <span className="text-[12px] font-bold text-white/60">
-                    {format(date, 'yyyy년 M월 d일 (EEEE)', { locale: ko })} 정기 라운딩
-                </span>
             </div>
         </div>
     )

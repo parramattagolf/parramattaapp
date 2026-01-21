@@ -93,12 +93,24 @@ export default function MonthSection({ month, events, view }: MonthSectionProps)
                                     </div>
 
                                     <div className="flex-1 min-w-0 pt-0.5">
-                                        <div className="flex items-center gap-2 mb-2">
-                                            {event.sponsor && !view && (
-                                                <span className="text-[10px] font-black bg-blue-600 text-white px-2 py-0.5 rounded-md uppercase tracking-widest shadow-[0_0_15px_rgba(37,99,235,0.4)]">
-                                                    Premium
-                                                </span>
-                                            )}
+                                        <div className="flex items-center justify-between mb-2">
+                                            <div className="flex items-center gap-2">
+                                                {event.sponsor && !view && (
+                                                    <span className="text-[10px] font-black bg-blue-600 text-white px-2 py-0.5 rounded-md uppercase tracking-widest shadow-[0_0_15px_rgba(37,99,235,0.4)]">
+                                                        Premium
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            {/* Duration Badge */}
+                                            <span className="text-[11px] font-bold text-white/50 bg-white/5 px-2 py-0.5 rounded-md">
+                                                {(() => {
+                                                    const start = new Date(event.start_date)
+                                                    const end = event.end_date ? new Date(event.end_date) : start
+                                                    const diff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
+                                                    return diff <= 0 ? '당일' : `${diff}박 ${diff + 1}일`
+                                                })()}
+                                            </span>
                                         </div>
 
                                         <h3 className={`text-[18px] font-black leading-tight mb-2 tracking-tight ${view === 'past' ? 'text-white/40' : 'text-white'}`}>

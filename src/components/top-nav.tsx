@@ -208,12 +208,12 @@ function TopNavContent() {
       </div>
       {/* Custom Toast Notification */}
       <div
-        className={`absolute top-full mt-4 left-6 bg-[#1c1c1e] border border-white/10 text-white text-xl font-bold py-4 px-8 rounded-[20px] shadow-[0_10px_40px_rgba(0,0,0,0.5)] whitespace-nowrap z-[110] transition-all duration-300 transform origin-top-left ${toast.visible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-2 scale-95 pointer-events-none'
+        className={`absolute top-full mt-4 left-6 bg-[#FEE500] border border-[#FEE500] text-black text-xl font-bold py-4 px-8 rounded-[20px] shadow-[0_10px_40px_rgba(0,0,0,0.5)] whitespace-nowrap z-[110] transition-all duration-300 transform origin-top-left ${toast.visible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-2 scale-95 pointer-events-none'
           }`}
       >
         {toast.message}
         {/* Little arrow on to p */}
-        <div className="absolute -top-1.5 left-6 w-3 h-3 bg-[#1c1c1e] border-t border-l border-white/10 rotate-45"></div>
+        <div className="absolute -top-1.5 left-6 w-3 h-3 bg-[#FEE500] border-t border-l border-[#FEE500] rotate-45"></div>
       </div>
     </nav>
   )

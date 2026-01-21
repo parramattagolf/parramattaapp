@@ -28,8 +28,8 @@ export default async function RoundsPage({ searchParams }: { searchParams: Promi
 
   // Filter based on the view
   const filteredList = view === 'past'
-    ? list.filter(e => new Date(e.start_date) < now)
-    : list.filter(e => new Date(e.start_date) >= now)
+    ? list.filter(e => new Date(e.start_date) < now && e.is_public)
+    : list.filter(e => new Date(e.start_date) >= now && e.is_public)
 
   // Group filtered events by month
   const groupedEvents: Record<string, any[]> = {}

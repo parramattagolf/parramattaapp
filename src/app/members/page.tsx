@@ -1,6 +1,6 @@
 import { createClient } from '@/utils/supabase/server'
 import Link from 'next/link'
-import { Heart } from 'lucide-react'
+import { Heart, Flag } from 'lucide-react'
 
 export const dynamic = 'force-dynamic'
 
@@ -91,20 +91,23 @@ function MemberItem({ member, isParticipant }: { member: any, isParticipant: boo
                 <div className="flex items-center gap-2">
                     <div className="font-bold text-[var(--color-text-primary)]">{member.nickname}</div>
                     {isParticipant && (
-                        <span className="text-[9px] font-black px-1.5 py-0.5 bg-blue-500/10 text-blue-500 rounded uppercase tracking-tighter">Active</span>
+                        <Flag size={12} className="text-red-500 fill-current" />
                     )}
                 </div>
-                <div className="text-xs text-[var(--color-text-desc)] truncate">
-                    {member.job || '직업 미입력'} | {member.mbti || 'MBTI 미입력'}
-                </div>
+                {isParticipant && (
+                    <div className="text-xs text-red-500 font-bold mt-0.5">라운딩참가중</div>
+                )}
             </div>
-            <div className="flex flex-col items-end gap-1">
+            <div className="flex flex-col items-end gap-0.5">
                 <div className={`flex items-center gap-1 ${member.gender === 'male' ? 'text-blue-500' :
                     member.gender === 'female' ? 'text-pink-500' :
                         'text-gray-400'
                     }`}>
                     <Heart size={14} className="fill-current" />
                     <span className="text-sm font-black">{member.manner_score}</span>
+                </div>
+                <div className="text-[10px] text-[var(--color-text-desc)]">
+                    {member.job || '직업 미입력'} | {member.mbti || 'MBTI 미입력'}
                 </div>
             </div>
         </Link>

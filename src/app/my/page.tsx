@@ -146,7 +146,7 @@ export default async function MyPage() {
                 {/* Score Cards (Kakao Style - Minimal) */}
                 <MyScoreDashboard
                     mannerScore={mannerScore}
-                    points={bestDresserScore}
+                    points={userData?.points || 0}
                     mannerPercentile={percentile}
                     pointRank={pointRank}
                 />

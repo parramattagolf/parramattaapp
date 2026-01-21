@@ -1,0 +1,68 @@
+import { createClient } from '@/utils/supabase/server'
+import { notFound } from 'next/navigation'
+
+
+import RoomDetailContent from '@/components/room-detail-content'
+import PremiumSubHeader from '@/components/premium-sub-header'
+
+export default async function RoomDetailPage({ params }: { params: Promise<{ id: string, roomNumber: string }> }) {
+    const { id, roomNumber } = await params
+    const roomIndex = parseInt(roomNumber) - 1
+
+    const supabase = await createClient()
+
+    // 1. Fetch Event Details
+    const { data: event, error } = await supabase
+        .from('events')
+        .select(`
+            *,
+            host:users!events_host_id_fkey (id, nickname, profile_img, phone, is_admin)
+        `)
+        .eq('id', id)
+        .single()
+
+    if (error || !event) {
+        return notFound()
+    }
+
+    // 2. Fetch Participants
+    const { data: participants } = await supabase
+        .from('participants')
+        .select(`
+            *,
+            user:users (id, nickname, profile_img, job)
+        `)
+        .eq('event_id', id)
+
+    const { data: { user } } = await supabase.auth.getUser()
+    const isJoined = participants?.some(p => p.user_id === user?.id)
+
+    // Calculate room name
+    const maxParticipants = event.max_participants || 4
+    const totalRooms = Math.ceil(maxParticipants / 4)
+    const roomTitle = totalRooms === 1 ? '조인방 상세' : `${roomNumber}번 조인방 상세`
+
+    return (
+        <div className="min-h-screen bg-[#121212] font-sans pb-32">
+            <PremiumSubHeader
+                title={roomTitle}
+                backHref={`/rounds/${id}`}
+            />
+
+            <main className="px-6 pt-24 space-y-8 animate-fade-in">
+                {/* Chat Section */}
+
+
+                {/* Room Detail Content (Interactive Grid) */}
+                <RoomDetailContent
+                    event={event}
+                    participants={participants || []}
+                    currentUser={user}
+                    isHost={!!(user && event.host_id === user.id)}
+                    isJoined={!!isJoined}
+                    roomIndex={roomIndex}
+                />
+            </main>
+        </div>
+    )
+}

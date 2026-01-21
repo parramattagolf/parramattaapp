@@ -5,58 +5,58 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
 export async function createEvent(formData: FormData) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user) throw new Error('Unauthorized')
+    if (!user) throw new Error('Unauthorized')
 
-  const title = formData.get('title') as string
-  const course_name = formData.get('course_name') as string
-  const start_date = formData.get('start_date') as string
-  const cost = formData.get('cost') as string
-  const max_participants = formData.get('max_participants') as string
-  const description = formData.get('description') as string
-  const theme = formData.get('theme') as string || 'General'
+    const title = formData.get('title') as string
+    const course_name = formData.get('course_name') as string
+    const start_date = formData.get('start_date') as string
+    const cost = formData.get('cost') as string
+    const max_participants = formData.get('max_participants') as string
+    const description = formData.get('description') as string
+    const theme = formData.get('theme') as string || 'General'
 
-  // Location can be same as course name for now or separate
-  const location = course_name 
+    // Location can be same as course name for now or separate
+    const location = course_name
 
-  // Calculate end_date (Default 5 hours later?)
-  const start = new Date(start_date)
-  const end = new Date(start.getTime() + 5 * 60 * 60 * 1000) 
+    // Calculate end_date (Default 5 hours later?)
+    const start = new Date(start_date)
+    const end = new Date(start.getTime() + 5 * 60 * 60 * 1000)
 
-  const { data, error } = await supabase
-    .from('events')
-    .insert({
-      host_id: user.id,
-      title,
-      course_name,
-      location,
-      start_date: start.toISOString(),
-      end_date: end.toISOString(),
-      cost: parseFloat(cost),
-      max_participants: parseInt(max_participants),
-      description,
-      status: 'open',
-      theme
+    const { data, error } = await supabase
+        .from('events')
+        .insert({
+            host_id: user.id,
+            title,
+            course_name,
+            location,
+            start_date: start.toISOString(),
+            end_date: end.toISOString(),
+            cost: parseFloat(cost),
+            max_participants: parseInt(max_participants),
+            description,
+            status: 'open',
+            theme
+        })
+        .select()
+        .single()
+
+    if (error) {
+        console.error('Create Event Error:', error)
+        throw new Error('Failed to create event')
+    }
+
+    // Auto-join host
+    await supabase.from('participants').insert({
+        event_id: data.id,
+        user_id: user.id,
+        status: 'joined' // Host is always joined
     })
-    .select()
-    .single()
 
-  if (error) {
-    console.error('Create Event Error:', error)
-    throw new Error('Failed to create event')
-  }
-
-  // Auto-join host
-  await supabase.from('participants').insert({
-      event_id: data.id,
-      user_id: user.id,
-      status: 'joined' // Host is always joined
-  })
-
-  revalidatePath('/rounds')
-  redirect(`/rounds/${data.id}`)
+    revalidatePath('/rounds')
+    redirect(`/rounds/${data.id}`)
 }
 
 export async function joinEvent(eventId: string) {
@@ -81,16 +81,46 @@ export async function joinEvent(eventId: string) {
     })
 
     if (error) throw new Error('Failed to join')
-    
+
+    // Award points logic
+    // count === 1 => 2nd person (1st in Room 1) => 10 points
+    // count === 4 => 5th person (1st in Room 2) => 5 points
+    let pointsAwarded = 0
+    if (count === 1) pointsAwarded = 10
+    else if (count === 4) pointsAwarded = 5
+
+    if (pointsAwarded > 0) {
+        const { data: u } = await supabase.from('users').select('points').eq('id', user.id).single()
+        if (u) {
+            const newBalance = (u.points || 0) + pointsAwarded
+
+            // Update User Points
+            await supabase.from('users').update({ points: newBalance }).eq('id', user.id)
+
+            // Insert Transaction Log
+            // Try/Catch to handle potential missing table error gracefully (or assume it exists)
+            try {
+                await supabase.from('point_transactions').insert({
+                    user_id: user.id,
+                    amount: pointsAwarded,
+                    description: count === 1 ? '1번 조인방 첫 참여 시상' : '2번 조인방 첫 참여 시상',
+                    balance_snapshot: newBalance
+                })
+            } catch (e) {
+                console.error("Failed to log point transaction", e)
+            }
+        }
+    }
+
     // Send payment pending notification
     const { data: eventData } = await supabase.from('events').select('title').eq('id', eventId).single()
     if (eventData) {
         const { notifyPaymentPending } = await import('@/actions/notification-actions')
         await notifyPaymentPending(user.id, eventData.title)
     }
-    
+
     revalidatePath(`/rounds/${eventId}`)
-    return { success: true }
+    return { success: true, pointsAwarded }
 }
 
 export async function leaveEvent(eventId: string) {
@@ -137,7 +167,7 @@ export async function inviteParticipant(eventId: string, targetUserId: string) {
         console.error('Invite error', error)
         throw new Error('Failed to invite')
     }
-    
+
     // Send invite notification
     const { data: eventData } = await supabase.from('events').select('title').eq('id', eventId).single()
     const { data: senderData } = await supabase.from('users').select('nickname').eq('id', user.id).single()
@@ -145,7 +175,7 @@ export async function inviteParticipant(eventId: string, targetUserId: string) {
         const { notifyFriendInvite } = await import('@/actions/notification-actions')
         await notifyFriendInvite(targetUserId, senderData.nickname, eventData.title)
     }
-    
+
     revalidatePath(`/rounds/${eventId}`)
     return { success: true }
 }
@@ -164,10 +194,10 @@ export async function kickParticipant(formData: FormData) {
     // DELETE policy? I didn't set DELETE policy explicitly for Host kicking others.
     // I set "Users can update own...". I need to check DELETE policy.
     // Default RLS is deny all. I need to check migration_phase3.sql again.
-    
+
     // Let's rely on server-side check + admin privileges/SQL execution if needed, 
     // or better, ensure RLS allows Host to DELETE participants.
-    
+
     // We need to fix RLS first if I want to be secure. 
     // Or, since I am using service role in some places? No, `createClient` uses user session.
     // I will check permissions in code for now.
