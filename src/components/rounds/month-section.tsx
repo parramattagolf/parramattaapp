@@ -1,8 +1,8 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, getDay, isWithinInterval, startOfDay, addDays } from 'date-fns'
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, getDay, isWithinInterval, startOfDay } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { Calendar, List } from 'lucide-react'
 
@@ -32,14 +32,61 @@ const getDayColor = (date: Date) => {
     return 'text-white'
 }
 
+interface Event {
+    id: string;
+    start_date: string;
+    end_date?: string;
+    title: string;
+    max_participants?: number;
+    current_participants?: number;
+    description?: string;
+    participant_count?: number;
+    pre_reservation_count?: number;
+    sponsor?: {
+        name: string;
+        logo_url: string;
+    }
+}
+
 interface MonthSectionProps {
     month: string
-    events: any[]
+    events: Event[]
     view?: string
 }
 
 export default function MonthSection({ month, events, view }: MonthSectionProps) {
     const [mode, setMode] = useState<'list' | 'calendar'>('list')
+    const [randomVideoId, setRandomVideoId] = useState<string | null>(null)
+
+    useEffect(() => {
+        const fetchRandomVideo = async () => {
+            try {
+                const playlistId = 'PLpf6bXUHPOxCLpBujRRqy01DfgCrYlThp'
+                const apiKey = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY
+                
+                if (!apiKey) {
+                    console.warn('YouTube API key not found')
+                    return
+                }
+
+                const response = await fetch(
+                    `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&key=${apiKey}`
+                )
+                
+                const data = await response.json()
+                
+                if (data.items && data.items.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * data.items.length)
+                    const videoId = data.items[randomIndex].snippet.resourceId.videoId
+                    setRandomVideoId(videoId)
+                }
+            } catch (error) {
+                console.error('Failed to fetch YouTube playlist:', error)
+            }
+        }
+
+        fetchRandomVideo()
+    }, [])
 
     // Parse month string "yyyy년 M월" to Date
     const [yearStr, monthStr] = month.replace('년', '').replace('월', '').split(' ')
@@ -57,13 +104,13 @@ export default function MonthSection({ month, events, view }: MonthSectionProps)
                 <div className="flex items-center gap-3">
                     <span className={`h-[3px] w-5 rounded-full shadow-[0_0_10px_rgba(234,179,8,0.5)] ${view === 'past' ? 'bg-white/20' : 'bg-yellow-500'}`}></span>
                     <h2 className={`text-sm font-bold tracking-normal uppercase ${view === 'past' ? 'text-white/30' : 'text-white/60'}`}>{month}</h2>
-                    <button
-                        onClick={() => setMode(mode === 'list' ? 'calendar' : 'list')}
-                        className="w-8 h-8 flex items-center justify-center rounded-full bg-white/5 border border-white/5 text-white/40 hover:text-white hover:bg-white/10 hover:border-white/20 transition-all active:scale-90 ml-1"
-                    >
-                        {mode === 'list' ? <Calendar size={14} strokeWidth={2.5} /> : <List size={14} strokeWidth={2.5} />}
-                    </button>
                 </div>
+                <button
+                    onClick={() => setMode(mode === 'list' ? 'calendar' : 'list')}
+                    className="w-8 h-8 flex items-center justify-center rounded-full bg-white/5 border border-white/5 text-white/40 hover:text-white hover:bg-white/10 hover:border-white/20 transition-all active:scale-90"
+                >
+                    {mode === 'list' ? <Calendar size={14} strokeWidth={2.5} /> : <List size={14} strokeWidth={2.5} />}
+                </button>
             </div>
 
             {mode === 'list' ? (
@@ -74,7 +121,23 @@ export default function MonthSection({ month, events, view }: MonthSectionProps)
                             href={`/rounds/${event.id}`}
                             className={`block transition-all duration-150 active:scale-[0.96] ${view === 'past' ? 'opacity-60 grayscale' : ''}`}
                         >
-                            <div className={`card-flat border border-white/10 rounded-[24px] py-4 px-6 shadow-xl transition-all ${view === 'past' ? 'bg-[#18181a]' : 'bg-[#1c1c1e] hover:bg-[#252527]'}`}>
+                            {(() => {
+                                const hasParticipants = (event.participant_count ?? 0) > 0
+                                const hasPreReservations = (event.pre_reservation_count ?? 0) > 0
+                                
+                                let borderClass = 'border-white/10'
+                                
+                                if (view !== 'past') {
+                                    if (hasParticipants) {
+                                        borderClass = 'border-emerald-500'
+                                    } else if (hasPreReservations) {
+                                        borderClass = 'border-blue-500'
+                                    }
+                                }
+                                
+                                return (
+                            <div className={`transition-all duration-300 rounded-[24px] py-4 px-6 shadow-xl relative overflow-hidden group/card ${view === 'past' ? 'bg-[#18181a] border border-white/5 opacity-60' : `bg-[#1c1c1e] border ${borderClass} hover:bg-[#252527]`}`}>
+
                                 <div className="flex items-start gap-5">
                                     <div className="flex flex-col items-center gap-2 shrink-0">
                                         <div className={`flex flex-col items-center justify-center w-15 h-15 rounded-2xl border border-white/5 shadow-inner p-3 ${view === 'past' ? 'bg-[#252527]' : 'bg-[#2c2c2e]'}`}>
@@ -86,8 +149,13 @@ export default function MonthSection({ month, events, view }: MonthSectionProps)
                                             </span>
                                         </div>
                                         {view !== 'past' && (
-                                            <span className="text-[12px] font-black text-blue-400 tracking-tighter">
-                                                {event.current_participants || 0}/{event.max_participants || 4}명
+                                            <span className="text-[11px] font-bold text-blue-400 bg-blue-400/10 px-2 py-0.5 rounded-md mt-0.5">
+                                                {(() => {
+                                                    const start = new Date(event.start_date)
+                                                    const end = event.end_date ? new Date(event.end_date) : start
+                                                    const diff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
+                                                    return diff <= 0 ? '당일' : `${diff}박 ${diff + 1}일`
+                                                })()}
                                             </span>
                                         )}
                                     </div>
@@ -100,41 +168,46 @@ export default function MonthSection({ month, events, view }: MonthSectionProps)
                                                         Premium
                                                     </span>
                                                 )}
-                                            </div>
 
-                                            {/* Duration Badge */}
-                                            <span className="text-[11px] font-bold text-white/50 bg-white/5 px-2 py-0.5 rounded-md">
-                                                {(() => {
-                                                    const start = new Date(event.start_date)
-                                                    const end = event.end_date ? new Date(event.end_date) : start
-                                                    const diff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
-                                                    return diff <= 0 ? '당일' : `${diff}박 ${diff + 1}일`
-                                                })()}
-                                            </span>
+                                            </div>
                                         </div>
 
-                                        <h3 className={`text-[18px] font-black leading-tight mb-2 tracking-tight ${view === 'past' ? 'text-white/40' : 'text-white'}`}>
+                                        <h3 className={`text-[18px] font-black leading-tight mb-1 tracking-tight ${view === 'past' ? 'text-white/40' : 'text-white'}`}>
                                             {event.title}
                                         </h3>
-
-                                        {view !== 'past' && (
-                                            <div className="flex items-center gap-1.5 mt-4">
-                                                {[...Array(event.max_participants || 4)].map((_, i) => (
-                                                    <div
-                                                        key={i}
-                                                        className={`h-1 flex-1 rounded-full transition-all duration-500 ${i < (event.current_participants || 0)
-                                                            ? 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.4)]'
-                                                            : 'bg-white/10 border border-white/5'
-                                                            }`}
-                                                    />
-                                                ))}
-                                            </div>
+                                        {event.description && (
+                                            <p className={`text-[4px] leading-tight break-keep line-clamp-3 ${view === 'past' ? 'text-white/20' : 'text-white/40'}`}>
+                                                {event.description}
+                                            </p>
                                         )}
+
+
                                     </div>
                                 </div>
                             </div>
+                            )
+                            })()}
                         </Link>
                     ))}
+                    <div className="mt-6 rounded-[24px] overflow-hidden border border-white/10 shadow-xl bg-[#1c1c1e]">
+                        <div className="aspect-video w-full">
+                            {randomVideoId ? (
+                                <iframe 
+                                    className="w-full h-full"
+                                    src={`https://www.youtube.com/embed/${randomVideoId}?rel=0`}
+                                    title="YouTube video player" 
+                                    frameBorder="0" 
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                                    referrerPolicy="strict-origin-when-cross-origin" 
+                                    allowFullScreen
+                                ></iframe>
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-[#2c2c2e]">
+                                    <div className="text-white/40 text-sm">영상 로딩 중...</div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
             ) : (
                 <div className="px-6 animate-fade-in">
@@ -184,7 +257,7 @@ export default function MonthSection({ month, events, view }: MonthSectionProps)
 
                                         {/* Event Indicators Stacking Context */}
                                         <div className="w-full flex flex-col items-center gap-1 mt-1">
-                                            {indicators.map((ind, idx) => (
+                                            {indicators.map((ind) => (
                                                 <Link
                                                     key={ind.id}
                                                     href={`/rounds/${ind.id}`}

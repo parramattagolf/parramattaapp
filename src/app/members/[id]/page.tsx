@@ -70,21 +70,25 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
             <div className="px-4 mt-8 grid grid-cols-2 gap-3">
                 <div className="bg-[var(--color-gray-100)] p-4 rounded-xl border border-[var(--color-divider)]">
                     <div className="text-[11px] text-[var(--color-text-desc)] mb-1 font-bold">매너 점수</div>
-                    <div className="text-2xl font-bold text-emerald-500">{profile.manner_score || 0}</div>
+                    <div className={`text-2xl font-bold ${profile.manner_score < 0 ? 'text-red-500' : 'text-emerald-500'}`}>
+                        {profile.manner_score?.toLocaleString() || 0}
+                    </div>
                     <div className="mt-2 h-1 bg-[var(--color-divider)] rounded-full overflow-hidden">
                         <div
-                            className="h-full bg-emerald-500 rounded-full"
-                            style={{ width: `${Math.min(100, profile.manner_score || 0)}%` }}
+                            className={`h-full rounded-full ${profile.manner_score < 0 ? 'bg-red-500' : 'bg-emerald-500'}`}
+                            style={{ width: `${Math.max(0, Math.min(100, profile.manner_score || 0))}%` }}
                         />
                     </div>
                 </div>
                 <div className="bg-[var(--color-gray-100)] p-4 rounded-xl border border-[var(--color-divider)]">
-                    <div className="text-[11px] text-[var(--color-text-desc)] mb-1 font-bold">베스트 드레서</div>
-                    <div className="text-2xl font-bold text-pink-500">{profile.best_dresser_score || 0}</div>
+                    <div className="text-[11px] text-[var(--color-text-desc)] mb-1 font-bold">누적 포인트</div>
+                    <div className={`text-2xl font-bold ${profile.points < 0 ? 'text-red-500' : 'text-pink-500'}`}>
+                        {profile.points?.toLocaleString() || 0}
+                    </div>
                     <div className="mt-2 h-1 bg-[var(--color-divider)] rounded-full overflow-hidden">
                         <div
-                            className="h-full bg-pink-500 rounded-full"
-                            style={{ width: `${Math.min(100, profile.best_dresser_score || 0)}%` }}
+                            className={`h-full rounded-full ${profile.points < 0 ? 'bg-red-500' : 'bg-pink-500'}`}
+                            style={{ width: `${Math.max(0, Math.min(100, (profile.points || 0) / 10))}%` }}
                         />
                     </div>
                 </div>

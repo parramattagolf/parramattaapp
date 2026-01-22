@@ -158,10 +158,10 @@ function TopNavContent() {
       <div className="flex items-center gap-2">
         {pathname === '/rounds' && (
           <Link
-            href={view === 'past' ? '/rounds' : '/rounds?view=past'}
+            href="/rounds/new"
             className="text-[13px] font-bold text-blue-500 hover:text-blue-400 transition-colors uppercase tracking-tight active:scale-95 mr-2"
           >
-            {view === 'past' ? '진행중인 라운딩' : '지난일정'}
+            라운드등록
           </Link>
         )}
 

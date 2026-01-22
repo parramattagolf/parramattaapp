@@ -42,7 +42,7 @@ export default async function PointsHistoryPage() {
                         P
                     </div>
                     <div className="relative z-10 flex flex-col items-center">
-                        <div className="text-7xl font-black text-white tracking-tight">
+                        <div className={`text-7xl font-black tracking-tight ${userData?.points < 0 ? 'text-red-200' : 'text-white'}`}>
                             {(userData?.points || 0).toLocaleString()}
                         </div>
                         {transactions && transactions.length > 0 && (
@@ -61,14 +61,14 @@ export default async function PointsHistoryPage() {
                             아직 거래 내역이 없습니다.
                         </div>
                     ) : (
-                        <div className="divide-y divide-[var(--color-divider)]">
+                        <ul className="divide-y divide-[var(--color-divider)]">
                             {transactions.map((tx) => (
-                                <div key={tx.id} className="p-5 flex justify-between items-center group hover:bg-[var(--color-surface-hover)] transition-colors">
+                                <li key={tx.id} className="p-5 flex justify-between items-center group hover:bg-[var(--color-surface-hover)] transition-colors">
                                     <div className="flex flex-col gap-1 flex-1 pr-4">
                                         <span className="text-[14px] font-bold text-[var(--color-text-primary)]">
                                             {tx.description}
                                         </span>
-                                        <span className="text-[11px] text-[var(--color-text-desc)]">
+                                        <span className="text-[11px] text-[var(--color-text-desc)]" suppressHydrationWarning>
                                             {format(new Date(tx.created_at), 'yyyy.MM.dd HH:mm', { locale: ko })}
                                         </span>
                                     </div>
@@ -82,9 +82,9 @@ export default async function PointsHistoryPage() {
                                             </div>
                                         )}
                                     </div>
-                                </div>
+                                </li>
                             ))}
-                        </div>
+                        </ul>
                     )}
                 </div>
             </div>

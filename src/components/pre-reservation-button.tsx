@@ -31,8 +31,9 @@ export default function PreReservationButton({ eventId, isReserved }: { eventId:
             return
         }
 
-        const message = "아직 고민 중이신가요?\n부담 없이 사전예약을 먼저 해보세요.\n회원님을 기다리는 분들께 초대를 받으실 수도 있답니다.\n\n사전예약은 취소 패널티가 전혀 없으며,\n오히려 감사의 의미로 매너점수 1점을 드려요! 🎁\n\n지금 바로 사전예약 하시겠어요?";
-        if (!confirm(message)) return
+        if (!isReserved) {
+            // No confirmation needed for pre-reservation
+        }
 
         setLoading(true)
         try {

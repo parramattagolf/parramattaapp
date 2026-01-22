@@ -53,11 +53,13 @@ export default function MyScoreDashboard({ mannerScore, points, mannerPercentile
                         )}
                     </div>
                 </div>
-                <div className="text-2xl font-bold text-emerald-500">{mannerScore}</div>
+                <div className={`text-2xl font-bold ${mannerScore < 0 ? 'text-red-500' : 'text-emerald-500'}`}>
+                    {mannerScore > 0 ? mannerScore : (mannerScore === 0 ? '0' : mannerScore.toLocaleString())}
+                </div>
                 <div className="mt-2 h-1 bg-[var(--color-divider)] rounded-full overflow-hidden">
                     <div
-                        className="h-full bg-emerald-500 rounded-full transition-all"
-                        style={{ width: `${Math.min(100, mannerScore)}%` }}
+                        className={`h-full rounded-full transition-all ${mannerScore < 0 ? 'bg-red-500' : 'bg-emerald-500'}`}
+                        style={{ width: `${Math.max(0, Math.min(100, mannerScore))}%` }}
                     />
                 </div>
             </div>
@@ -87,11 +89,13 @@ export default function MyScoreDashboard({ mannerScore, points, mannerPercentile
                         )}
                     </div>
                 </div>
-                <div className="text-2xl font-bold text-pink-500">{points.toLocaleString()}</div>
+                <div className={`text-2xl font-bold ${points < 0 ? 'text-red-500' : 'text-pink-500'}`}>
+                    {points.toLocaleString()}
+                </div>
                 <div className="mt-2 h-1 bg-[var(--color-divider)] rounded-full overflow-hidden">
                     <div
-                        className="h-full bg-pink-500 rounded-full transition-all"
-                        style={{ width: `${Math.min(100, (points / 1000) * 100)}%` }}
+                        className={`h-full rounded-full transition-all ${points < 0 ? 'bg-red-500' : 'bg-pink-500'}`}
+                        style={{ width: `${Math.max(0, Math.min(100, (points / 1000) * 100))}%` }}
                     />
                 </div>
             </div>

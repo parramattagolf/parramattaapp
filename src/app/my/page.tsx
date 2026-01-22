@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { getUserBadges } from '@/actions/sponsor-actions'
 import { Bell } from 'lucide-react'
 import MyScoreDashboard from '@/components/my/my-score-dashboard'
+import MyYoutubeEmbed from '@/components/my/my-youtube-embed'
 
 // ============================================
 // 🔒 개발용: SHOW_KAKAO_ID를 false로 설정하면 
@@ -60,8 +61,8 @@ export default async function MyPage() {
     const displayEmail = authEmail || userData?.email || null
     const displayJob = userData?.job || null
     const displayGolfExp = userData?.golf_experience || null
-    const mannerScore = userData?.manner_score || 100
-    const bestDresserScore = userData?.best_dresser_score || 0
+    const mannerScore = userData?.manner_score ?? 100
+    const currentPoints = userData?.points || 0
 
     // 카카오 ID: DB에서 가져오거나 메타데이터에서 추출
     const displayKakaoId = userData?.kakao_id || kakaoId
@@ -71,19 +72,19 @@ export default async function MyPage() {
         .from('users')
         .select('*', { count: 'exact', head: true })
 
-    const { count: higherScorers } = await supabase
+    const { count: higherMannerScorers } = await supabase
         .from('users')
         .select('*', { count: 'exact', head: true })
         .gt('manner_score', mannerScore)
 
-    const rank = (higherScorers || 0) + 1
-    const percentile = totalUsers ? Math.ceil((rank / totalUsers) * 100) : 100
+    const mannerRank = (higherMannerScorers || 0) + 1
+    const percentile = totalUsers ? Math.ceil((mannerRank / totalUsers) * 100) : 100
 
     // Calculate Point Rank (Seed Rank)
     const { count: higherPointScorers } = await supabase
         .from('users')
         .select('*', { count: 'exact', head: true })
-        .gt('best_dresser_score', bestDresserScore)
+        .gt('points', currentPoints)
 
     const pointRank = (higherPointScorers || 0) + 1
 
@@ -225,33 +226,10 @@ export default async function MyPage() {
                 </Link>
             </div>
 
-            {/* Host Stats Dashboard */}
-            <div className="px-5 mt-6">
-                <div className="bg-gradient-to-br from-yellow-500/10 to-orange-500/5 rounded-2xl border border-yellow-500/20 p-5">
-                    <div className="flex items-center gap-2 mb-4">
-                        <span className="text-xl">👑</span>
-                        <h3 className="text-base font-black text-yellow-500">호스트 활동</h3>
-                        {userData?.is_vip && (
-                            <span className="ml-auto text-[10px] font-bold bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded-full border border-purple-500/30">
-                                VIP
-                            </span>
-                        )}
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-black/20 rounded-xl p-4 text-center">
-                            <div className="text-3xl font-black text-yellow-500">{userData?.host_count || 0}</div>
-                            <div className="text-[11px] text-white/40 font-bold mt-1">조인방 호스트 횟수</div>
-                        </div>
-                        <div className="bg-black/20 rounded-xl p-4 text-center">
-                            <div className="text-3xl font-black text-blue-400">{userData?.invite_count || 0}</div>
-                            <div className="text-[11px] text-white/40 font-bold mt-1">친구 초대 성공</div>
-                        </div>
-                    </div>
-                    <p className="text-[11px] text-white/30 mt-3 text-center">
-                        조인방에 가장 먼저 참가하면 호스트가 됩니다!
-                    </p>
-                </div>
-            </div>
+            {/* Member Video Recommended for User */}
+            <MyYoutubeEmbed nickname={displayName} />
+
+
 
         </div>
     )

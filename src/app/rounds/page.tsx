@@ -31,18 +31,39 @@ export default async function RoundsPage({ searchParams }: { searchParams: Promi
     ? list.filter(e => new Date(e.start_date) < now && e.is_public)
     : list.filter(e => new Date(e.start_date) >= now && e.is_public)
 
-  // Group filtered events by month
-  const groupedEvents: Record<string, any[]> = {}
-  filteredList.forEach(event => {
+  // Fetch participant counts and pre-reservation counts for all events
+  const eventWithCounts = await Promise.all(
+    filteredList.map(async (event) => {
+      const { count: participantCount } = await supabase
+        .from('participants')
+        .select('*', { count: 'exact', head: true })
+        .eq('event_id', event.id)
+
+      const { count: preReservationCount } = await supabase
+        .from('pre_reservations')
+        .select('*', { count: 'exact', head: true })
+        .eq('event_id', event.id)
+
+      return {
+        ...event,
+        participant_count: participantCount || 0,
+        pre_reservation_count: preReservationCount || 0
+      }
+    })
+  )
+
+  // Group filtered events by month (using the enriched ones)
+  const groupedEventsWithCounts: Record<string, any[]> = {}
+  eventWithCounts.forEach(event => {
     const monthYear = format(new Date(event.start_date), 'yyyy년 M월', { locale: ko })
-    if (!groupedEvents[monthYear]) {
-      groupedEvents[monthYear] = []
+    if (!groupedEventsWithCounts[monthYear]) {
+      groupedEventsWithCounts[monthYear] = []
     }
-    groupedEvents[monthYear].push(event)
+    groupedEventsWithCounts[monthYear].push(event)
   })
 
-  // Sort months for past view (descending) or upcoming view (ascending)
-  const months = Object.keys(groupedEvents).sort((a, b) => {
+  // Sort months
+  const months = Object.keys(groupedEventsWithCounts).sort((a, b) => {
     if (view === 'past') return b.localeCompare(a)
     return a.localeCompare(b)
   })
@@ -52,7 +73,7 @@ export default async function RoundsPage({ searchParams }: { searchParams: Promi
       <main className="space-y-12">
         {months.length > 0 ? (
           months.map(month => (
-            <MonthSection key={month} month={month} events={groupedEvents[month]} view={view} />
+            <MonthSection key={month} month={month} events={groupedEventsWithCounts[month]} view={view} />
           ))
         ) : (
           <div className="py-40 px-10 text-center animate-fade-in">

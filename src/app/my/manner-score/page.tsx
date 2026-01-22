@@ -42,8 +42,8 @@ export default async function MannerScoreHistoryPage() {
                         M
                     </div>
                     <div className="relative z-10 flex flex-col items-center">
-                        <div className="text-7xl font-black text-white tracking-tight">
-                            {(userData?.manner_score || 0)}
+                        <div className={`text-7xl font-black tracking-tight ${userData?.manner_score < 0 ? 'text-red-200' : 'text-white'}`}>
+                            {(userData?.manner_score || 0).toLocaleString()}
                         </div>
                         {history && history.length > 0 && (
                             <div className={`mt-2 flex items-center gap-1 text-lg font-bold ${history[0].amount > 0 ? 'text-red-300' : 'text-blue-300'}`}>

@@ -207,6 +207,13 @@ export async function leaveEvent(eventId: string) {
 
     if (error) throw new Error('Failed to leave')
 
+    // Release all held slots by this user
+    await supabase
+        .from('held_slots')
+        .delete()
+        .eq('event_id', eventId)
+        .eq('held_by', user.id)
+
     // Host Succession
     if (participant?.group_no) {
         await handleHostSuccession(eventId, participant.group_no, user.id)
@@ -228,6 +235,23 @@ export async function leaveEvent(eventId: string) {
         } catch (e) {
             console.error('Failed to log manner score', e)
         }
+    }
+
+    // Check if any participants left in the event
+    const { count: remainingCount } = await supabase
+        .from('participants')
+        .select('*', { count: 'exact' })
+        .eq('event_id', eventId)
+
+    // If no one left, release all pre-reservations and redirect
+    if (remainingCount === 0) {
+        // Release all held slots for the event (just to be safe)
+        await supabase
+            .from('held_slots')
+            .delete()
+            .eq('event_id', eventId)
+
+        return { success: true, redirectUrl: '/rounds', message: '마지막 참가자가 퇴장하여 라운딩 목록으로 이동합니다.' }
     }
 
     revalidatePath(`/rounds/${eventId}`)
