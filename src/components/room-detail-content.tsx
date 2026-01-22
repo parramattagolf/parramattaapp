@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { joinEvent, leaveEvent, kickParticipant, inviteParticipant } from '@/actions/event-actions'
+import { joinEvent, leaveEvent, inviteParticipant } from '@/actions/event-actions'
 import InviteModal from '@/components/invite-modal'
 import JoinConfirmModal from '@/components/join-confirm-modal'
 import { createClient } from '@/utils/supabase/client'
@@ -25,6 +25,7 @@ interface Participant {
 interface User {
     id: string;
     email?: string;
+    is_vip?: boolean;
     user_metadata?: {
         full_name?: string;
         avatar_url?: string;
@@ -37,27 +38,58 @@ interface Event {
     max_participants: number;
 }
 
+interface HeldSlot {
+    event_id: string;
+    group_no: number;
+    slot_index: number;
+    held_by: string;
+    invited_user_id?: string;
+}
+
 export default function RoomDetailContent({
     event,
     participants,
-    currentUser,
-    isHost,
+    currentUser: authUser,
+    roomHostId,
+    isRoomHost,
     isJoined,
     roomIndex
 }: {
     event: Event,
     participants: Participant[],
     currentUser: User | null,
-    isHost: boolean,
+    roomHostId: string | null,
+    isRoomHost: boolean,
     isJoined: boolean,
     roomIndex: number
 }) {
     const [slots, setSlots] = useState<(Participant | null)[]>([])
     const [isInviteOpen, setIsInviteOpen] = useState(false)
+    const [heldSlots, setHeldSlots] = useState<HeldSlot[]>([])
+    const [userData, setUserData] = useState<User | null>(null)
     const router = useRouter()
     const supabase = createClient()
 
     const [isJoinModalOpen, setIsJoinModalOpen] = useState(false)
+
+    useEffect(() => {
+        if (authUser) {
+            const fetchUser = async () => {
+                const { data } = await supabase.from('users').select('*').eq('id', authUser.id).single()
+                if (data) setUserData(data)
+            }
+            fetchUser()
+        }
+    }, [authUser, supabase])
+
+    useEffect(() => {
+        const fetchHeldSlots = async () => {
+            const { getHeldSlots } = await import('@/actions/event-actions')
+            const data = await getHeldSlots(event.id)
+            setHeldSlots(data || [])
+        }
+        fetchHeldSlots()
+    }, [event.id])
 
     useEffect(() => {
         // Filter participants by group_no (roomIndex is 0-based, group_no is 1-based)
@@ -128,12 +160,54 @@ export default function RoomDetailContent({
         }
     }
 
+    const handleHoldSlot = async (slotIndex: number) => {
+        try {
+            const { holdSlot } = await import('@/actions/event-actions')
+            const roomNumber = roomIndex + 1
+
+            // Count existing holds by this host
+            const myHolds = heldSlots.filter(s => s.held_by === userData?.id)
+            if (!userData?.is_vip && myHolds.length >= 3) {
+                alert('VIP 회원이 아니면 최대 3개까지만 예약 가능합니다.')
+                return
+            }
+
+            const result = await holdSlot(event.id, roomNumber, slotIndex)
+            if (result.success) {
+                alert(result.message)
+                router.refresh()
+            }
+        } catch (error) {
+            alert(error instanceof Error ? error.message : '슬롯 보류 실패')
+        }
+    }
+
+    const handleReleaseSlot = async (slotIndex: number) => {
+        try {
+            const { releaseSlot } = await import('@/actions/event-actions')
+            const roomNumber = roomIndex + 1
+            const result = await releaseSlot(event.id, roomNumber, slotIndex)
+            if (result.success) {
+                alert(result.message)
+                router.refresh()
+            }
+        } catch (error) {
+            alert(error instanceof Error ? error.message : '슬롯 해제 실패')
+        }
+    }
+
     const handleKick = async (userId: string) => {
         if (!confirm('정말 내보내시겠습니까?')) return
-        const formData = new FormData()
-        formData.append('eventId', event.id)
-        formData.append('userId', userId)
-        await kickParticipant(formData)
+        try {
+            const { kickParticipant } = await import('@/actions/event-actions')
+            const formData = new FormData()
+            formData.append('eventId', event.id)
+            formData.append('userId', userId)
+            await kickParticipant(formData)
+            router.refresh()
+        } catch (error) {
+            alert('강퇴 실패: ' + (error instanceof Error ? error.message : '알 수 없는 오류'))
+        }
     }
 
     const TimeDisplay = ({ joinedAt, onExpire }: { joinedAt: string, onExpire: () => void }) => {
@@ -232,15 +306,19 @@ export default function RoomDetailContent({
                     // Check if this slot index is truly valid within max_participants
                     const globalIndex = roomIndex * 4 + i
                     const isSlotValid = globalIndex < (event.max_participants || 4)
+                    if (!isSlotValid) return null;
 
-                    if (!isSlotValid) return null; // Don't render invalid slots
+                    const heldSlot = heldSlots.find(s => s.group_no === roomIndex + 1 && s.slot_index === i)
+                    const isReservedForMe = heldSlot?.invited_user_id === userData?.id
 
                     return (
                         <div
                             key={i}
                             className={`aspect-square rounded-[36px] border transition-all duration-500 flex flex-col items-center justify-center p-6 relative group overflow-hidden ${slot
                                 ? 'border-white/10 bg-[#1c1c1e] shadow-2xl scale-100'
-                                : 'border-dashed border-white/5 bg-white/[0.01] hover:bg-white/[0.03]'
+                                : heldSlot
+                                    ? 'border-yellow-500/50 bg-yellow-500/5 shadow-[0_0_20px_rgba(234,179,8,0.1)]'
+                                    : 'border-dashed border-white/5 bg-white/[0.01] hover:bg-white/[0.03]'
                                 }`}
                         >
                             {slot ? (
@@ -251,6 +329,9 @@ export default function RoomDetailContent({
                                             <img src={slot.user.profile_img} className="w-full h-full object-cover" alt="" referrerPolicy="no-referrer" />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center text-3xl opacity-20 grayscale">👤</div>
+                                        )}
+                                        {slot.user_id === roomHostId && (
+                                            <div className="absolute -top-1 -right-1 text-lg z-20 drop-shadow-md">👑</div>
                                         )}
                                     </div>
                                     <div className="text-center w-full px-2 relative z-10">
@@ -276,7 +357,7 @@ export default function RoomDetailContent({
                                         )}
                                     </div>
 
-                                    {isHost && slot.user_id !== currentUser?.id && (
+                                    {isRoomHost && slot.user_id !== authUser?.id && (
                                         <button
                                             onClick={() => handleKick(slot.user_id)}
                                             className="absolute top-4 right-4 text-white/10 hover:text-red-500 font-black p-2 text-2xl leading-none active:scale-75 transition-all z-20"
@@ -286,23 +367,55 @@ export default function RoomDetailContent({
                                     )}
 
                                     {slot.user_id === event.host_id && (
-                                        <span className="absolute top-5 left-5 text-[9px] bg-blue-500 text-white px-2 py-0.5 rounded-md font-black shadow-[0_0_20px_rgba(59,130,246,0.6)] tracking-tighter uppercase z-20">Host</span>
+                                        <span className="absolute top-5 left-5 w-2 h-2 bg-blue-500 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.8)] z-20"></span>
                                     )}
                                 </>
+                            ) : heldSlot ? (
+                                <div className="flex flex-col items-center justify-center text-yellow-500/50 gap-2">
+                                    <div className="text-2xl">🔒</div>
+                                    <span className="text-[10px] font-black uppercase tracking-widest">Reserved</span>
+                                    {isRoomHost && (
+                                        <button
+                                            onClick={() => handleReleaseSlot(i)}
+                                            className="mt-2 text-[9px] bg-yellow-500/20 px-2 py-1 rounded-md text-yellow-500 border border-yellow-500/30 font-bold active:scale-90 transition-transform"
+                                        >
+                                            RELEASE
+                                        </button>
+                                    )}
+                                    {isReservedForMe && (
+                                        <button
+                                            onClick={handleJoin}
+                                            className="mt-2 text-[9px] bg-blue-600 px-3 py-1 rounded-md text-white font-black animate-pulse"
+                                        >
+                                            JOIN NOW
+                                        </button>
+                                    )}
+                                </div>
                             ) : (
-                                <button
-                                    disabled={isJoined || (participants.length >= event.max_participants)}
-                                    onClick={handleJoin}
-                                    className="w-full h-full flex flex-col items-center justify-center text-white/20 gap-3 active:bg-white/[0.05] active:scale-[0.94] transition-all rounded-[36px]"
-                                >
-                                    <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center border border-white/5 shadow-inner group-hover:bg-white/10 transition-colors">
-                                        <span className="text-2xl font-extralight text-white/30">+</span>
-                                    </div>
-                                    <div className="flex flex-col items-center">
-                                        <span className="text-[11px] font-black uppercase tracking-[0.2em] opacity-30">Available</span>
-                                        {isJoined ? <span className="text-[9px] text-blue-500/40 font-black mt-2 tracking-widest uppercase">(JOINED)</span> : null}
-                                    </div>
-                                </button>
+                                <div className="flex flex-col items-center justify-center w-full h-full">
+                                    <button
+                                        disabled={isJoined || participants.length >= event.max_participants}
+                                        onClick={handleJoin}
+                                        className="flex flex-col items-center justify-center text-white/20 gap-3 active:bg-white/[0.05] active:scale-[0.94] transition-all rounded-[36px] w-full h-full"
+                                    >
+                                        <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center border border-white/5 shadow-inner group-hover:bg-white/10 transition-colors">
+                                            <span className="text-2xl font-extralight text-white/30">+</span>
+                                        </div>
+                                        <div className="flex flex-col items-center">
+                                            <span className="text-[11px] font-black uppercase tracking-[0.2em] opacity-30">Available</span>
+                                            {isJoined ? <span className="text-[9px] text-blue-500/40 font-black mt-2 tracking-widest uppercase">(JOINED)</span> : null}
+                                        </div>
+                                    </button>
+
+                                    {isRoomHost && !isJoined && (
+                                        <button
+                                            onClick={() => handleHoldSlot(i)}
+                                            className="absolute bottom-4 text-[9px] text-white/20 hover:text-yellow-500/50 font-black border border-white/10 px-2 py-1 rounded-md transition-colors"
+                                        >
+                                            HOLD SLOT
+                                        </button>
+                                    )}
+                                </div>
                             )}
                         </div>
                     )

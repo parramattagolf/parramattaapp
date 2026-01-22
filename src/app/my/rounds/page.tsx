@@ -4,20 +4,35 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import PremiumSubHeader from '@/components/premium-sub-header'
 import Link from 'next/link'
+import Image from 'next/image'
 import { format } from 'date-fns'
-import { Trophy, Calendar, MapPin, CheckCircle2, Clock } from 'lucide-react'
+import { Trophy, Calendar, MapPin } from 'lucide-react'
+
+interface EventData {
+    id: string;
+    title: string;
+    start_date: string;
+    course_name: string;
+    thumbnail_url: string | null;
+}
+
+interface RoundData {
+    joined_at: string;
+    payment_status: string;
+    events: EventData;
+}
 
 export default function MyRoundsPage() {
     const supabase = createClient()
     const [loading, setLoading] = useState(true)
-    const [rounds, setRounds] = useState<any[]>([])
+    const [rounds, setRounds] = useState<RoundData[]>([])
 
     useEffect(() => {
         const fetchRounds = async () => {
             const { data: { user } } = await supabase.auth.getUser()
             if (!user) return
 
-            const { data, error } = await supabase
+            const { data } = await supabase
                 .from('participants')
                 .select(`
                     joined_at,
@@ -34,7 +49,7 @@ export default function MyRoundsPage() {
                 .order('joined_at', { ascending: false })
 
             if (data) {
-                setRounds(data)
+                setRounds(data as unknown as RoundData[])
             }
             setLoading(false)
         }
@@ -56,7 +71,7 @@ export default function MyRoundsPage() {
 
             <div className="pt-24 px-5 space-y-4">
                 {rounds.length > 0 ? (
-                    rounds.map((r: any) => {
+                    rounds.map((r: RoundData) => {
                         const event = r.events
                         const isPast = new Date(event.start_date) < new Date()
 
@@ -67,9 +82,9 @@ export default function MyRoundsPage() {
                                 className={`block bg-[#1c1c1e] border border-white/5 rounded-3xl overflow-hidden active:scale-[0.98] transition-all ${isPast ? 'opacity-80' : 'opacity-100'}`}
                             >
                                 <div className="flex p-4 gap-4">
-                                    <div className="w-20 h-20 rounded-2xl bg-white/5 overflow-hidden border border-white/10 shrink-0">
+                                    <div className="w-20 h-20 rounded-2xl bg-white/5 overflow-hidden border border-white/10 shrink-0 relative">
                                         {event.thumbnail_url ? (
-                                            <img src={event.thumbnail_url} alt="" className="w-full h-full object-cover" />
+                                            <Image src={event.thumbnail_url} alt="" fill className="object-cover" unoptimized />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center text-2xl bg-gradient-to-br from-white/10 to-white/5">⛳</div>
                                         )}

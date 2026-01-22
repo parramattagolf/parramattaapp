@@ -37,6 +37,10 @@ export default async function RoomDetailPage({ params }: { params: Promise<{ id:
     const { data: { user } } = await supabase.auth.getUser()
     const isJoined = participants?.some(p => p.user_id === user?.id)
 
+    // 3. Get Room Host
+    const { getRoomHost } = await import('@/actions/event-actions')
+    const roomHostId = await getRoomHost(id, parseInt(roomNumber))
+
     // Calculate room name
     const maxParticipants = event.max_participants || 4
     const totalRooms = Math.ceil(maxParticipants / 4)
@@ -57,8 +61,9 @@ export default async function RoomDetailPage({ params }: { params: Promise<{ id:
                 <RoomDetailContent
                     event={event}
                     participants={participants || []}
-                    currentUser={user}
-                    isHost={!!(user && event.host_id === user.id)}
+                    currentUser={user as any}
+                    roomHostId={roomHostId}
+                    isRoomHost={user?.id === roomHostId}
                     isJoined={!!isJoined}
                     roomIndex={roomIndex}
                 />

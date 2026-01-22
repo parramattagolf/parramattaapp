@@ -191,6 +191,14 @@ export async function leaveEvent(eventId: string) {
     const { data: event } = await supabase.from('events').select('title').eq('id', eventId).single()
     const eventTitle = event?.title ? `'${event.title}' ` : ''
 
+    // Find group_no for handleHostSuccession
+    const { data: participant } = await supabase
+        .from('participants')
+        .select('group_no')
+        .eq('event_id', eventId)
+        .eq('user_id', user.id)
+        .single()
+
     const { error } = await supabase
         .from('participants')
         .delete()
@@ -198,6 +206,11 @@ export async function leaveEvent(eventId: string) {
         .eq('user_id', user.id)
 
     if (error) throw new Error('Failed to leave')
+
+    // Host Succession
+    if (participant?.group_no) {
+        await handleHostSuccession(eventId, participant.group_no, user.id)
+    }
 
     // Deduct 10 Manner Score
     const { data: userData } = await supabase.from('users').select('manner_score').eq('id', user.id).single()
@@ -320,8 +333,24 @@ export async function kickParticipant(formData: FormData) {
 
     // Fetch event to check host
     const { data: event } = await supabase.from('events').select('host_id').eq('id', eventId).single()
-    if (!event || event.host_id !== user.id) {
-        throw new Error('Only host can kick')
+    // Find group_no for handleHostSuccession
+    const { data: participant } = await supabase
+        .from('participants')
+        .select('group_no')
+        .eq('event_id', eventId)
+        .eq('user_id', targetUserId)
+        .single()
+
+    // 1. Check if user is event host OR room host for this participant's room
+    if (!event) throw new Error('이벤트를 찾을 수 없습니다.')
+
+    let canKick = event.host_id === user.id
+    if (!canKick && participant?.group_no) {
+        canKick = await checkIsRoomHost(eventId, participant.group_no)
+    }
+
+    if (!canKick) {
+        throw new Error('강퇴 권한이 없습니다. (라운딩 개설자 또는 해당 조인방 호스트만 가능)')
     }
 
     const { error } = await supabase
@@ -331,6 +360,11 @@ export async function kickParticipant(formData: FormData) {
         .eq('user_id', targetUserId)
 
     if (error) throw new Error('Failed to kick')
+
+    // Host Succession
+    if (participant?.group_no) {
+        await handleHostSuccession(eventId, participant.group_no, targetUserId)
+    }
 
     // Send kicked notification
     const { data: eventData } = await supabase.from('events').select('title').eq('id', eventId).single()
@@ -579,6 +613,15 @@ export async function holdSlot(eventId: string, groupNo: number, slotIndex: numb
 
     if (existingHold) throw new Error('이미 홀드된 슬롯입니다.')
 
+    // VIP limit check
+    const { data: userData } = await supabase.from('users').select('is_vip').eq('id', user.id).single()
+    if (!userData?.is_vip) {
+        const { data: currentHolds } = await supabase.from('held_slots').select('id').eq('held_by', user.id)
+        if (currentHolds && currentHolds.length >= 3) {
+            throw new Error('VIP 회원이 아니면 최대 3개까지만 예약 가능합니다.')
+        }
+    }
+
     // Insert hold
     const { error } = await supabase.from('held_slots').insert({
         event_id: eventId,
@@ -655,4 +698,48 @@ export async function canJoinSlot(eventId: string, groupNo: number, slotIndex: n
 
     // If just held (no specific invite), no one can join except through invite
     return false
+}
+
+export async function handleHostSuccession(eventId: string, groupNo: number, leavingUserId: string) {
+    const supabase = await createClient()
+
+    // 1. Check if the leaving user was the host
+    const currentHostId = await getRoomHost(eventId, groupNo)
+    if (currentHostId !== leavingUserId) return
+
+    // 2. End the current host session
+    await supabase.from('host_history')
+        .update({ ended_at: new Date().toISOString() })
+        .eq('event_id', eventId)
+        .eq('group_no', groupNo)
+        .eq('user_id', leavingUserId)
+        .is('ended_at', null)
+
+    // 3. Find the next joiner in this room
+    const { data: nextParticipant } = await supabase
+        .from('participants')
+        .select('user_id')
+        .eq('event_id', eventId)
+        .eq('group_no', groupNo)
+        .neq('user_id', leavingUserId)
+        .order('joined_at', { ascending: true })
+        .limit(1)
+        .single()
+
+    if (nextParticipant) {
+        // 4. Make them the new host
+        await supabase.from('host_history').insert({
+            event_id: eventId,
+            group_no: groupNo,
+            user_id: nextParticipant.user_id,
+        })
+
+        // 5. Increment their host count
+        const { data: userData } = await supabase.from('users').select('host_count').eq('id', nextParticipant.user_id).single()
+        if (userData) {
+            await supabase.from('users').update({
+                host_count: (userData.host_count || 0) + 1
+            }).eq('id', nextParticipant.user_id)
+        }
+    }
 }
