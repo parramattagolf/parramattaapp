@@ -1,5 +1,6 @@
 import { createClient } from '@/utils/supabase/server'
 import Link from 'next/link'
+import SponsorVideoList from '@/components/sponsors/sponsor-video-list'
 
 export default async function SponsorsPage() {
     const supabase = await createClient()
@@ -44,6 +45,11 @@ export default async function SponsorsPage() {
                 {regularSponsors.map((sponsor: any) => (
                     <SponsorItem key={sponsor.id} sponsor={sponsor} isActive={false} />
                 ))}
+            </div>
+            
+            {/* Sponsor Playlist Video */}
+            <div className="px-5">
+                <SponsorVideoList />
             </div>
         </div>
     )
