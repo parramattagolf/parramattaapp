@@ -1,15 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { joinEvent, leaveEvent, kickParticipant, inviteParticipant, holdSlot, releaseSlot } from '@/actions/event-actions'
-import InviteModal from '@/components/invite-modal'
-import Link from 'next/link'
-import JoinConfirmModal from '@/components/join-confirm-modal'
-import RoomInfoPopup from '@/components/room-info-popup'
+import { leaveEvent } from '@/actions/event-actions'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
-import confetti from 'canvas-confetti'
-import { Lock, Unlock } from 'lucide-react'
+import Image from 'next/image'
+import { Lock } from 'lucide-react'
 
 interface Participant {
     id: string;
@@ -50,25 +46,12 @@ interface HeldSlot {
     invited_user_id: string | null;
 }
 
-export default function RoundDetailContent({ event, participants, currentUser, isHost, isJoined }: { event: Event, participants: Participant[], currentUser: User | null, isHost: boolean, isJoined: boolean }) {
+export default function RoundDetailContent({ event, participants, isHost, isJoined }: { event: Event, participants: Participant[], currentUser: User | null, isHost: boolean, isJoined: boolean }) {
     const [slots, setSlots] = useState<(Participant | null)[]>([])
-    const [isInviteOpen, setIsInviteOpen] = useState(false)
-    const [isJoinModalOpen, setIsJoinModalOpen] = useState(false)
-    const [targetGroupNo, setTargetGroupNo] = useState<number>(1)
-    const [showInfoPopup, setShowInfoPopup] = useState(false)
     const [heldSlots, setHeldSlots] = useState<HeldSlot[]>([])
     const [roomHosts, setRoomHosts] = useState<Record<number, string>>({}) // groupNo -> userId
     const router = useRouter()
     const supabase = createClient()
-
-    // Show info popup on first visit
-    useEffect(() => {
-        const hasSeenPopup = localStorage.getItem('hasSeenRoundInfoPopup')
-        if (!hasSeenPopup) {
-            setShowInfoPopup(true)
-            localStorage.setItem('hasSeenRoundInfoPopup', 'true')
-        }
-    }, [])
 
     // Fetch held slots
     useEffect(() => {
@@ -119,23 +102,13 @@ export default function RoundDetailContent({ event, participants, currentUser, i
 
     useEffect(() => {
         const max = event.max_participants || 4
-        // Logic to distribute participants into rooms based on group_no
-        // If group_no is null (legacy), we might default to 1 or try to infer. 
-        // For now, default to 1 to ensure visibility.
-
         const filledSlots: (Participant | null)[] = []
         const maxRooms = Math.ceil(max / 4)
 
         for (let r = 1; r <= maxRooms; r++) {
-            // Get participants for this room
-            // Filter by group_no if present, or fallback to room 1 for legacy data without group_no
             const roomMembers = participants.filter(p => (p.group_no || 1) === r)
-
-            // Sort by join time to keep stable order
             roomMembers.sort((a, b) => new Date(a.joined_at).getTime() - new Date(b.joined_at).getTime())
 
-            // Calculate how many slots this room should show
-            // Last room may have fewer slots if max_participants is not multiple of 4
             const slotsUsedBefore = (r - 1) * 4
             const slotsForThisRoom = Math.min(4, max - slotsUsedBefore)
 
@@ -165,74 +138,9 @@ export default function RoundDetailContent({ event, participants, currentUser, i
         }
     }, [supabase, event.id, router])
 
-    const handleJoin = async (groupNo: number) => {
-        setTargetGroupNo(groupNo)
-        setIsJoinModalOpen(true)
-    }
-
-    const confirmJoin = async () => {
-        setIsJoinModalOpen(false)
-        try {
-            const result = await joinEvent(event.id, targetGroupNo)
-            if (result && result.pointsAwarded) {
-                alert(`축하합니다. ${result.pointsAwarded}포인트가 시상되었습니다`)
-                confetti({
-                    particleCount: 150,
-                    spread: 70,
-                    origin: { y: 0.6 },
-                    colors: ['#FFE400', '#FFBD00', '#E89400', '#FFCA6C', '#FDFFB8']
-                })
-            }
-        } catch (error) {
-            console.error(error);
-            alert('참가 실패: ' + (error instanceof Error ? error.message : '알 수 없는 오류'))
-        }
-    }
-
-    const handleInvite = async (friendId: string) => {
-        setIsInviteOpen(false)
-        try {
-            const result = await inviteParticipant(event.id, friendId)
-            if (result.message) {
-                alert(result.message)
-            }
-        } catch (e: unknown) {
-            const error = e as Error;
-            alert(error.message || '초대 실패')
-        }
-    }
-
-    const handleKick = async (userId: string) => {
-        if (!confirm('정말 내보내시겠습니까?')) return
-        const formData = new FormData()
-        formData.append('eventId', event.id)
-        formData.append('userId', userId)
-        await kickParticipant(formData)
-    }
-
-    const TimeDisplay = ({ joinedAt }: { joinedAt: string }) => {
-        const [left, setLeft] = useState('')
-
-        useEffect(() => {
-            const timer = setInterval(() => {
-                const deadline = new Date(new Date(joinedAt).getTime() + 3 * 60 * 60 * 1000)
-                const now = new Date()
-                const diff = deadline.getTime() - now.getTime()
-
-                if (diff <= 0) {
-                    setLeft('00:00:00')
-                    clearInterval(timer)
-                } else {
-                    const h = Math.floor(diff / (1000 * 60 * 60))
-                    const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
-                    const s = Math.floor((diff % (1000 * 60)) / 1000)
-                    setLeft(`${h}:${m < 10 ? '0' + m : m}:${s < 10 ? '0' + s : s}`)
-                }
-            }, 1000)
-            return () => clearInterval(timer)
-        }, [joinedAt])
-
-        return <span className="text-red-500 font-mono font-bold text-xs">{left}</span>
+    // Navigate to room detail page
+    const navigateToRoom = (roomNumber: number) => {
+        router.push(`/rounds/${event.id}/rooms/${roomNumber}`)
     }
 
     return (
@@ -260,7 +168,7 @@ export default function RoundDetailContent({ event, participants, currentUser, i
                             <div key={roomIndex}>
                                 <button
                                     type="button"
-                                    onClick={() => router.push(`/rounds/${event.id}/rooms/${roomIndex + 1}`)}
+                                    onClick={() => navigateToRoom(roomIndex + 1)}
                                     className="relative z-10 cursor-pointer font-bold text-white/60 text-lg uppercase tracking-widest mb-4 hover:text-white transition-colors flex items-center gap-2 group/title"
                                 >
                                     {roomTitle}
@@ -283,13 +191,12 @@ export default function RoundDetailContent({ event, participants, currentUser, i
                                             h => h.group_no === roomIndex + 1 && h.slot_index === idx
                                         )
                                         const isHeld = !!heldSlot
-                                        const isRoomHost = roomHosts[roomIndex + 1] === currentUser?.id
-                                        const canJoinHeld = heldSlot?.invited_user_id === currentUser?.id
 
                                         return (
                                             <div
                                                 key={roomIndex * 4 + idx}
-                                                className={`aspect-square rounded-2xl border transition-all duration-500 flex flex-col items-center justify-center p-2 relative group overflow-hidden ${slot
+                                                onClick={() => navigateToRoom(roomIndex + 1)}
+                                                className={`aspect-square rounded-2xl border transition-all duration-500 flex flex-col items-center justify-center p-2 relative group overflow-hidden cursor-pointer ${slot
                                                     ? 'border-white/10 bg-[#1c1c1e] shadow-2xl scale-100'
                                                     : isHeld
                                                         ? 'border-dashed border-yellow-500/30 bg-yellow-500/5'
@@ -297,14 +204,13 @@ export default function RoundDetailContent({ event, participants, currentUser, i
                                                     }`}
                                             >
                                                 {slot ? (
-                                                    <div
-                                                        onClick={() => router.push(`/rounds/${event.id}/rooms/${roomIndex + 1}`)}
-                                                        className="w-full h-full flex flex-col items-center justify-center cursor-pointer"
-                                                    >
+                                                    <div className="w-full h-full flex flex-col items-center justify-center">
                                                         <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                                                         <div className="w-10 h-10 bg-[#2c2c2e] rounded-xl mb-2 overflow-hidden border border-white/10 shadow-inner translate-y-0 group-hover:-translate-y-1 transition-transform active:scale-90 relative z-10">
                                                             {slot.user?.profile_img ? (
-                                                                <img src={slot.user.profile_img} className="w-full h-full object-cover" alt="" referrerPolicy="no-referrer" />
+                                                                <div className="relative w-full h-full">
+                                                                    <Image src={slot.user.profile_img} className="object-cover" alt="" fill unoptimized />
+                                                                </div>
                                                             ) : (
                                                                 <div className="w-full h-full flex items-center justify-center text-xl opacity-20 grayscale">👤</div>
                                                             )}
@@ -331,58 +237,22 @@ export default function RoundDetailContent({ event, participants, currentUser, i
                                                             <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-blue-500 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.8)] z-20"></span>
                                                         )}
                                                     </div>
-                                                ) : isHeld && !canJoinHeld ? (
-                                                    // Held slot UI (not for this user)
+                                                ) : isHeld ? (
+                                                    // Held slot UI
                                                     <div className="w-full h-full flex flex-col items-center justify-center text-yellow-500/50 gap-1">
                                                         <Lock size={20} className="text-yellow-500/40" />
                                                         <span className="text-[9px] font-black uppercase tracking-widest">Reserved</span>
-                                                        {isRoomHost && (
-                                                            <button
-                                                                onClick={async () => {
-                                                                    try {
-                                                                        await releaseSlot(event.id, roomIndex + 1, idx)
-                                                                    } catch (e) {
-                                                                        console.error(e)
-                                                                    }
-                                                                }}
-                                                                className="mt-1 text-[8px] text-red-400 underline"
-                                                            >
-                                                                홀드 해제
-                                                            </button>
-                                                        )}
                                                     </div>
                                                 ) : (
-                                                    // Empty slot or held for this user
-                                                    <button
-                                                        disabled={isJoined || (participants.length >= event.max_participants) || (isHeld && !canJoinHeld)}
-                                                        onClick={() => handleJoin(roomIndex + 1)}
-                                                        className="w-full h-full flex flex-col items-center justify-center text-white/20 gap-1 active:bg-white/[0.05] active:scale-[0.94] transition-all rounded-2xl"
-                                                    >
+                                                    // Empty slot - click to go to room detail
+                                                    <div className="w-full h-full flex flex-col items-center justify-center text-white/20 gap-1">
                                                         <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center border border-white/5 shadow-inner group-hover:bg-white/10 transition-colors">
                                                             <span className="text-xl font-extralight text-white/30">+</span>
                                                         </div>
                                                         <div className="flex flex-col items-center">
-                                                            <span className="text-[9px] font-black uppercase tracking-[0.2em] opacity-30 mt-1">
-                                                                {canJoinHeld ? '초대됨' : 'Empty'}
-                                                            </span>
-                                                            {isJoined ? <span className="text-[8px] text-blue-500/40 font-black mt-0.5 tracking-widest uppercase">(JOINED)</span> : null}
-                                                            {isRoomHost && !isHeld && (
-                                                                <button
-                                                                    onClick={async (e) => {
-                                                                        e.stopPropagation()
-                                                                        try {
-                                                                            await holdSlot(event.id, roomIndex + 1, idx)
-                                                                        } catch (err) {
-                                                                            alert((err as Error).message)
-                                                                        }
-                                                                    }}
-                                                                    className="mt-1 text-[8px] text-yellow-500 flex items-center gap-0.5"
-                                                                >
-                                                                    <Lock size={10} /> 홀드
-                                                                </button>
-                                                            )}
+                                                            <span className="text-[9px] font-black uppercase tracking-[0.2em] opacity-30 mt-1">Empty</span>
                                                         </div>
-                                                    </button>
+                                                    </div>
                                                 )}
                                             </div>
                                         )
@@ -393,25 +263,6 @@ export default function RoundDetailContent({ event, participants, currentUser, i
                     })
                 })()}
             </div>
-
-            <InviteModal
-                isOpen={isInviteOpen}
-                onClose={() => setIsInviteOpen(false)}
-                onInvite={handleInvite}
-                eventId={event.id}
-            />
-
-            <JoinConfirmModal
-                isOpen={isJoinModalOpen}
-                onClose={() => setIsJoinModalOpen(false)}
-                onConfirm={confirmJoin}
-            />
-
-            {/* Room Info Popup */}
-            <RoomInfoPopup
-                isOpen={showInfoPopup}
-                onClose={() => setShowInfoPopup(false)}
-            />
 
             {/* Fixed Bottom Action */}
             {isJoined && !isHost && (

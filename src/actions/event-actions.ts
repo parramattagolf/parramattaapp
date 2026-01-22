@@ -591,16 +591,19 @@ export async function checkIsRoomHost(eventId: string, groupNo: number) {
     return hostUserId === user.id
 }
 
-// Hold a slot (room host only)
+// Hold a slot (room host or admin only)
 export async function holdSlot(eventId: string, groupNo: number, slotIndex: number, invitedUserId?: string) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) throw new Error('Unauthorized')
 
-    // Check if user is room host
+    // Check if user is room host or admin
     const isHost = await checkIsRoomHost(eventId, groupNo)
-    if (!isHost) throw new Error('조인방 호스트만 슬롯을 홀드할 수 있습니다.')
+    const { data: userData } = await supabase.from('users').select('is_admin').eq('id', user.id).single()
+    const isAdmin = userData?.is_admin === true
+
+    if (!isHost && !isAdmin) throw new Error('조인방 호스트나 관리자만 슬롯을 홀드할 수 있습니다.')
 
     // Check if slot is already held or occupied
     const { data: existingHold } = await supabase
@@ -612,15 +615,6 @@ export async function holdSlot(eventId: string, groupNo: number, slotIndex: numb
         .single()
 
     if (existingHold) throw new Error('이미 홀드된 슬롯입니다.')
-
-    // VIP limit check
-    const { data: userData } = await supabase.from('users').select('is_vip').eq('id', user.id).single()
-    if (!userData?.is_vip) {
-        const { data: currentHolds } = await supabase.from('held_slots').select('id').eq('held_by', user.id)
-        if (currentHolds && currentHolds.length >= 3) {
-            throw new Error('VIP 회원이 아니면 최대 3개까지만 예약 가능합니다.')
-        }
-    }
 
     // Insert hold
     const { error } = await supabase.from('held_slots').insert({
@@ -640,20 +634,31 @@ export async function holdSlot(eventId: string, groupNo: number, slotIndex: numb
     return { success: true, message: '슬롯을 홀드했습니다.' }
 }
 
-// Release a held slot (room host only)
+// Release a held slot (room host or admin only)
 export async function releaseSlot(eventId: string, groupNo: number, slotIndex: number) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) throw new Error('Unauthorized')
 
-    const { error } = await supabase
+    // Check if user is admin
+    const { data: userData } = await supabase.from('users').select('is_admin').eq('id', user.id).single()
+    const isAdmin = userData?.is_admin === true
+
+    // For admins, allow deletion of any held slot
+    // For regular hosts, only allow deletion of their own holds
+    let query = supabase
         .from('held_slots')
         .delete()
         .eq('event_id', eventId)
         .eq('group_no', groupNo)
         .eq('slot_index', slotIndex)
-        .eq('held_by', user.id)
+
+    if (!isAdmin) {
+        query = query.eq('held_by', user.id)
+    }
+
+    const { error } = await query
 
     if (error) throw new Error('슬롯 홀드 해제 실패')
 
