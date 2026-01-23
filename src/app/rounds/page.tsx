@@ -36,9 +36,8 @@ export default async function RoundsPage({ searchParams }: { searchParams: Promi
 
   const allEvents = events || []
   
-  // Find the theme of the most recently updated event
-  const latestEvent = allEvents[0]
-  const defaultTheme = latestEvent?.theme || 'all'
+  // Default theme is always 'all' (전체보기)
+  const defaultTheme = 'all'
   const activeTheme = theme || defaultTheme
 
   // Now sort by start_date for display
