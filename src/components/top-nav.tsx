@@ -98,7 +98,7 @@ function TopNavContent() {
   }, [lastScrollY, pathname])
 
   // Hide on certain pages
-  const isDetailPage = pathname.includes('/[id]') ||
+  const isDetailPage = pathname.startsWith('/members/') ||
     pathname.startsWith('/rounds/') ||
     pathname.startsWith('/sponsors/') ||
     pathname.startsWith('/settings') ||

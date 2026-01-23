@@ -58,11 +58,16 @@ export async function createEvent(formData: FormData) {
 
     // Award 10 points to Host (Founder/First Participant)
     const pointsAwarded = 10
-    const { data: u } = await supabase.from('users').select('points').eq('id', user.id).single()
-    if (u) {
-        const newBalance = (u.points || 0) + pointsAwarded
-        await supabase.from('users').update({ points: newBalance }).eq('id', user.id)
+    
+    // Atomically update user scores
+    const { error: updateError } = await supabase.rpc('update_user_scores', {
+        target_user_id: user.id,
+        points_delta: pointsAwarded
+    })
 
+    if (!updateError) {
+        const { data: u } = await supabase.from('users').select('points').eq('id', user.id).single()
+        const newBalance = u?.points || pointsAwarded
         try {
             await supabase.from('point_transactions').insert({
                 user_id: user.id,
@@ -144,13 +149,14 @@ export async function joinEvent(eventId: string, groupNo: number = 1) {
     }
 
     if (pointsAwarded > 0) {
-        const { data: u } = await supabase.from('users').select('points').eq('id', user.id).single()
-        if (u) {
-            const newBalance = (u.points || 0) + pointsAwarded
+        const { error: updateError } = await supabase.rpc('update_user_scores', {
+            target_user_id: user.id,
+            points_delta: pointsAwarded
+        })
 
-            // Update User Points
-            await supabase.from('users').update({ points: newBalance }).eq('id', user.id)
-
+        if (!updateError) {
+            const { data: u } = await supabase.from('users').select('points').eq('id', user.id).single()
+            const newBalance = u?.points || pointsAwarded
             // Insert Transaction Log
             try {
                 await supabase.from('point_transactions').insert({
@@ -219,21 +225,40 @@ export async function leaveEvent(eventId: string) {
         await handleHostSuccession(eventId, participant.group_no, user.id)
     }
 
-    // Deduct 10 Manner Score
-    const { data: userData } = await supabase.from('users').select('manner_score').eq('id', user.id).single()
-    if (userData) {
-        const newScore = (userData.manner_score ?? 100) - 10
-        await supabase.from('users').update({ manner_score: newScore }).eq('id', user.id)
+    // Atomically deduct 20 Manner Score and 20 Points
+    const { error: updateError } = await supabase.rpc('update_user_scores', {
+        target_user_id: user.id,
+        points_delta: -20,
+        manner_delta: -20
+    })
 
+    if (!updateError) {
+        const { data: u } = await supabase.from('users').select('manner_score, points').eq('id', user.id).single()
+        const newMannerScore = u?.manner_score ?? 80
+        const newPoints = u?.points ?? 0
+
+        // Log manner score deduction
         try {
             await supabase.from('manner_score_history').insert({
                 user_id: user.id,
-                amount: -10,
+                amount: -20,
                 description: `${eventTitle}조인 취소 위약금`,
-                score_snapshot: newScore
+                score_snapshot: newMannerScore
             })
         } catch (e) {
             console.error('Failed to log manner score', e)
+        }
+
+        // Log points deduction
+        try {
+            await supabase.from('point_transactions').insert({
+                user_id: user.id,
+                amount: -20,
+                description: `${eventTitle}조인 취소 위약금`,
+                balance_snapshot: newPoints
+            })
+        } catch (e) {
+            console.error('Failed to log point transaction', e)
         }
     }
 
@@ -255,7 +280,7 @@ export async function leaveEvent(eventId: string) {
     }
 
     revalidatePath(`/rounds/${eventId}`)
-    return { success: true, message: '조인이 취소되었습니다. 매너점수 10점이 차감되었습니다. 다시 재신청은 가능합니다.' }
+    return { success: true, message: '조인이 취소되었습니다. 매너 -20, 포인트 -20이 차감되었습니다. 다시 재신청은 가능합니다.' }
 }
 
 export async function inviteParticipant(eventId: string, targetUserId: string, roomNumber?: number) {
@@ -377,6 +402,13 @@ export async function kickParticipant(formData: FormData) {
         throw new Error('강퇴 권한이 없습니다. (라운딩 개설자 또는 해당 조인방 호스트만 가능)')
     }
 
+    // Release all held slots by this user
+    await supabase
+        .from('held_slots')
+        .delete()
+        .eq('event_id', eventId)
+        .eq('held_by', targetUserId)
+
     const { error } = await supabase
         .from('participants')
         .delete()
@@ -442,14 +474,18 @@ export async function preReserveEvent(eventId: string) {
         throw new Error('Failed to pre-reserve')
     }
 
-    // Award 1 Manner Score
-    const { data: u } = await supabase.from('users').select('manner_score').eq('id', user.id).single()
-    if (u) {
+    // Atomically award 1 Manner Score
+    const { error: updateError } = await supabase.rpc('update_user_scores', {
+        target_user_id: user.id,
+        manner_delta: 1
+    })
+
+    if (!updateError) {
+        const { data: u } = await supabase.from('users').select('manner_score').eq('id', user.id).single()
+        const newScore = u?.manner_score ?? 101
+        
         const { data: event } = await supabase.from('events').select('title').eq('id', eventId).single()
         const eventTitle = event?.title ? `'${event.title}' ` : ''
-
-        const newScore = (u.manner_score ?? 100) + 1
-        await supabase.from('users').update({ manner_score: newScore }).eq('id', user.id)
 
         try {
             await supabase.from('manner_score_history').insert({
@@ -485,14 +521,18 @@ export async function cancelPreReservation(eventId: string) {
         throw new Error('Failed to cancel pre-reservation')
     }
 
-    // Deduct 2 Manner Score
-    const { data: u } = await supabase.from('users').select('manner_score').eq('id', user.id).single()
-    if (u) {
+    // Atomically deduct 2 Manner Score
+    const { error: updateError } = await supabase.rpc('update_user_scores', {
+        target_user_id: user.id,
+        manner_delta: -2
+    })
+
+    if (!updateError) {
+        const { data: u } = await supabase.from('users').select('manner_score').eq('id', user.id).single()
+        const newScore = u?.manner_score ?? 98
+        
         const { data: event } = await supabase.from('events').select('title').eq('id', eventId).single()
         const eventTitle = event?.title ? `'${event.title}' ` : ''
-
-        const newScore = (u.manner_score ?? 100) - 2
-        await supabase.from('users').update({ manner_score: newScore }).eq('id', user.id)
 
         try {
             await supabase.from('manner_score_history').insert({
@@ -518,6 +558,13 @@ export async function expireParticipant(eventId: string, participantUserId: stri
     const { data: event } = await supabase.from('events').select('title').eq('id', eventId).single()
     const eventTitle = event?.title || '라운딩'
 
+    // Release all held slots by this user
+    await supabase
+        .from('held_slots')
+        .delete()
+        .eq('event_id', eventId)
+        .eq('held_by', participantUserId)
+
     // Delete participant
     const { error } = await supabase
         .from('participants')
@@ -530,21 +577,17 @@ export async function expireParticipant(eventId: string, participantUserId: stri
         return { success: false }
     }
 
-    // Deduct 30 Manner Score and 30 Points
-    const { data: userData } = await supabase
-        .from('users')
-        .select('manner_score, points')
-        .eq('id', participantUserId)
-        .single()
+    // Atomically deduct 30 Manner Score and 30 Points
+    const { error: updateError } = await supabase.rpc('update_user_scores', {
+        target_user_id: participantUserId,
+        points_delta: -30,
+        manner_delta: -30
+    })
 
-    if (userData) {
-        const newMannerScore = (userData.manner_score ?? 100) - 30
-        const newPoints = (userData.points || 0) - 30
-
-        await supabase.from('users').update({
-            manner_score: newMannerScore,
-            points: newPoints
-        }).eq('id', participantUserId)
+    if (!updateError) {
+        const { data: u } = await supabase.from('users').select('manner_score, points').eq('id', participantUserId).single()
+        const newMannerScore = u?.manner_score ?? 70
+        const newPoints = u?.points ?? 0
 
         // Log manner score deduction
         try {
@@ -694,12 +737,44 @@ export async function releaseSlot(eventId: string, groupNo: number, slotIndex: n
 export async function getHeldSlots(eventId: string) {
     const supabase = await createClient()
 
-    const { data } = await supabase
+    const { data: holds } = await supabase
         .from('held_slots')
         .select('*')
         .eq('event_id', eventId)
 
-    return data || []
+    if (!holds || holds.length === 0) return []
+
+    // Verify if holders are still participants
+    const { data: participants } = await supabase
+        .from('participants')
+        .select('user_id')
+        .eq('event_id', eventId)
+
+    const participantIds = new Set(participants?.map(p => p.user_id) || [])
+
+    // Filter out holds where the holder is not a participant
+    // Exception: Maybe admins can hold without being participants? 
+    // Usually admin holds are 'system' holds, but schema says 'held_by references users'.
+    // If admin is not in room, can they hold? Prompt says "Room Host or Admin Only".
+    // If Admin holds it, they might not be in the room. So we should KEEP holds by Admins.
+    // So: Keep if held_by is in participants OR held_by is admin.
+    
+    // Check which holders are admins
+    const holderIds = [...new Set(holds.map(h => h.held_by))]
+    const { data: admins } = await supabase
+        .from('users')
+        .select('id')
+        .in('id', holderIds)
+        .eq('is_admin', true)
+    
+    const adminIds = new Set(admins?.map(a => a.id) || [])
+
+    const validHolds = holds.filter(h => participantIds.has(h.held_by) || adminIds.has(h.held_by))
+    
+    // If validHolds.length < holds.length, we could auto-cleanup here or just return filtered.
+    // Returning filtered fixes the UI.
+
+    return validHolds
 }
 
 // Check if user can join a specific slot (handles held slots)

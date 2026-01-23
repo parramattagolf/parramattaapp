@@ -33,13 +33,55 @@ export async function GET(request: Request) {
         },
       }
     )
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
-    if (!error) {
+    
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code)
+    
+    if (!error && data.user) {
+      // Extract Kakao profile info from auth metadata
+      const kakaoProfile = data.user.user_metadata?.kakao_account?.profile
+      const kakaoId = data.user.user_metadata?.provider_id
+      const profileImageUrl = kakaoProfile?.profile_image_url || kakaoProfile?.thumbnail_image_url
+      const nickname = kakaoProfile?.nickname
+      
+      // Check if user exists in our users table
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', data.user.id)
+        .single()
+      
+      if (existingUser) {
+        // User exists - update profile_img and nickname only
+        await supabase
+          .from('users')
+          .update({
+            profile_img: profileImageUrl || null,
+            nickname: nickname || null,
+            kakao_id: kakaoId || null,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', data.user.id)
+      } else {
+        // New user - insert with minimal data (profile_img, nickname, kakao_id)
+        await supabase
+          .from('users')
+          .insert({
+            id: data.user.id,
+            kakao_id: kakaoId || null,
+            nickname: nickname || null,
+            profile_img: profileImageUrl || null,
+            real_name: '', // Empty initially
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+      }
+      
       return NextResponse.redirect(`${origin}${next}`)
     } else {
       console.error('Auth Error:', error)
-      return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(error.message)}`)
+      return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(error?.message || 'Unknown error')}`)
     }
   }
+  
   return NextResponse.redirect(`${origin}/login?error=NoCode`)
 }

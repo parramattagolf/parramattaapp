@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { fetchYoutubePlaylist } from '@/actions/youtube-actions'
 
 export default function SponsorVideoList() {
     const [videoId, setVideoId] = useState<string | null>(null)
@@ -10,21 +11,9 @@ export default function SponsorVideoList() {
         const fetchVideo = async () => {
             try {
                 const playlistId = 'PLpf6bXUHPOxCPBUBXwh8PNG6zElh8BIIJ'
-                const apiKey = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY
-                
-                if (!apiKey) {
-                    console.warn('YouTube API key not found')
-                    setLoading(false)
-                    return
-                }
+                const data = await fetchYoutubePlaylist(playlistId)
 
-                // Fetch playlist items (up to 50)
-                const response = await fetch(
-                    `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&key=${apiKey}`
-                )
-                const data = await response.json()
-
-                if (data.items && data.items.length > 0) {
+                if (data && data.items && data.items.length > 0) {
                     const items = data.items
                     const randomIndex = Math.floor(Math.random() * items.length)
                     const randomVideoId = items[randomIndex].snippet.resourceId.videoId

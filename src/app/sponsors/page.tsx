@@ -1,6 +1,12 @@
 import { createClient } from '@/utils/supabase/server'
 import Link from 'next/link'
 import SponsorVideoList from '@/components/sponsors/sponsor-video-list'
+interface Sponsor {
+    id: string;
+    name: string;
+    logo_url?: string;
+    description?: string;
+}
 
 export default async function SponsorsPage() {
     const supabase = await createClient()
@@ -21,7 +27,7 @@ export default async function SponsorsPage() {
 
     if (error) console.error('Error fetching sponsors:', error)
 
-    const allSponsors = sponsors || []
+    const allSponsors: Sponsor[] = sponsors || []
 
     // 3. Separate and prioritize active sponsors
     const prioritySponsors = allSponsors.filter(s => activeSponsorIds.includes(s.id))
@@ -33,7 +39,7 @@ export default async function SponsorsPage() {
             {prioritySponsors.length > 0 && (
                 <div className="mb-4">
                     <div className="divide-y divide-[var(--color-divider)]">
-                        {prioritySponsors.map((sponsor: any) => (
+                        {prioritySponsors.map((sponsor) => (
                             <SponsorItem key={sponsor.id} sponsor={sponsor} isActive={true} />
                         ))}
                     </div>
@@ -42,24 +48,24 @@ export default async function SponsorsPage() {
 
             {/* Regular Section */}
             <div className="divide-y divide-[var(--color-divider)]">
-                {regularSponsors.map((sponsor: any) => (
+                {regularSponsors.map((sponsor) => (
                     <SponsorItem key={sponsor.id} sponsor={sponsor} isActive={false} />
                 ))}
             </div>
             
             {/* Sponsor Playlist Video */}
-            <div className="px-5">
+            <div className="px-gutter">
                 <SponsorVideoList />
             </div>
         </div>
     )
 }
 
-function SponsorItem({ sponsor, isActive }: { sponsor: any, isActive: boolean }) {
+function SponsorItem({ sponsor, isActive }: { sponsor: Sponsor, isActive: boolean }) {
     return (
         <Link
             href={`/sponsors/${sponsor.id}`}
-            className="flex items-center gap-4 py-4 px-0 active:bg-[var(--color-surface-hover)] transition-colors"
+            className="flex items-center gap-4 py-4 px-gutter active:bg-[var(--color-surface-hover)] transition-colors"
         >
             <div className="w-14 h-14 rounded-2xl bg-[var(--color-gray-100)] overflow-hidden border border-[var(--color-divider)] shrink-0 flex items-center justify-center">
                 {sponsor.logo_url ? (

@@ -75,7 +75,7 @@ function MemberItem({ member, isParticipant }: { member: any, isParticipant: boo
     return (
         <Link
             href={`/members/${member.id}`}
-            className="flex items-center gap-4 py-4 px-0 active:bg-[var(--color-surface-hover)] transition-colors"
+            className="flex items-center gap-4 py-4 px-gutter active:bg-[var(--color-surface-hover)] transition-colors"
         >
             <div className={`w-12 h-12 rounded-full bg-[var(--color-gray-100)] overflow-hidden shrink-0 transition-all box-border ${member.gender === 'male' ? 'border-4 border-blue-500 ring-2 ring-blue-500/20' :
                 member.gender === 'female' ? 'border-4 border-red-500 ring-2 ring-red-500/20' :

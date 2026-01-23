@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { fetchYoutubePlaylist } from '@/actions/youtube-actions'
 
 interface MyYoutubeEmbedProps {
     nickname: string
@@ -14,21 +15,9 @@ export default function MyYoutubeEmbed({ nickname }: MyYoutubeEmbedProps) {
         const fetchVideo = async () => {
             try {
                 const playlistId = 'PLpf6bXUHPOxAL93x95ugCLwzXqQlpgRpd'
-                const apiKey = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY
-                
-                if (!apiKey) {
-                    console.warn('YouTube API key not found')
-                    setLoading(false)
-                    return
-                }
+                const data = await fetchYoutubePlaylist(playlistId)
 
-                // Fetch playlist items (up to 50)
-                const response = await fetch(
-                    `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&key=${apiKey}`
-                )
-                const data = await response.json()
-
-                if (data.items && data.items.length > 0) {
+                if (data && data.items && data.items.length > 0) {
                     const items = data.items
                     
                     // Simple similarity search: Check if nickname is included in title, 
@@ -79,7 +68,7 @@ export default function MyYoutubeEmbed({ nickname }: MyYoutubeEmbedProps) {
     }, [nickname])
 
     return (
-        <div className="px-5 mt-6">
+        <div className="px-4 mt-6">
             <div className="rounded-[24px] overflow-hidden border border-white/10 shadow-xl bg-[#1c1c1e]">
                 <div className="aspect-video w-full">
                     {loading ? (

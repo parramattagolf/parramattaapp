@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { leaveEvent } from '@/actions/event-actions'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
@@ -54,17 +54,18 @@ export default function RoundDetailContent({ event, participants, isHost, isJoin
     const supabase = createClient()
 
     // Fetch held slots
-    useEffect(() => {
-        const fetchHeldSlots = async () => {
-            const { data } = await supabase
-                .from('held_slots')
-                .select('*')
-                .eq('event_id', event.id)
-            setHeldSlots(data || [])
-        }
-        fetchHeldSlots()
+    // Fetch held slots
+    const fetchHeldSlots = useCallback(async () => {
+        const { getHeldSlots } = await import('@/actions/event-actions')
+        const data = await getHeldSlots(event.id)
+        setHeldSlots(data || [])
+    }, [event.id])
 
-        // Subscribe to changes
+    useEffect(() => {
+        fetchHeldSlots()
+    }, [fetchHeldSlots, participants])
+
+    useEffect(() => {
         const channel = supabase
             .channel('held_slots_changes')
             .on('postgres_changes', {
@@ -80,7 +81,7 @@ export default function RoundDetailContent({ event, participants, isHost, isJoin
         return () => {
             supabase.removeChannel(channel)
         }
-    }, [supabase, event.id])
+    }, [supabase, event.id, fetchHeldSlots])
 
     // Calculate room hosts (first joiner per room)
     useEffect(() => {

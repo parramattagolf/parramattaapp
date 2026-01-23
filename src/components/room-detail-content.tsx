@@ -123,7 +123,9 @@ export default function RoomDetailContent({
 
   useEffect(() => {
     fetchHeldSlots();
+  }, [fetchHeldSlots, participants]);
 
+  useEffect(() => {
     // Subscribe to held slots changes
     const channel = supabase
       .channel(`held_slots_room_${roomIndex}`)
@@ -396,7 +398,7 @@ export default function RoomDetailContent({
               onClick={async () => {
                 if (
                   confirm(
-                    "정말 방을 나가시겠습니까?\n\n⚠️ 매너점수 10점이 차감됩니다.\n(다시 재신청은 가능합니다)",
+                    "정말 방을 나가시겠습니까?\n\n⚠️ 매너 -20, 포인트 -20이 차감됩니다.\n(다시 재신청은 가능합니다)",
                   )
                 ) {
                   try {
@@ -440,6 +442,8 @@ export default function RoomDetailContent({
               onClick={() => {
                 if (!slot) {
                   handleSlotClick(i, isHeld, canJoinThisSlot);
+                } else {
+                  router.push(`/members/${slot.user_id}`);
                 }
               }}
               className={`aspect-square rounded-[36px] border transition-all duration-500 flex flex-col items-center justify-center p-6 relative group overflow-hidden cursor-pointer ${
@@ -556,7 +560,7 @@ export default function RoomDetailContent({
                         클릭하여 조인
                       </span>
                     )}
-                    {(isRoomHost || userData?.is_admin) && !isJoined && (
+                    {(isRoomHost || userData?.is_admin) && (
                       <span className="text-[9px] text-yellow-500/50 mt-1 flex items-center gap-1">
                         <Lock size={10} /> 홀드 가능
                       </span>
@@ -622,8 +626,8 @@ export default function RoomDetailContent({
               </p>
               <ul className="text-[12px] text-white/60 space-y-1">
                 <li>• 조인 신청 후 3시간 내 결제해 주세요</li>
-                <li>• 3시간이내 방나가기 매너점수 -20점</li>
-                <li>• 3시간초과 방치할 경우 매너점수 -30점 포인트 -30점</li>
+                <li>• 3시간이내 방나가기 매너 -20, 포인트 -20</li>
+                <li>• 3시간초과 방치할 경우 매너 -30, 포인트 -30</li>
               </ul>
             </div>
 

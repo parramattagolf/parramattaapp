@@ -3,9 +3,11 @@ import { notFound } from 'next/navigation'
 import RoundDetailContent from '@/components/round-detail-content'
 import PremiumSubHeader from '@/components/premium-sub-header'
 import RoundInfoCard from '@/components/round-info-card'
-import EventChat from '@/components/event-chat'
+
 import PreReservationButton from '@/components/pre-reservation-button'
 import PreReservationList from '@/components/pre-reservation-list'
+
+import RoundEntranceGuard from '@/components/rounds/round-entrance-guard'
 
 export default async function RoundDetailPage({ params }: { params: Promise<{ id: string }> }) {
     // In Next.js 15+, params is a Promise. 
@@ -49,17 +51,35 @@ export default async function RoundDetailPage({ params }: { params: Promise<{ id
         .order('created_at', { ascending: true })
 
     const { data: { user } } = await supabase.auth.getUser()
-    const isJoined = participants?.some(p => p.user_id === user?.id)
-    const isPreReserved = preReservations?.some(p => p.user_id === user?.id)
+    const currentUserParticipant = participants?.find(p => p.user_id === user?.id)
+    const currentUserPreReservation = preReservations?.find(p => p.user_id === user?.id)
+
+    let userStatus: 'none' | 'pre_reserved' | 'joined' = 'none'
+    if (currentUserParticipant) {
+        userStatus = 'joined'
+    } else if (currentUserPreReservation) {
+        userStatus = 'pre_reserved'
+    }
+
+    const isPreReserved = !!currentUserPreReservation
+    const isJoined = !!currentUserParticipant
 
     return (
         <div className="min-h-screen bg-[#121212] pb-32 font-sans overflow-x-hidden">
+            <RoundEntranceGuard 
+                status={userStatus}
+                paymentStatus={currentUserParticipant?.payment_status as 'paid' | 'unpaid' | null}
+                roomNumber={currentUserParticipant?.group_no}
+                joinedAt={currentUserParticipant?.joined_at}
+                paymentDeadlineHours={event.payment_deadline_hours}
+            />
+
             {/* Dynamic Sticky Header */}
             <PremiumSubHeader
                 title=""
                 backHref="/rounds"
                 rightElement={
-                    <PreReservationButton eventId={event.id} isReserved={!!isPreReserved} />
+                    <PreReservationButton eventId={event.id} isReserved={isPreReserved} />
                 }
             />
             {/* Dynamic Height Header */}
@@ -96,7 +116,7 @@ export default async function RoundDetailPage({ params }: { params: Promise<{ id
                         participants={participants || []}
                         currentUser={user}
                         isHost={!!(user && event.host_id === user.id)}
-                        isJoined={!!isJoined}
+                        isJoined={isJoined}
                     />
                 </div>
             </main>

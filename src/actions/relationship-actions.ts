@@ -42,7 +42,13 @@ export async function sendLike(targetUserId: string) {
         status: 'pending' 
     })
 
-    if (error) throw new Error('Failed to send like')
+    if (error) {
+        console.error('Send like error:', error)
+        if (error.code === '23505') { // Unique violation
+            throw new Error('이미 1촌 신청을 보냈거나 1촌입니다.')
+        }
+        throw new Error(`Failed to send like: ${error.message}`)
+    }
     
     revalidatePath(`/members/${targetUserId}`)
     return { success: true }

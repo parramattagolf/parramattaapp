@@ -6,6 +6,8 @@ import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, getDay,
 import { ko } from 'date-fns/locale'
 import { Calendar, List } from 'lucide-react'
 
+import { fetchYoutubePlaylist } from '@/actions/youtube-actions'
+
 // Shared logic for day color
 const getDayColor = (date: Date) => {
     const year = date.getFullYear()
@@ -62,20 +64,9 @@ export default function MonthSection({ month, events, view }: MonthSectionProps)
         const fetchRandomVideo = async () => {
             try {
                 const playlistId = 'PLpf6bXUHPOxCLpBujRRqy01DfgCrYlThp'
-                const apiKey = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY
+                const data = await fetchYoutubePlaylist(playlistId)
                 
-                if (!apiKey) {
-                    console.warn('YouTube API key not found')
-                    return
-                }
-
-                const response = await fetch(
-                    `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=50&playlistId=${playlistId}&key=${apiKey}`
-                )
-                
-                const data = await response.json()
-                
-                if (data.items && data.items.length > 0) {
+                if (data && data.items && data.items.length > 0) {
                     const randomIndex = Math.floor(Math.random() * data.items.length)
                     const videoId = data.items[randomIndex].snippet.resourceId.videoId
                     setRandomVideoId(videoId)
@@ -114,7 +105,7 @@ export default function MonthSection({ month, events, view }: MonthSectionProps)
             </div>
 
             {mode === 'list' ? (
-                <div className="space-y-4 px-0">
+                <div className="space-y-4 px-4">
                     {events.map((event) => (
                         <Link
                             key={event.id}

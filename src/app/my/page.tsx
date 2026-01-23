@@ -107,7 +107,7 @@ export default async function MyPage() {
         <div className="min-h-screen bg-[var(--color-bg)] pb-24 font-sans pt-24">
             {/* Profile Header */}
             <div className="bg-[var(--color-bg)]">
-                <div className="px-5 py-8">
+                <div className="px-gutter py-8">
                     <div className="flex items-center gap-5">
                         {/* Avatar */}
                         <div className="w-20 h-20 rounded-full bg-[var(--color-gray-100)] overflow-hidden border border-[var(--color-divider)] flex-shrink-0">
@@ -156,7 +156,7 @@ export default async function MyPage() {
 
             {/* Sponsor Badges */}
             {badges.length > 0 && (
-                <div className="px-5 mt-10">
+                <div className="px-gutter mt-10">
                     <h2 className="text-base font-bold text-[var(--color-text-primary)] mb-4">보유 배지</h2>
                     <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
                         {badges.map((badge: any) => (
@@ -184,7 +184,7 @@ export default async function MyPage() {
             )}
 
             {/* Quick Actions (Kakao Style List) */}
-            <div className="px-5 mt-4 space-y-2">
+            <div className="px-gutter mt-4 space-y-2">
                 <Link href="/my/rounds" className="flex items-center justify-between p-4 bg-[var(--color-gray-100)] rounded-xl border border-[var(--color-divider)] active:bg-[var(--color-surface-hover)]">
                     <div className="flex items-center gap-3">
                         <span className="text-lg">⛳</span>
