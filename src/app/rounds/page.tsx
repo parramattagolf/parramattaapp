@@ -2,12 +2,22 @@ import { createClient } from '@/utils/supabase/server'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import MonthSection from '@/components/rounds/month-section'
+import RoundFilter from '@/components/rounds/round-filter'
+import { Suspense } from 'react'
 
 export const revalidate = 0
 
-export default async function RoundsPage({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
-  const { view } = await searchParams
+export default async function RoundsPage({ searchParams }: { searchParams: Promise<{ view?: string; theme?: string }> }) {
+  const { view, theme } = await searchParams
   const supabase = await createClient()
+
+  // Fetch unique themes for the filter
+  const { data: themesData } = await supabase
+    .from('events')
+    .select('theme')
+    .not('theme', 'is', null)
+  
+  const uniqueThemes = Array.from(new Set(themesData?.map(t => t.theme) || [])).sort()
 
   // Fetch all columns from 'events' and join host/sponsor info
   const { data: events, error } = await supabase
@@ -17,19 +27,39 @@ export default async function RoundsPage({ searchParams }: { searchParams: Promi
       host:users!events_host_id_fkey (id, nickname, profile_img),
       sponsor:sponsors (id, name, logo_url)
     `)
-    .order('start_date', { ascending: view === 'past' ? false : true })
+    .order('created_at', { ascending: false }) // Temporary order to find the latest
+    // Note: We'll re-sort in memory for the start_date display
 
   if (error) {
     console.error('Error fetching events:', error)
   }
 
+  const allEvents = events || []
+  
+  // Find the theme of the most recently updated event
+  const latestEvent = allEvents[0]
+  const defaultTheme = latestEvent?.theme || 'all'
+  const activeTheme = theme || defaultTheme
+
+  // Now sort by start_date for display
+  const sortedEvents = [...allEvents].sort((a, b) => {
+    const timeA = new Date(a.start_date).getTime()
+    const timeB = new Date(b.start_date).getTime()
+    if (view === 'past') return timeB - timeA
+    return timeA - timeB
+  })
+
   const now = new Date()
-  const list = events || []
+
+  // Apply theme filter using activeTheme
+  const baseFilteredList = activeTheme !== 'all' 
+    ? sortedEvents.filter(e => e.theme === activeTheme) 
+    : sortedEvents
 
   // Filter based on the view
   const filteredList = view === 'past'
-    ? list.filter(e => new Date(e.start_date) < now && e.is_public)
-    : list.filter(e => new Date(e.start_date) >= now && e.is_public)
+    ? baseFilteredList.filter(e => new Date(e.start_date) < now && e.is_public)
+    : baseFilteredList.filter(e => new Date(e.start_date) >= now && e.is_public)
 
   // Fetch participant counts and pre-reservation counts for all events
   const eventWithCounts = await Promise.all(
@@ -53,7 +83,7 @@ export default async function RoundsPage({ searchParams }: { searchParams: Promi
   )
 
   // Group filtered events by month (using the enriched ones)
-  const groupedEventsWithCounts: Record<string, any[]> = {}
+  const groupedEventsWithCounts: Record<string, (typeof eventWithCounts[0])[]> = {}
   eventWithCounts.forEach(event => {
     const monthYear = format(new Date(event.start_date), 'yyyy년 M월', { locale: ko })
     if (!groupedEventsWithCounts[monthYear]) {
@@ -70,7 +100,10 @@ export default async function RoundsPage({ searchParams }: { searchParams: Promi
 
   return (
     <div className="min-h-screen bg-[#121212] pb-32 font-sans overflow-x-hidden pt-24">
-      <main className="space-y-12">
+      <Suspense fallback={<div className="fixed top-[51px] left-1/2 -translate-x-1/2 w-full max-w-[500px] h-[61px] bg-[#121212]/95 border-b border-white/10 z-[89]" />}>
+        <RoundFilter themes={uniqueThemes} activeTheme={activeTheme} />
+      </Suspense>
+      <main className="space-y-12 mt-12 px-0">
         {months.length > 0 ? (
           months.map(month => (
             <MonthSection key={month} month={month} events={groupedEventsWithCounts[month]} view={view} />
