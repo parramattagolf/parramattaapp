@@ -83,7 +83,7 @@ export default function RoomInfoPopup({ isOpen, onClose }: RoomInfoPopupProps) {
                                 {slide.benefits.map((benefit, bIdx) => (
                                     <div key={bIdx} className="flex items-center gap-3 bg-white/5 rounded-xl px-4 py-3">
                                         <benefit.icon size={18} className={slide.iconColor} />
-                                        <span className="text-sm text-white/80 font-medium">{benefit.text}</span>
+                                        <span className="text-sm text-white/80 font-medium whitespace-nowrap">{benefit.text}</span>
                                     </div>
                                 ))}
                             </div>

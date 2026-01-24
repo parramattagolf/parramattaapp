@@ -93,7 +93,7 @@ export default async function RoundDetailPage({ params }: { params: Promise<{ id
                 title=""
                 backHref="/rounds"
                 rightElement={
-                    <PreReservationButton eventId={event.id} isReserved={isPreReserved} />
+                    isPreReserved ? <PreReservationButton eventId={event.id} isReserved={isPreReserved} /> : null
                 }
             />
             {/* Dynamic Height Header */}
@@ -127,7 +127,11 @@ export default async function RoundDetailPage({ params }: { params: Promise<{ id
                 {/* 2. Host Benefits Banner (For Pre-reserved Users) */}
                 {userStatus === 'pre_reserved' && (
                     <div className="animate-fade-in">
-                        <HostBenefitsBanner eventId={event.id} invitation={invitation} />
+                        <HostBenefitsBanner 
+                            eventId={event.id} 
+                            invitation={invitation} 
+                            nickname={currentUserPreReservation?.user?.nickname}
+                        />
                     </div>
                 )}
 

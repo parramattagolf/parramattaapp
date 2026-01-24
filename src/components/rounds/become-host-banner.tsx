@@ -1,12 +1,11 @@
 'use client'
 
-import { Crown, Shield, Users, Gift } from 'lucide-react'
+import { Crown, Shield, Users } from 'lucide-react'
 
 export default function BecomeHostBanner() {
     const benefits = [
         { icon: Shield, text: '빈 슬롯을 "홀드"하여 예약 가능' },
         { icon: Users, text: '원치 않는 참가자 강퇴 권한' },
-        { icon: Gift, text: '친구 초대 시 홀드 슬롯 접근 부여' },
     ]
 
     return (
@@ -24,7 +23,7 @@ export default function BecomeHostBanner() {
                     조인방 호스트가 되세요! <span className="inline-block animate-bounce ml-1">👑</span>
                 </h3>
                 <p className="text-[13px] text-white/50 mb-8 font-bold uppercase tracking-widest bg-white/5 px-4 py-1.5 rounded-full border border-white/5">
-                    각 조인방에 가장 먼저 입장하면 호스트가 됩니다
+                    가장 먼저 입장하면 호스트가 됩니다
                 </p>
 
                 <div className="w-full space-y-3 max-w-sm mx-auto">
@@ -36,7 +35,7 @@ export default function BecomeHostBanner() {
                             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-500/20 to-orange-500/10 flex items-center justify-center shrink-0 border border-yellow-500/10 group-hover/item:scale-110 transition-transform">
                                 <benefit.icon size={20} className="text-yellow-500" />
                             </div>
-                            <span className="text-[15px] text-white/80 font-black tracking-tight">{benefit.text}</span>
+                            <span className="text-[15px] text-white/80 font-black tracking-tight whitespace-nowrap">{benefit.text}</span>
                         </div>
                     ))}
                 </div>

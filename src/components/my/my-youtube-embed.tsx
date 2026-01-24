@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { fetchYoutubePlaylist } from '@/actions/youtube-actions'
+import { createClient } from '@/utils/supabase/client'
 
 interface MyYoutubeEmbedProps {
     nickname: string
@@ -10,19 +11,33 @@ interface MyYoutubeEmbedProps {
 export default function MyYoutubeEmbed({ nickname }: MyYoutubeEmbedProps) {
     const [videoId, setVideoId] = useState<string | null>(null)
     const [loading, setLoading] = useState(true)
+    const [rewardReceived, setRewardReceived] = useState(false)
+    const supabase = createClient()
 
     useEffect(() => {
-        const fetchVideo = async () => {
+        const fetchInitialData = async () => {
             try {
+                // 1. Fetch YouTube Reward Status
+                const { data: { user } } = await supabase.auth.getUser()
+                if (user) {
+                    const { data: userData } = await supabase
+                        .from('users')
+                        .select('youtube_reward_received')
+                        .eq('id', user.id)
+                        .single()
+                    
+                    if (userData) {
+                        setRewardReceived(userData.youtube_reward_received)
+                    }
+                }
+
+                // 2. Fetch Video
                 const playlistId = 'PLpf6bXUHPOxAL93x95ugCLwzXqQlpgRpd'
                 const data = await fetchYoutubePlaylist(playlistId)
 
                 if (data && data.items && data.items.length > 0) {
                     const items = data.items
                     
-                    // Simple similarity search: Check if nickname is included in title, 
-                    // or find the one with the most common characters.
-                    // For now, let's look for an exact inclusion or shared words.
                     let bestMatch = null
                     let maxMatchScore = 0
 
@@ -30,13 +45,11 @@ export default function MyYoutubeEmbed({ nickname }: MyYoutubeEmbedProps) {
                         const title = item.snippet.title.toLowerCase()
                         const lowerNickname = nickname.toLowerCase()
                         
-                        // Check for exact inclusion
                         if (title.includes(lowerNickname)) {
                             bestMatch = item.snippet.resourceId.videoId
-                            break // High priority match found
+                            break
                         }
 
-                        // Fallback: simple character matching score
                         let score = 0
                         const nicknameChars = lowerNickname.split('')
                         nicknameChars.forEach(char => {
@@ -49,7 +62,6 @@ export default function MyYoutubeEmbed({ nickname }: MyYoutubeEmbedProps) {
                         }
                     }
 
-                    // If score is too low or no match found, pick random
                     if (!bestMatch || maxMatchScore < 2) {
                         const randomIndex = Math.floor(Math.random() * items.length)
                         bestMatch = items[randomIndex].snippet.resourceId.videoId
@@ -58,14 +70,26 @@ export default function MyYoutubeEmbed({ nickname }: MyYoutubeEmbedProps) {
                     setVideoId(bestMatch)
                 }
             } catch (error) {
-                console.error('Failed to fetch YouTube playlist for MyPage:', error)
+                console.error('Failed to fetch data for MyYoutubeEmbed:', error)
             } finally {
                 setLoading(false)
             }
         }
 
-        fetchVideo()
+        fetchInitialData()
     }, [nickname])
+
+    const handleSubscribeAndReward = async () => {
+        if (rewardReceived) return;
+
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user) {
+            const { error } = await supabase.rpc('reward_youtube_subscription', { target_user_id: user.id })
+            if (!error) {
+                setRewardReceived(true);
+            }
+        }
+    }
 
     return (
         <div className="px-4 mt-6">
@@ -81,7 +105,7 @@ export default function MyYoutubeEmbed({ nickname }: MyYoutubeEmbedProps) {
                             src={`https://www.youtube.com/embed/${videoId}?rel=0`}
                             title="YouTube video player" 
                             frameBorder="0" 
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-degree; web-share" 
                             referrerPolicy="strict-origin-when-cross-origin" 
                             allowFullScreen
                         ></iframe>
@@ -91,6 +115,42 @@ export default function MyYoutubeEmbed({ nickname }: MyYoutubeEmbedProps) {
                         </div>
                     )}
                 </div>
+            </div>
+
+            {/* YouTube Channel Subscription Link */}
+            <div className="mt-4 pb-8">
+                <a 
+                    href="https://www.youtube.com/channel/UC0MeKM-YQZ7Kh1o1UMjUObg?sub_confirmation=1" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    onClick={handleSubscribeAndReward}
+                    className={`w-full flex items-center justify-between p-5 rounded-[28px] group active:scale-[0.98] transition-all duration-300 shadow-[0_10px_40px_rgba(255,0,0,0.1)] border ${
+                        rewardReceived 
+                            ? 'bg-white/5 border-white/10 opacity-60' 
+                            : 'bg-[#FF0000]/10 border-[#FF0000]/30'
+                    }`}
+                >
+                    <div className="flex items-center gap-4">
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-[0_5px_15px_rgba(255,0,0,0.4)] transition-transform group-hover:scale-110 ${
+                            rewardReceived ? 'bg-white/20' : 'bg-[#FF0000]'
+                        }`}>
+                            <svg viewBox="0 0 24 24" className="w-6 h-6 fill-white" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                            </svg>
+                        </div>
+                        <div className="flex flex-col">
+                            <span className="text-[15px] font-black text-white tracking-tighter leading-none">파라마타 골프 TV 📺</span>
+                            {rewardReceived ? (
+                                <span className="text-[11px] text-emerald-400 font-bold mt-1.5 uppercase tracking-wider">포인트 리워드 지급 완료 ✓</span>
+                            ) : (
+                                <span className="text-[11px] text-[#FF0000] font-bold mt-1.5 uppercase tracking-wider animate-pulse">구독하면 100포인트 리워드</span>
+                            )}
+                        </div>
+                    </div>
+                    <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white/30 group-hover:bg-white/10 group-hover:text-white transition-colors">
+                        →
+                    </div>
+                </a>
             </div>
         </div>
     )

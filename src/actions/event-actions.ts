@@ -106,7 +106,35 @@ export async function joinEvent(eventId: string, groupNo: number = 1) {
         .eq('group_no', groupNo)
 
     if (groupCount && groupCount >= 4) {
-        throw new Error(`Room ${groupNo} is full`)
+        throw new Error(`${groupNo}번 조인방이 꽉 찼습니다.`)
+    }
+
+    // New: Check if previous room is filled (Sequential Joining)
+    // Only enforced for non-admins and users without a specific invitation hold
+    if (groupNo > 1) {
+        const { count: prevRoomCount } = await supabase
+            .from('participants')
+            .select('*', { count: 'exact' })
+            .eq('event_id', eventId)
+            .eq('group_no', groupNo - 1)
+
+        if (prevRoomCount !== null && prevRoomCount < 4) {
+            // Check if user is an admin (skip check)
+            const { data: userData } = await supabase.from('users').select('is_admin').eq('id', user.id).single()
+            
+            // Check if user has an invitation hold for THIS room
+            const { data: invite } = await supabase
+                .from('held_slots')
+                .select('id')
+                .eq('event_id', eventId)
+                .eq('group_no', groupNo)
+                .eq('invited_user_id', user.id)
+                .maybeSingle()
+
+            if (!userData?.is_admin && !invite) {
+                throw new Error(`${groupNo - 1}번 조인방이 아직 다 차지 않았습니다. 순서대로 참여해 주세요.`)
+            }
+        }
     }
 
     const { error } = await supabase.from('participants').insert({
@@ -565,6 +593,14 @@ export async function expireParticipant(eventId: string, participantUserId: stri
         .eq('event_id', eventId)
         .eq('held_by', participantUserId)
 
+    // Find group_no for handleHostSuccession
+    const { data: participant } = await supabase
+        .from('participants')
+        .select('group_no')
+        .eq('event_id', eventId)
+        .eq('user_id', participantUserId)
+        .single()
+
     // Delete participant
     const { error } = await supabase
         .from('participants')
@@ -575,6 +611,11 @@ export async function expireParticipant(eventId: string, participantUserId: stri
     if (error) {
         console.error('Failed to expire participant:', error)
         return { success: false }
+    }
+
+    // Host Succession
+    if (participant?.group_no) {
+        await handleHostSuccession(eventId, participant.group_no, participantUserId)
     }
 
     // Atomically deduct 30 Manner Score and 30 Points

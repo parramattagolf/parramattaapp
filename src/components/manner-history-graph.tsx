@@ -63,7 +63,7 @@ export default function MannerHistoryGraph({ history }: { history: HistoryItem[]
     return (
         <div className="w-full h-full flex flex-col relative">
             <div className="absolute top-2 right-2 text-[10px] text-gray-400 font-mono z-10">
-                Recent 5
+                Recent {history.length}
             </div>
             
             <div className="flex-1 w-full relative">

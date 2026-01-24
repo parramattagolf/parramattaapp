@@ -14,12 +14,13 @@ export default function MembershipBadge({ level, className }: MembershipBadgePro
     // Handle case-insensitive level check
     const normalizedLevel = level.toLowerCase()
 
-    const levels = ['black', 'blue', 'white', 'red']
+    const levels = ['black', 'blue', 'white', 'yellow', 'red']
     
     const levelStyles: Record<string, { active: string; label: string }> = {
         'red': { active: 'bg-red-500 text-white', label: 'RED' },
         'white': { active: 'bg-white text-black', label: 'WHITE' },
         'blue': { active: 'bg-blue-500 text-white', label: 'BLUE' },
+        'yellow': { active: 'bg-yellow-500 text-black', label: 'YELLOW' },
         'black': { active: 'bg-black text-white border border-white/30', label: 'BLACK' }
     }
 
@@ -98,6 +99,12 @@ export default function MembershipBadge({ level, className }: MembershipBadgePro
                                 color="bg-blue-500 text-white" 
                                 name="BLUE" 
                                 desc="신뢰할 수 있는 회원으로, 라운드(방)를 직접 개설할 수 있습니다." 
+                            />
+                             <LevelItem 
+                                current={normalizedLevel === 'yellow'} 
+                                color="bg-yellow-500 text-black" 
+                                name="YELLOW" 
+                                desc="특별 멤버십 혜택을 받는 골드 회원입니다." 
                             />
                              <LevelItem 
                                 current={normalizedLevel === 'black'} 

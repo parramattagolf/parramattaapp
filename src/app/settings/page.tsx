@@ -197,7 +197,7 @@ export default function SettingsPage() {
             } else {
                 alert('정보가 성공적으로 저장되었습니다.')
             }
-            router.push(`/members/${user.id}`)
+            router.push('/my')
         }
         setSaving(false)
     }
@@ -215,7 +215,7 @@ export default function SettingsPage() {
 
     return (
         <div className="min-h-screen bg-[#121212] pb-24 font-sans">
-            <PremiumSubHeader title="" backHref="/members/me" />
+            <PremiumSubHeader title="" backHref="/my" />
 
             <div className="pt-20 px-6 space-y-8">
                 {/* Profile Image Preview */}
@@ -236,7 +236,7 @@ export default function SettingsPage() {
                     {/* Basic Identity */}
                     <div className="space-y-4">
                         <label className="text-[11px] font-black text-blue-500 uppercase tracking-[0.2em] px-1 flex items-center gap-2">
-                            Basic Identity
+                            기본 정보 (IDENTITY)
                             <span className="w-full h-px bg-white/5 block"></span>
                         </label>
 
@@ -264,7 +264,7 @@ export default function SettingsPage() {
                                     : 'bg-[#1c1c1e] border-white/5'
                                 }`}>
                                 <div className="flex justify-between items-center mb-3">
-                                    <label className={`block text-[10px] font-bold uppercase tracking-wider ${isGenderEmpty ? 'text-blue-400' : 'text-white/30'}`}>Gender</label>
+                                    <label className={`block text-[10px] font-bold uppercase tracking-wider ${isGenderEmpty ? 'text-blue-400' : 'text-white/30'}`}>성별</label>
                                     {isGenderEmpty ? (
                                         <span className="relative flex h-1.5 w-1.5">
                                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
@@ -297,7 +297,7 @@ export default function SettingsPage() {
                                     : 'bg-[#1c1c1e] border-white/5'
                                 }`}>
                                 <div className="flex justify-between items-center mb-3">
-                                    <label className={`block text-[10px] font-bold uppercase tracking-wider ${isAgeEmpty ? 'text-blue-400' : 'text-white/30'}`}>Age Select</label>
+                                    <label className={`block text-[10px] font-bold uppercase tracking-wider ${isAgeEmpty ? 'text-blue-400' : 'text-white/30'}`}>연령대 선택</label>
                                     {isAgeEmpty ? (
                                         <span className="relative flex h-1.5 w-1.5">
                                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
@@ -389,7 +389,7 @@ export default function SettingsPage() {
                     {/* Professional & Social */}
                     <div className="space-y-4">
                         <label className="text-[11px] font-black text-blue-500 uppercase tracking-[0.2em] px-1 flex items-center gap-2">
-                            Professional & Social
+                            직업 및 소셜 (SOCIAL)
                             <span className="w-full h-px bg-white/5 block"></span>
                         </label>
 
@@ -437,18 +437,50 @@ export default function SettingsPage() {
                                 )}
                             </div>
                         </div>
-                        <SettingsInput 
-                            icon={GraduationCap} 
-                            value={profile.mbti} 
-                            onChange={(e) => setProfile({ ...profile, mbti: e.target.value })} 
-                            placeholder="MBTI"
-                        />
+                        <div className="group relative">
+                            <div className={`absolute left-6 top-1/2 -translate-y-1/2 transition-colors ${!profile.mbti ? 'text-blue-400' : 'text-white/20 group-focus-within:text-emerald-500'}`}>
+                                <GraduationCap size={20} />
+                            </div>
+                            <select
+                                className={`w-full rounded-2xl py-4 !pl-16 pr-12 font-bold text-white outline-none transition-all shadow-inner border appearance-none ${
+                                    !profile.mbti 
+                                        ? 'bg-blue-500/5 border-blue-500/30 focus:border-blue-500 focus:bg-blue-500/10' 
+                                        : 'bg-[#1c1c1e] border-white/5 focus:border-emerald-500/50'
+                                }`}
+                                value={profile.mbti}
+                                onChange={(e) => setProfile({ ...profile, mbti: e.target.value })}
+                            >
+                                <option value="" disabled>MBTI 선택</option>
+                                {['ISTJ', 'ISFJ', 'INFJ', 'INTJ', 'ISTP', 'ISFP', 'INFP', 'INTP', 'ESTP', 'ESFP', 'ENFP', 'ENTP', 'ESTJ', 'ESFJ', 'ENFJ', 'ENTJ'].map((m) => (
+                                    <option key={m} value={m}>{m}</option>
+                                ))}
+                            </select>
+                            
+                            {/* Custom Arrow */}
+                            <div className="absolute right-12 top-1/2 -translate-y-1/2 pointer-events-none text-white/30">
+                                ▼
+                            </div>
+
+                            {/* Status Indicator */}
+                            <div className={`absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none flex items-center`}>
+                                {!profile.mbti ? (
+                                    <div className="flex items-center gap-2">
+                                        <span className="relative flex h-2 w-2">
+                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                                        </span>
+                                    </div>
+                                ) : (
+                                    <Check size={18} className="text-emerald-500" />
+                                )}
+                            </div>
+                        </div>
                     </div>
 
                     {/* Golf Performance */}
                     <div className="space-y-4">
                         <label className="text-[11px] font-black text-blue-500 uppercase tracking-[0.2em] px-1 flex items-center gap-2">
-                            Golf Performance
+                            골프 정보 (PERFORMANCE)
                             <span className="w-full h-px bg-white/5 block"></span>
                         </label>
                         
@@ -579,20 +611,20 @@ function GiftModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }
                         </p>
                     </div>
 
-                    <div className="bg-white/5 rounded-3xl p-6 border border-white/5 flex flex-col gap-3">
+                    <div className="bg-white/5 rounded-3xl p-6 border border-white/5 flex flex-col gap-4">
                         <div className="flex items-center justify-between">
-                            <span className="text-[11px] font-bold text-white/30 uppercase tracking-widest">Manner Score</span>
-                            <span className="text-lg font-black text-emerald-400">+100 SP</span>
+                            <span className="text-[12px] font-bold text-white/40">매너점수</span>
+                            <span className="text-xl font-black text-emerald-400">+100</span>
                         </div>
                         <div className="h-px bg-white/5 w-full"></div>
                         <div className="flex items-center justify-between">
-                            <span className="text-[11px] font-bold text-white/30 uppercase tracking-widest">Points</span>
-                            <span className="text-lg font-black text-amber-400">+100 P</span>
+                            <span className="text-[12px] font-bold text-white/40">포인트</span>
+                            <span className="text-xl font-black text-amber-400">+100</span>
                         </div>
                     </div>
 
-                    <p className="text-[11px] text-blue-400/60 font-medium italic">
-                        &quot;프로필의 모든 칸을 채우시면 자동 지급됩니다&quot;
+                    <p className="text-[11px] text-blue-400/60 font-medium italic leading-relaxed">
+                        &quot;프로필의 모든 칸을 채우시면<br/>자동 지급됩니다&quot;
                     </p>
 
                     <button 

@@ -65,7 +65,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
         .select('*')
         .eq('user_id', id)
         .order('created_at', { ascending: false })
-        .limit(5)
+        .limit(10)
 
     // Get recent rounds
     // Get rounds (future and past)
@@ -273,7 +273,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
                         </div>
                         <div className="flex items-center text-[var(--color-text-secondary)]">
                              <span className="w-8 text-[var(--color-text-desc)] text-[10px]">거주</span>
-                             <span className="font-bold text-gray-300 truncate">{profile.district || '미입력'}</span>
+                             <span className="font-bold text-emerald-300 truncate">{profile.district || '미입력'}</span>
                         </div>
                     </div>
                 </div>

@@ -139,16 +139,30 @@ export default function MonthSection({ month, events, view }: MonthSectionProps)
                                                 {format(new Date(event.start_date), 'd')}
                                             </span>
                                         </div>
-                                        {view !== 'past' && (
-                                            <span className="text-[11px] font-bold text-blue-400 bg-blue-400/10 px-2 py-0.5 rounded-md mt-0.5">
-                                                {(() => {
-                                                    const start = new Date(event.start_date)
-                                                    const end = event.end_date ? new Date(event.end_date) : start
-                                                    const diff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
-                                                    return diff <= 0 ? '당일' : `${diff}박 ${diff + 1}일`
-                                                })()}
-                                            </span>
-                                        )}
+                                        {view !== 'past' && (() => {
+                                            const start = new Date(event.start_date)
+                                            const end = event.end_date ? new Date(event.end_date) : start
+                                            const diff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
+                                            const label = diff <= 0 ? '당일' : `${diff}박 ${diff + 1}일`
+                                            const colorClass = diff <= 0 
+                                                ? 'text-blue-400 bg-blue-400/10' 
+                                                : 'text-purple-400 bg-purple-400/10'
+                                            
+                                            const isFull = event.max_participants && (event.participant_count || 0) >= event.max_participants
+
+                                            return (
+                                                <div className="flex flex-col gap-1 mt-0.5">
+                                                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md text-center ${colorClass}`}>
+                                                        {label}
+                                                    </span>
+                                                    {isFull && (
+                                                        <span className="text-[10px] font-black bg-red-500 text-white px-2 py-0.5 rounded-md text-center shadow-[0_0_10px_rgba(239,68,68,0.4)] animate-pulse">
+                                                            마감
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            )
+                                        })()}
                                     </div>
 
                                     <div className="flex-1 min-w-0 pt-0.5">
@@ -167,12 +181,37 @@ export default function MonthSection({ month, events, view }: MonthSectionProps)
                                             {event.title}
                                         </h3>
                                         {event.description && (
-                                            <p className={`text-[4px] leading-tight break-keep line-clamp-3 ${view === 'past' ? 'text-white/20' : 'text-white/40'}`}>
+                                            <p className={`text-[12px] leading-tight break-keep line-clamp-3 mb-3 ${view === 'past' ? 'text-white/20' : 'text-white/40'}`}>
                                                 {event.description}
                                             </p>
                                         )}
 
-
+                                        {/* Recruitment Percentage */}
+                                        {event.max_participants && event.max_participants > 0 && view !== 'past' && (
+                                            <div className="mt-2">
+                                                <div className="flex items-center justify-between mb-1.5">
+                                                    <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Recruitment</span>
+                                                    <span className={`text-[11px] font-black ${
+                                                        (event.participant_count || 0) >= event.max_participants ? 'text-emerald-400' : 'text-blue-400'
+                                                    }`}>
+                                                        {Math.round(((event.participant_count || 0) / event.max_participants) * 100)}%
+                                                    </span>
+                                                </div>
+                                                <div className="h-1 bg-white/5 rounded-full overflow-hidden">
+                                                    <div 
+                                                        className={`h-full rounded-full transition-all duration-1000 ${
+                                                            (event.participant_count || 0) >= event.max_participants ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]'
+                                                        }`}
+                                                        style={{ width: `${Math.min(100, Math.round(((event.participant_count || 0) / event.max_participants) * 100))}%` }}
+                                                    />
+                                                </div>
+                                                <div className="flex justify-end mt-1">
+                                                    <span className="text-[9px] font-bold text-white/20">
+                                                        {event.participant_count || 0} / {event.max_participants} 명
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>

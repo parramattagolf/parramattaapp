@@ -151,35 +151,39 @@ export default function RoundDetailContent({ event, participants, isHost, isJoin
                 {(() => {
                     const maxRooms = Math.ceil((event.max_participants || 4) / 4)
                     
-                    // 1. Start with Room 1 and 2 (always visible)
-                    const roomsToShow = new Set<number>([0, 1])
+                    // 1. Always show the first room
+                    const roomsToShow = new Set<number>([0])
                     
-                    // 2. Add all rooms that have at least one participant
+                    // 2. Determine which rooms to show based on participation
+                    // Show a room if it has participants OR if the previous room has participants
                     for (let i = 0; i < maxRooms; i++) {
                         const roomSlots = slots.slice(i * 4, (i + 1) * 4)
-                        if (roomSlots.some(s => s !== null)) {
+                        const hasMembers = roomSlots.some(s => s !== null)
+                        
+                        if (hasMembers) {
                             roomsToShow.add(i)
-                        }
-                    }
-
-                    // 3. Check if any of the rooms being shown are already empty
-                    const hasAvailableEmptyShown = Array.from(roomsToShow).some(roomIdx => {
-                        const roomSlots = slots.slice(roomIdx * 4, (roomIdx + 1) * 4)
-                        return !roomSlots.every(s => s !== null) // If any slot in shown room is null
-                    })
-
-                    // 4. If all shown rooms are FULL, find the next one empty room to show
-                    if (!hasAvailableEmptyShown) {
-                        for (let i = 0; i < maxRooms; i++) {
-                            if (!roomsToShow.has(i)) {
-                                roomsToShow.add(i)
-                                break
+                            // If this room has members, the NEXT room should at least be visible as an option
+                            if (i + 1 < maxRooms) {
+                                roomsToShow.add(i + 1)
                             }
                         }
                     }
 
+                    // 3. Ensure at least one room with an empty slot is shown (if not all full)
+                    let sortedRoomIndices = Array.from(roomsToShow)
+                        .filter(i => i < maxRooms)
+                        .sort((a, b) => a - b)
+                    
+                    const lastShownIdx = sortedRoomIndices[sortedRoomIndices.length - 1]
+                    const lastRoomSlots = slots.slice(lastShownIdx * 4, (lastShownIdx + 1) * 4)
+                    const isLastRoomFull = lastRoomSlots.every(s => s !== null)
+                    
+                    if (isLastRoomFull && lastShownIdx + 1 < maxRooms) {
+                        roomsToShow.add(lastShownIdx + 1)
+                    }
+
                     // Sort and filter out of bounds
-                    const sortedRoomIndices = Array.from(roomsToShow)
+                    sortedRoomIndices = Array.from(roomsToShow)
                         .filter(i => i < maxRooms)
                         .sort((a, b) => a - b)
 
@@ -218,7 +222,18 @@ export default function RoundDetailContent({ event, participants, isHost, isJoin
                                         return (
                                             <div
                                                 key={roomIndex * 4 + idx}
-                                                onClick={() => navigateToRoom(roomIndex + 1)}
+                                                onClick={() => {
+                                                    // Check if previous room is empty (Sequential Join Guidance)
+                                                    if (roomIndex > 0) {
+                                                        const prevRoomSlots = slots.slice((roomIndex - 1) * 4, roomIndex * 4);
+                                                        const isPrevRoomEmpty = prevRoomSlots.every(s => s === null);
+                                                        if (isPrevRoomEmpty && !slot) {
+                                                            alert(`${roomIndex}번방이 비어있습니다. 순서대로 1번방부터 조인해 주세요.`);
+                                                            return;
+                                                        }
+                                                    }
+                                                    navigateToRoom(roomIndex + 1);
+                                                }}
                                                 className={`aspect-square rounded-2xl border transition-all duration-500 flex flex-col items-center justify-center p-2 relative group overflow-hidden cursor-pointer ${slot
                                                     ? 'border-white/10 bg-[#1c1c1e] shadow-2xl scale-100'
                                                     : isHeld

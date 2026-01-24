@@ -507,7 +507,7 @@ textarea::placeholder {
 }
 
 .animate-pulse-gentle {
-  animation: pulse-gentle 2s ease-in-out infinite;
+  animation: pulse-gentle 1s ease-in-out infinite;
 }
 
 @keyframes bounce-subtle {
@@ -541,4 +541,12 @@ textarea::placeholder {
 @keyframes scaleUp {
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
+}
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+.animate-shimmer {
+  animation: shimmer 3s infinite linear;
 }

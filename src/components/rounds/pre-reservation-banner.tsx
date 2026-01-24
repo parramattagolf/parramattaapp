@@ -58,7 +58,6 @@ export default function PreReservationBanner({ eventId, onAction }: PreReservati
                 <div className="grid grid-cols-1 gap-3 mb-8">
                     <BenefitItem text="취소패널티 없이, 매너점수 1점을 드려요" />
                     <BenefitItem text="기존 참여자들로부터 초대를 받을 수 있어요" />
-                    <BenefitItem text="취소 시 수수료가 면제됩니다 (예약 확정 전)." />
                 </div>
 
                 <button 

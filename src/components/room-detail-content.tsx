@@ -370,7 +370,7 @@ export default function RoomDetailContent({
 
     return (
       <span
-        className={`font-mono font-black text-lg ${isExpired ? "text-gray-500" : "text-red-500"}`}
+        className={`font-mono font-black text-[13px] ${isExpired ? "text-gray-500" : "text-red-500"}`}
       >
         {left}
       </span>
@@ -422,9 +422,9 @@ export default function RoomDetailContent({
     }, [heldAt, isExpired, onExpire]);
 
     return (
-      <div className="mt-3 bg-yellow-500/10 px-4 py-2 rounded-2xl inline-flex items-center gap-2 border border-yellow-500/20 shadow-[0_0_20px_rgba(234,179,8,0.15)]">
-         <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(234,179,8,0.6)]"></div>
-         <span className="font-mono font-black text-lg text-yellow-500 tracking-tight">
+      <div className="mt-2 bg-yellow-500/10 px-3 py-1.5 rounded-xl inline-flex items-center gap-1.5 border border-yellow-500/20 shadow-[0_0_15px_rgba(234,179,8,0.1)]">
+         <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(234,179,8,0.6)]"></div>
+         <span className="font-mono font-black text-[13px] text-yellow-500 tracking-tight">
            {left}
          </span>
       </div>
@@ -449,14 +449,22 @@ export default function RoomDetailContent({
 
       {/* Held Slot Guidance for Holder */}
       {heldSlots.some(s => s.group_no === roomIndex + 1 && s.held_by === authUser?.id) && (
-        <div className="mb-6 mx-4 animate-bounce-subtle">
-          <div className="bg-blue-600/10 border border-blue-500/30 rounded-2xl p-4 flex items-center gap-3 shadow-[0_0_20px_rgba(37,99,235,0.1)]">
-            <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center shrink-0 shadow-lg">
-              <Users size={20} className="text-white" />
+        <div className="mb-8 animate-pulse-gentle">
+          <div className="relative overflow-hidden bg-gradient-to-r from-blue-600/20 to-indigo-600/10 backdrop-blur-md border border-blue-400/30 rounded-[28px] p-5 flex items-center gap-4 shadow-[0_10px_40px_rgba(37,99,235,0.15)] group">
+            {/* Animated Light Beam Effect */}
+            <div className="absolute top-0 -left-[100%] w-[50%] h-full bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-[-25deg] animate-shimmer"></div>
+            
+            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shrink-0 shadow-[0_5px_15px_rgba(37,99,235,0.4)] border border-white/10">
+              <Users size={22} className="text-white drop-shadow-sm" />
             </div>
             <div className="flex-1">
-              <p className="text-[14px] text-white font-black leading-tight">선점한 홀드 슬롯이 있습니다! 🔐</p>
-              <p className="text-[12px] text-blue-400 font-bold mt-1">&quot;초대하기&quot;를 통해 친구를 참가시켜 주세요.</p>
+              <div className="flex items-center gap-2">
+                <p className="text-[15px] text-white font-black tracking-tighter leading-none">홀드 슬롯 예약 중 🔐</p>
+                <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-ping"></div>
+              </div>
+              <p className="text-[12px] text-blue-300/80 font-bold mt-1.5 leading-snug tracking-tight">
+                지금 <span className="text-white underline underline-offset-4 decoration-blue-500/50">&apos;초대하기&apos;</span>로 친구를 조인시켜보세요!
+              </p>
             </div>
           </div>
         </div>
@@ -570,8 +578,8 @@ export default function RoomDetailContent({
                     </div>
 
                     {slot.payment_status !== "paid" && (
-                      <div className="mt-3 bg-red-500/20 px-4 py-2 rounded-2xl inline-flex items-center gap-2 border border-red-500/30 shadow-[0_0_20px_rgba(239,68,68,0.2)]">
-                        <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                      <div className="mt-2 bg-red-500/20 px-3 py-1.5 rounded-xl inline-flex items-center gap-1.5 border border-red-500/30 shadow-[0_0_20px_rgba(239,68,68,0.15)]">
+                        <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></div>
                         <TimeDisplay
                           joinedAt={slot.joined_at}
                           onExpire={async () => {
@@ -703,7 +711,7 @@ export default function RoomDetailContent({
               <div className="space-y-2 border-t border-white/5 pt-4 bg-red-500/[0.02] -mx-6 px-6 pb-2">
                 <div className="flex items-center gap-2">
                   <div className="w-1.5 h-1.5 rounded-full bg-red-500"></div>
-                  <p className="text-[13px] font-black text-red-400">재사용 불가 주의!</p>
+                  <p className="text-[13px] font-black text-red-400">재홀드 불가 주의!</p>
                 </div>
                 <p className="pl-3.5 text-[12px] text-red-400/60 leading-relaxed font-bold">
                   홀드가 해제되거나 만료된 후 <span className="border-b border-red-500/30">동일 사용자는 다시 홀드할 수 없으니</span> 신중하게 사용해 주세요.
@@ -840,7 +848,7 @@ export default function RoomDetailContent({
                   <div className="mt-5 bg-red-500/10 py-3 px-4 rounded-2xl border border-red-500/20 flex items-center justify-center gap-2">
                     <AlertCircle size={14} className="text-red-400 shrink-0" />
                     <p className="text-[12px] text-red-400 font-black tracking-tight">
-                      홀드 해제 시 동일 방 재사용 불가!
+                      6시간 초과 시 재홀드 불가!
                     </p>
                   </div>
                 </div>

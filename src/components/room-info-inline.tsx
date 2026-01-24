@@ -64,7 +64,7 @@ export default function RoomInfoInline() {
                                         <div className={`${slide.iconColor} bg-white/5 p-2 rounded-lg`}>
                                             <benefit.icon size={16} />
                                         </div>
-                                        <span className="text-[13px] text-white/70 font-bold tracking-tight">{benefit.text}</span>
+                                        <span className="text-[13px] text-white/70 font-bold tracking-tight whitespace-nowrap">{benefit.text}</span>
                                     </div>
                                 ))}
                             </div>

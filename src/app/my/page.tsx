@@ -5,12 +5,14 @@ import { getUserBadges } from '@/actions/sponsor-actions'
 import { Bell } from 'lucide-react'
 import MyScoreDashboard from '@/components/my/my-score-dashboard'
 import MyYoutubeEmbed from '@/components/my/my-youtube-embed'
+import MembershipBadge from '@/components/members/membership-badge'
+import ScoreRulesSummary from '@/components/my/score-rules-summary'
 
 // ============================================
 // 🔒 개발용: SHOW_KAKAO_ID를 false로 설정하면 
 // 카카오 고유번호가 화면에서 숨겨집니다.
 // ============================================
-const SHOW_KAKAO_ID = true // TODO: 프로덕션에서는 false로 변경
+const SHOW_KAKAO_ID = false // TODO: 프로덕션에서는 false로 변경
 
 export default async function MyPage() {
     const supabase = await createClient()
@@ -67,6 +69,14 @@ export default async function MyPage() {
     // 카카오 ID: DB에서 가져오거나 메타데이터에서 추출
     const displayKakaoId = userData?.kakao_id || kakaoId
 
+    const realName = userData?.real_name || ''
+    const gender = userData?.gender || ''
+    const ageRange = userData?.age_range || ''
+    const district = userData?.district || ''
+    const mbti = userData?.mbti || ''
+    const handicap = userData?.handicap !== null ? userData?.handicap : null
+    const membershipLevel = userData?.membership_level || null
+
     // Calculate Manner Score Percentile
     const { count: totalUsers } = await supabase
         .from('users')
@@ -108,9 +118,10 @@ export default async function MyPage() {
             {/* Profile Header */}
             <div className="bg-[var(--color-bg)]">
                 <div className="px-gutter py-8">
-                    <div className="flex items-center gap-5">
+                    <div className="flex items-start gap-6">
                         {/* Avatar */}
-                        <div className="w-20 h-20 rounded-full bg-[var(--color-gray-100)] overflow-hidden border border-[var(--color-divider)] flex-shrink-0">
+                        <div className="w-24 h-24 rounded-[32px] bg-[#1c1c1e] overflow-hidden border-2 border-white/5 flex-shrink-0 shadow-2xl relative group transition-transform hover:scale-105 duration-500">
+                            <div className="absolute inset-0 bg-gradient-to-tr from-black/40 via-transparent to-white/10 opacity-60"></div>
                             {displayAvatar ? (
                                 <img
                                     src={displayAvatar}
@@ -124,23 +135,68 @@ export default async function MyPage() {
                                 </div>
                             )}
                         </div>
-                        <div className="flex-1 min-w-0" id="header_info">
-                            <h1 className="text-xl font-bold text-[var(--color-text-primary)] truncate">{displayName}</h1>
-
-                            {displayEmail && (
-                                <p className="text-[13px] text-[var(--color-text-secondary)] mt-0.5 truncate">{displayEmail}</p>
-                            )}
+                        
+                        <div className="flex-1 min-w-0 pt-1" id="header_info">
+                            <div className="flex flex-wrap items-center gap-1.5 ">
+                                {realName && (
+                                    <span className="text-[10px] font-bold px-1.5 py-0.5 bg-blue-500/10 text-blue-400 rounded-md border border-blue-500/10">실명: {realName}</span>
+                                )}
+                                {gender && (
+                                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md border ${
+                                        gender === 'male' ? 'bg-blue-600/10 text-blue-400 border-blue-600/10' : 'bg-pink-600/10 text-pink-400 border-pink-600/10'
+                                    }`}>
+                                        {gender === 'male' ? '남성' : '여성'}
+                                    </span>
+                                )}
+                                {ageRange && (
+                                    <span className="text-[10px] font-bold px-1.5 py-0.5 bg-white/5 text-white/50 rounded-md border border-white/5">
+                                        {ageRange.replace('s', '대')}
+                                    </span>
+                                )}
+                                {mbti && (
+                                    <span className="text-[10px] font-bold px-1.5 py-0.5 bg-purple-500/10 text-purple-400 rounded-md border border-purple-500/10">{mbti}</span>
+                                )}
+                            </div>
 
                             {SHOW_KAKAO_ID && displayKakaoId && (
                                 <KakaoIdDisplay kakaoId={displayKakaoId} />
                             )}
 
-                            <p className="text-[13px] text-[var(--color-text-desc)] mt-1">{displayJob || '직업 미입력'}</p>
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mt-3">
+                                <div className="flex items-center gap-1">
+                                    <span className="text-[11px] text-[var(--color-text-desc)] font-medium">활동지역</span>
+                                    <span className="text-[11px] text-white/80 font-bold">{district || '미입력'}</span>
+                                </div>
+                                <div className="w-px h-2.5 bg-white/10"></div>
+                                <div className="flex items-center gap-1">
+                                    <span className="text-[11px] text-[var(--color-text-desc)] font-medium">관심분야</span>
+                                    <span className="text-[11px] text-white/80 font-bold">{displayJob || '미입력'}</span>
+                                </div>
+                            </div>
 
-                            {displayGolfExp && (
-                                <p className="text-[12px] text-blue-400 font-bold mt-1">⛳ {displayGolfExp}</p>
-                            )}
+                            <div className="flex items-center gap-4 mt-3">
+                                {displayGolfExp && (
+                                    <div className="flex items-center gap-1.5 bg-blue-500/5 px-2 py-1 rounded-lg border border-blue-500/10">
+                                        <span className="text-xs">⛳</span>
+                                        <span className="text-[12px] text-blue-400 font-black">{displayGolfExp}</span>
+                                    </div>
+                                )}
+                                {handicap !== null && (
+                                    <div className="flex items-center gap-1.5 bg-emerald-500/10 px-2.5 py-1.5 rounded-xl border border-emerald-500/20 shadow-sm">
+                                        <span className="text-xs">🏆</span>
+                                        <span className="text-[12px] text-emerald-400 font-black tracking-tight">핸디 {handicap}</span>
+                                    </div>
+                                )}
+                            </div>
                         </div>
+
+                        {/* Membership Badge (Far Right Column) */}
+                        {membershipLevel && (
+                             <MembershipBadge 
+                                level={membershipLevel} 
+                                className="shrink-0 mt-2"
+                            />
+                        )}
                     </div>
                 </div>
 
@@ -229,8 +285,8 @@ export default async function MyPage() {
             {/* Member Video Recommended for User */}
             <MyYoutubeEmbed nickname={displayName} />
 
-
-
+            {/* Score & Points Policy Summary */}
+            <ScoreRulesSummary />
         </div>
     )
 }

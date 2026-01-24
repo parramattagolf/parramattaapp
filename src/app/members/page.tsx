@@ -1,6 +1,7 @@
 import { createClient } from '@/utils/supabase/server'
 import Link from 'next/link'
 import { Heart, Flag } from 'lucide-react'
+import PremiumSubHeader from '@/components/premium-sub-header'
 
 export const dynamic = 'force-dynamic'
 
@@ -40,32 +41,54 @@ export default async function MembersPage() {
     const roundParticipants = allMembers.filter(m => participantIds.includes(m.id))
     const others = allMembers.filter(m => !participantIds.includes(m.id))
 
-    // 4. Sort both by manner_score descending
-    const sortByManner = (a: any, b: any) => (b.manner_score || 0) - (a.manner_score || 0)
-
-    roundParticipants.sort(sortByManner)
-    others.sort(sortByManner)
+    // 4. Combine and Sort
+    const combinedMembers = [
+        ...roundParticipants.map(m => ({ ...m, isParticipant: true })),
+        ...others.map(m => ({ ...m, isParticipant: false }))
+    ]
 
     return (
         <div className="min-h-screen bg-[var(--color-bg)] pb-24 font-sans pt-24">
-            {/* Section 1: Round Participants */}
-            {roundParticipants.length > 0 && (
-                <div className="mb-4">
-                    <div className="divide-y divide-[var(--color-divider)] border-b border-[var(--color-divider)]">
-                        {roundParticipants.map((member: any) => (
-                            <MemberItem key={`participant-${member.id}`} member={member} isParticipant={true} />
-                        ))}
-                    </div>
-                </div>
-            )}
+            <PremiumSubHeader 
+                title={<span className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>인맥</span>} 
+                rightElement={<Link href="/members/search" className="text-blue-500 font-bold text-sm">인맥찾기</Link>}
+            />
 
-            {/* Section 2: Other Members */}
-            <div className="mb-8">
-                <div className="divide-y divide-[var(--color-divider)]">
-                    {others.map((member: any) => (
-                        <MemberItem key={`other-${member.id}`} member={member} isParticipant={false} />
-                    ))}
-                </div>
+            <div className="divide-y divide-[var(--color-divider)]">
+                {combinedMembers.map((member: any, index: number) => {
+                    const videoIndex = (index + 1) / 5;
+                    const randomOffset = Math.floor((index * 7 + 3) % 20); // Deterministic "random" for SSR
+                    
+                    return (
+                        <div key={member.id}>
+                            <MemberItem member={member} isParticipant={member.isParticipant} />
+                            {(index + 1) % 5 === 0 && (
+                                <div className="px-gutter py-8 bg-black/20">
+                                    <div className="rounded-[40px] overflow-hidden border border-white/5 shadow-2xl relative aspect-video group">
+                                        <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
+                                        <iframe 
+                                            width="100%" 
+                                            height="100%" 
+                                            src={`https://www.youtube.com/embed/videoseries?si=tNkcTeHAjB8inmNC&list=PLpf6bXUHPOxAL93x95ugCLwzXqQlpgRpd&index=${randomOffset}`}
+                                            title="YouTube video player" 
+                                            frameBorder="0" 
+                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                                            referrerPolicy="strict-origin-when-cross-origin" 
+                                            allowFullScreen
+                                            className="grayscale-[0.1] group-hover:grayscale-0 transition-all duration-700"
+                                        ></iframe>
+                                        <div className="absolute top-5 left-5 pointer-events-none">
+                                            <div className="bg-[#1c1c1e]/80 backdrop-blur-xl px-4 py-1.5 rounded-full border border-white/10 flex items-center gap-2.5 shadow-2xl">
+                                                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                                                <span className="text-[10px] text-white font-black tracking-[0.1em] uppercase">Recommended Contents</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
             </div>
         </div>
     )

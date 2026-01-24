@@ -1,8 +1,7 @@
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import PremiumSubHeader from '@/components/premium-sub-header'
-import { format } from 'date-fns'
-import { ko } from 'date-fns/locale'
+import MannerHistoryList from '@/components/my/manner-history-list'
 
 export default async function MannerScoreHistoryPage() {
     const supabase = await createClient()
@@ -55,38 +54,7 @@ export default async function MannerScoreHistoryPage() {
                 </div>
 
                 {/* History List */}
-                <div className="bg-[var(--color-gray-100)] rounded-2xl border border-[var(--color-divider)] overflow-hidden">
-                    {!history || history.length === 0 ? (
-                        <div className="p-12 text-center text-[var(--color-text-desc)] text-sm">
-                            아직 점수 변동 내역이 없습니다.
-                        </div>
-                    ) : (
-                        <div className="divide-y divide-[var(--color-divider)]">
-                            {history.map((item) => (
-                                <div key={item.id} className="p-5 flex justify-between items-center group hover:bg-[var(--color-surface-hover)] transition-colors">
-                                    <div className="flex flex-col gap-1 flex-1 pr-4">
-                                        <span className="text-[14px] font-bold text-[var(--color-text-primary)]">
-                                            {item.description}
-                                        </span>
-                                        <span className="text-[11px] text-[var(--color-text-desc)]">
-                                            {format(new Date(item.created_at), 'yyyy.MM.dd HH:mm', { locale: ko })}
-                                        </span>
-                                    </div>
-                                    <div className="text-right shrink-0">
-                                        <div className={`text-[15px] font-black ${item.amount > 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-                                            {item.amount > 0 ? '+' : ''}{item.amount}
-                                        </div>
-                                        {item.score_snapshot !== undefined && item.score_snapshot !== null && (
-                                            <div className="text-[10px] text-[var(--color-text-desc)] mt-0.5">
-                                                T {item.score_snapshot}
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
+                <MannerHistoryList initialHistory={history || []} />
             </div>
         </div>
     )

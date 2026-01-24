@@ -8,9 +8,10 @@ interface HostBenefitsBannerProps {
     invitation?: {
         group_no: number;
     } | null;
+    nickname?: string;
 }
 
-export default function HostBenefitsBanner({ eventId, invitation }: HostBenefitsBannerProps) {
+export default function HostBenefitsBanner({ eventId, invitation, nickname }: HostBenefitsBannerProps) {
     if (invitation && eventId) {
         return (
             <div className="bg-[#1c1c1e] rounded-[32px] p-8 border border-blue-500/20 shadow-2xl relative overflow-hidden group animate-bounce-subtle">
@@ -27,7 +28,7 @@ export default function HostBenefitsBanner({ eventId, invitation }: HostBenefits
                     </h3>
                     
                     <div className="space-y-1 mb-8">
-                        <p className="text-[15px] text-white/70 font-bold">회원님을 위한 자리가 기다리고 있어요!</p>
+                        <p className="text-[15px] text-white/70 font-bold">{nickname || '회원'}님을 위한 자리가 기다리고 있어요!</p>
                         <p className="text-[13px] text-white/40 font-medium leading-relaxed">
                             <span className="text-blue-400 font-black">{invitation.group_no}번방</span>에서 회원님을 초대했습니다.<br/>
                             지금 바로 입장해서 조인을 확정하세요.
@@ -60,9 +61,8 @@ export default function HostBenefitsBanner({ eventId, invitation }: HostBenefits
                 </h3>
                 
                 <div className="space-y-1 mb-8">
-                    <p className="text-[15px] text-white/70 font-bold">사전예약 회원님!</p>
+                    <p className="text-[15px] text-white/70 font-bold">{nickname || '회원'}님!</p>
                     <p className="text-[13px] text-white/40 font-medium leading-relaxed">
-                        이제 개설된 조인방을 둘러보고,<br/>
                         <span className="text-white">마음에 드는 멤버가 있는 방</span>에 참여해보세요.
                     </p>
                 </div>

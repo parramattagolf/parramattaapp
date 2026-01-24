@@ -20,7 +20,7 @@ export default function PreReservationList({ reservations }: { reservations: Pre
         <div className="w-full mt-4 animate-fade-in">
             <h3 className="text-blue-400 text-[10px] uppercase tracking-widest font-black mb-3 px-1 flex items-center gap-1.5">
                 <Sparkles size={10} className="text-blue-500 fill-blue-500/20" />
-                사전예약자 당신을 기다리는 동반자
+                초대를 기다리는 사전예약자
             </h3>
             <div className="grid grid-cols-8 gap-2">
                 {reservations.map((res) => (
