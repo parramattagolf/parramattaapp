@@ -138,9 +138,9 @@ export default async function MyPage() {
                         
                         <div className="flex-1 min-w-0 pt-1" id="header_info">
                             <div className="flex flex-wrap items-center gap-1.5 ">
-                                {realName && (
-                                    <span className="text-[10px] font-bold px-1.5 py-0.5 bg-blue-500/10 text-blue-400 rounded-md border border-blue-500/10">실명: {realName}</span>
-                                )}
+                                <span className="text-[14px] font-black px-2.5 py-0.5 bg-white/10 text-white rounded-lg border border-white/20 shadow-sm flex items-center gap-1.5 tracking-tight mb-1">
+                                    {realName || displayName}
+                                </span>
                                 {gender && (
                                     <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md border ${
                                         gender === 'male' ? 'bg-blue-600/10 text-blue-400 border-blue-600/10' : 'bg-pink-600/10 text-pink-400 border-pink-600/10'
@@ -153,9 +153,6 @@ export default async function MyPage() {
                                         {ageRange.replace('s', '대')}
                                     </span>
                                 )}
-                                {mbti && (
-                                    <span className="text-[10px] font-bold px-1.5 py-0.5 bg-purple-500/10 text-purple-400 rounded-md border border-purple-500/10">{mbti}</span>
-                                )}
                             </div>
 
                             {SHOW_KAKAO_ID && displayKakaoId && (
@@ -163,11 +160,6 @@ export default async function MyPage() {
                             )}
 
                             <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mt-3">
-                                <div className="flex items-center gap-1">
-                                    <span className="text-[11px] text-[var(--color-text-desc)] font-medium">활동지역</span>
-                                    <span className="text-[11px] text-white/80 font-bold">{district || '미입력'}</span>
-                                </div>
-                                <div className="w-px h-2.5 bg-white/10"></div>
                                 <div className="flex items-center gap-1">
                                     <span className="text-[11px] text-[var(--color-text-desc)] font-medium">관심분야</span>
                                     <span className="text-[11px] text-white/80 font-bold">{displayJob || '미입력'}</span>

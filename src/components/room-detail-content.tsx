@@ -528,6 +528,14 @@ export default function RoomDetailContent({
           const isInvitedHere = isInvitedToSlot(heldSlot);
           const canJoinThisSlot = !isJoined && (!isHeld || isInvitedHere);
 
+          // Check if no one has joined this room yet (roomMembers check)
+          const roomNumber = roomIndex + 1;
+          const roomMembers = participants.filter(
+            (p) => (p.group_no || 1) === roomNumber,
+          );
+          const isRoomEmpty = roomMembers.length === 0;
+          const isGlowSlot = isRoomEmpty && i === 0 && !isHeld;
+
           return (
             <div
               key={i}
@@ -543,7 +551,9 @@ export default function RoomDetailContent({
                   ? "border-white/10 bg-[#1c1c1e] shadow-2xl scale-100"
                   : isHeld
                     ? "border-yellow-500/50 bg-yellow-500/5 shadow-[0_0_20px_rgba(234,179,8,0.1)] hover:bg-yellow-500/10"
-                    : "border-dashed border-white/5 bg-white/[0.01] hover:bg-white/[0.03]"
+                    : isGlowSlot 
+                      ? "border-blue-500/60 bg-blue-500/5 shadow-[0_0_30px_rgba(37,99,235,0.2)] animate-pulse-gentle"
+                      : "border-dashed border-white/5 bg-white/[0.01] hover:bg-white/[0.03]"
               }`}
             >
               {slot ? (

@@ -78,7 +78,7 @@ function BenefitItem({ text }: { text: string }) {
             <div className="w-6 h-6 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
                 <Check className="w-3.5 h-3.5 text-emerald-500" />
             </div>
-            <span className="text-[13px] text-white/80 font-bold tracking-tight">{text}</span>
+            <span className="text-[13px] text-white/80 font-bold tracking-tight whitespace-nowrap">{text}</span>
         </div>
     )
 }

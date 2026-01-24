@@ -180,11 +180,12 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
         isPending = relationship?.status === 'pending'
     }
 
-    // 3. Calculate 24-Week Participation Data
+    // 3. Calculate 24-Week Data (Past 12 weeks ~ Future 12 weeks)
     const now = new Date()
-    const weeks: { weekLabel: string; count: number; isCurrent: boolean }[] = []
+    const weeks: { weekLabel: string; joinCount: number; preResCount: number; isCurrent: boolean }[] = []
     
-    for (let i = 23; i >= 0; i--) {
+    // Range from i=12 (12 weeks ago) to i=-11 (11 weeks ahead) = total 24 weeks
+    for (let i = 12; i >= -11; i--) {
         const weekStart = new Date(now)
         weekStart.setDate(now.getDate() - (i * 7 + now.getDay())) // Start of week (Sunday)
         weekStart.setHours(0, 0, 0, 0)
@@ -193,20 +194,28 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
         weekEnd.setDate(weekStart.getDate() + 6)
         weekEnd.setHours(23, 59, 59, 999)
 
-        const count = pastRounds.filter(r => {
+        const joinCount = allRounds.filter(r => {
+            if (!r.event) return false
             const rd = new Date(r.event.start_date)
+            return rd >= weekStart && rd <= weekEnd
+        }).length
+
+        const preResCount = preReservations.filter(p => {
+            if (!p.event) return false
+            const rd = new Date(p.event.start_date)
             return rd >= weekStart && rd <= weekEnd
         }).length
 
         weeks.push({
             weekLabel: `${weekStart.getMonth() + 1}/${weekStart.getDate()}`,
-            count,
+            joinCount,
+            preResCount,
             isCurrent: i === 0
         })
     }
 
-    const maxCount = Math.max(...weeks.map(w => w.count), 1)
-    const totalRecentRounds = weeks.reduce((sum, w) => sum + w.count, 0)
+    const maxCount = Math.max(...weeks.map(w => w.joinCount + w.preResCount), 1)
+    const totalActivity = weeks.reduce((sum, w) => sum + w.joinCount + w.preResCount, 0)
 
     return (
         <div className="min-h-screen bg-[var(--color-bg)] pb-24 font-sans">
@@ -245,8 +254,9 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
 
                 <div className="flex-1 ml-4 mr-2 flex flex-col justify-center gap-1">
                     <div className="flex items-center gap-2 mb-0.5">
-                        <div className="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-md shadow-sm tracking-tight">
-                            {profile.real_name || profile.nickname}
+                        <div className="bg-blue-600/10 text-blue-400 text-[9px] font-black px-2.5 py-1 rounded-full border border-blue-500/20 shadow-sm tracking-tight flex items-center gap-1.5">
+                            <span className="w-1 h-1 bg-blue-500 rounded-full animate-pulse"></span>
+                            실명은 모든 회원이 비공개입니다
                         </div>
                     </div>
                     
@@ -260,20 +270,12 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
                             <span className="font-bold text-white">{profile.handicap !== null ? profile.handicap : '-'}</span>
                         </div>
                         <div className="flex items-center text-[var(--color-text-secondary)]">
-                            <span className="w-8 text-[var(--color-text-desc)] text-[10px]">MBTI</span>
-                            <span className="font-bold text-purple-400">{profile.mbti || '-'}</span>
-                        </div>
-                        <div className="flex items-center text-[var(--color-text-secondary)]">
                             <span className="w-8 text-[var(--color-text-desc)] text-[10px]">나이</span>
                             <span className="font-bold text-blue-300">{profile.age_range || '-'}</span>
                         </div>
                         <div className="flex items-center text-[var(--color-text-secondary)]">
                             <span className="w-8 text-[var(--color-text-desc)] text-[10px]">성별</span>
                             <span className="font-bold text-pink-300">{profile.gender === 'male' ? '남성' : profile.gender === 'female' ? '여성' : '-'}</span>
-                        </div>
-                        <div className="flex items-center text-[var(--color-text-secondary)]">
-                             <span className="w-8 text-[var(--color-text-desc)] text-[10px]">거주</span>
-                             <span className="font-bold text-emerald-300 truncate">{profile.district || '미입력'}</span>
                         </div>
                     </div>
                 </div>
@@ -327,12 +329,8 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
                  <div className="bg-[#1c1c1e] rounded-3xl p-6 border border-white/5 shadow-2xl relative overflow-hidden">
                     <div className="flex justify-between items-start mb-6">
                         <div>
-                            <div className="text-[10px] text-white/30 font-black uppercase tracking-[0.2em] mb-1">Weekly Activity</div>
-                            <h2 className="text-lg font-black text-white">최근 24주 참여 현황</h2>
-                            <p className="text-[11px] text-white/40 mt-1">지난 6개월간 총 <b className="text-blue-400">{totalRecentRounds}회</b> 라운딩</p>
-                        </div>
-                        <div className="bg-blue-500/10 px-3 py-1.5 rounded-xl border border-blue-500/20">
-                            <span className="text-[10px] font-bold text-blue-400">Trend: Stable</span>
+                            <h2 className="text-lg font-black text-white">과거 12주 & 향후 12주 현황</h2>
+                            <p className="text-[11px] text-white/40 mt-1">24주간 총 <b className="text-blue-400">{totalActivity}회</b> 참여 진행 중</p>
                         </div>
                     </div>
 
@@ -342,21 +340,27 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
                             <div key={idx} className="flex-1 flex flex-col items-center group h-full justify-end">
                                 {/* Tooltip on hover (mobile might ignore, but nice for logic) */}
                                 <div className="invisible group-hover:visible absolute -top-8 bg-white text-black text-[10px] font-bold px-2 py-1 rounded shadow-lg z-20 whitespace-nowrap">
-                                    {week.weekLabel}: {week.count}회
+                                    {week.weekLabel}: {week.joinCount + week.preResCount}회
                                 </div>
                                 
-                                {/* Bar */}
-                                <div 
-                                    className={`w-full rounded-t-sm transition-all duration-700 delay-[${idx * 30}ms] ${
-                                        week.count > 0 
-                                            ? week.isCurrent ? 'bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.5)]' : 'bg-blue-500' 
-                                            : 'bg-white/[0.03]'
-                                    }`}
-                                    style={{ 
-                                        height: `${week.count > 0 ? Math.max((week.count / maxCount) * 100, 15) : 8}%`,
-                                        opacity: week.count > 0 ? 1 : 0.3
-                                    }}
-                                />
+                                 {/* Stacked Bar Container */}
+                                 <div className="w-full flex flex-col justify-end gap-[1px] h-full">
+                                     {week.preResCount > 0 && (
+                                         <div 
+                                             className="w-full bg-blue-500 rounded-sm"
+                                             style={{ height: `${(week.preResCount / maxCount) * 100}%` }}
+                                         />
+                                     )}
+                                     {week.joinCount > 0 && (
+                                         <div 
+                                             className={`w-full rounded-sm ${week.isCurrent ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.4)]' : 'bg-emerald-600'}`}
+                                             style={{ height: `${(week.joinCount / maxCount) * 100}%` }}
+                                         />
+                                     )}
+                                     {week.joinCount === 0 && week.preResCount === 0 && (
+                                         <div className="w-full bg-white/[0.03] h-[10%] rounded-sm" />
+                                     )}
+                                 </div>
                                 
                                 {idx % 4 === 0 && (
                                     <span className="text-[8px] text-white/10 font-bold mt-2 transform scale-75">
@@ -370,15 +374,15 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
                     <div className="flex justify-between items-center pt-4 border-t border-white/5 mt-2">
                         <div className="flex gap-4">
                             <div className="flex items-center gap-1.5">
-                                <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-                                <span className="text-[9px] text-white/30 font-bold">참여함</span>
+                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+                                <span className="text-[9px] text-white/30 font-bold">조인참가</span>
                             </div>
                             <div className="flex items-center gap-1.5">
-                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>
-                                <span className="text-[9px] text-white/30 font-bold">이번 주</span>
+                                <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                                <span className="text-[9px] text-white/30 font-bold">사전예약</span>
                             </div>
                         </div>
-                        <span className="text-[9px] text-white/20 italic">Last Updated: {new Date().toLocaleDateString('ko-KR')}</span>
+                        <span className="text-[9px] text-white/20 italic font-black">과거 12주 & 향후 12주 참가현황</span>
                     </div>
                  </div>
             </div>
@@ -410,11 +414,6 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
                                             {new Date(pre.event.start_date).toLocaleDateString()}
                                         </div>
                                     </div>
-                                    {pre.event.course_name && (
-                                        <div className="text-xs text-purple-200/70 mt-1.5">
-                                            📍 {pre.event.course_name}
-                                        </div>
-                                    )}
                                 </Link>
                             ))
                         ) : (
@@ -456,11 +455,6 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
                                             {new Date(round.event.start_date).toLocaleDateString()}
                                         </div>
                                     </div>
-                                    {round.event.course_name && (
-                                        <div className="text-xs text-[var(--color-text-desc)] mt-1">
-                                            📍 {round.event.course_name}
-                                        </div>
-                                    )}
                                 </Link>
                             ))
                         ) : (
@@ -502,34 +496,6 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
                 </div>
             )}
 
-            {/* MBTI & Preferences */}
-            {(profile.mbti || profile.partner_style_preference?.length > 0) && (
-                <div className="px-gutter mt-10">
-                    <h2 className="text-base font-bold text-[var(--color-text-primary)] mb-3">플레이 스타일</h2>
-                    <div className="bg-[var(--color-gray-100)] rounded-xl p-4 border border-[var(--color-divider)] space-y-4">
-                        {profile.mbti && (
-                            <div className="flex items-center justify-between">
-                                <span className="text-[var(--color-text-desc)] text-xs font-bold">MBTI</span>
-                                <span className="text-purple-400 text-sm font-bold">
-                                    {profile.mbti}
-                                </span>
-                            </div>
-                        )}
-                        {profile.partner_style_preference?.length > 0 && (
-                            <div className="flex items-start justify-between gap-4">
-                                <span className="text-[var(--color-text-desc)] text-xs font-bold pt-1 shrink-0">선호 스타일</span>
-                                <div className="flex gap-1.5 flex-wrap justify-end">
-                                    {profile.partner_style_preference.map((style: string) => (
-                                        <span key={style} className="bg-[var(--color-bg)] text-[var(--color-text-secondary)] px-2 py-0.5 rounded text-[10px] border border-[var(--color-divider)]">
-                                            {style}
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
         </div>
     )
 }
