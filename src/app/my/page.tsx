@@ -57,10 +57,10 @@ export default async function MyPage() {
         .eq('id', user.id)
         .single()
 
-    // Merge auth data with DB data (auth takes precedence for fresh data)
-    const displayName = authName || userData?.nickname || '닉네임 없음'
-    const displayAvatar = authAvatar || userData?.profile_img || null
-    const displayEmail = authEmail || userData?.email || null
+    // Merge auth data with DB data (DB takes precedence for consistency)
+    const displayName = userData?.nickname || authName || '닉네임 없음'
+    const displayAvatar = userData?.profile_img || authAvatar || null
+    const displayEmail = userData?.email || authEmail || null
     const displayJob = userData?.job || null
     const displayGolfExp = userData?.golf_experience || null
     const mannerScore = userData?.manner_score ?? 100
@@ -113,6 +113,13 @@ export default async function MyPage() {
         .select('id')
         .eq('user_id', user.id)
 
+    // Get unread notifications count
+    const { count: unreadCount } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .or(`receiver_id.eq.${user.id},type.eq.global`)
+        .eq('is_read', false)
+
     return (
         <div className="min-h-screen bg-[var(--color-bg)] pb-24 font-sans pt-24">
             {/* Profile Header */}
@@ -136,20 +143,23 @@ export default async function MyPage() {
                             )}
                         </div>
                         
-                        <div className="flex-1 min-w-0 pt-1" id="header_info">
-                            <div className="flex flex-wrap items-center gap-1.5 ">
-                                <span className="text-[14px] font-black px-2.5 py-0.5 bg-white/10 text-white rounded-lg border border-white/20 shadow-sm flex items-center gap-1.5 tracking-tight mb-1">
-                                    {realName || displayName}
-                                </span>
+                        <div className="flex-1 min-w-0 flex flex-col justify-center gap-2" id="header_info">
+                            {/* Line 1: Name */}
+                            <div className="text-[22px] font-black text-white tracking-tight leading-none mb-1">
+                                {realName || displayName}
+                            </div>
+
+                            {/* Line 2: Demographics */}
+                            <div className="flex items-center gap-2">
                                 {gender && (
-                                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md border ${
+                                    <span className={`text-[14px] font-bold px-2.5 py-1 rounded-lg border ${
                                         gender === 'male' ? 'bg-blue-600/10 text-blue-400 border-blue-600/10' : 'bg-pink-600/10 text-pink-400 border-pink-600/10'
                                     }`}>
                                         {gender === 'male' ? '남성' : '여성'}
                                     </span>
                                 )}
                                 {ageRange && (
-                                    <span className="text-[10px] font-bold px-1.5 py-0.5 bg-white/5 text-white/50 rounded-md border border-white/5">
+                                    <span className="text-[14px] font-bold px-2.5 py-1 bg-white/5 text-white/50 rounded-lg border border-white/5">
                                         {ageRange.replace('s', '대')}
                                     </span>
                                 )}
@@ -159,34 +169,33 @@ export default async function MyPage() {
                                 <KakaoIdDisplay kakaoId={displayKakaoId} />
                             )}
 
-                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 mt-3">
-                                <div className="flex items-center gap-1">
-                                    <span className="text-[11px] text-[var(--color-text-desc)] font-medium">관심분야</span>
-                                    <span className="text-[11px] text-white/80 font-bold">{displayJob || '미입력'}</span>
-                                </div>
+                            {/* Line 3: Interest */}
+                            <div className="flex items-center gap-2 mt-1">
+                                <span className="text-[14px] text-[var(--color-text-desc)] font-medium">관심분야</span>
+                                <span className="text-[14px] text-white/90 font-bold">{displayJob || '미입력'}</span>
                             </div>
 
-                            <div className="flex items-center gap-4 mt-3">
-                                {displayGolfExp && (
-                                    <div className="flex items-center gap-1.5 bg-blue-500/5 px-2 py-1 rounded-lg border border-blue-500/10">
-                                        <span className="text-xs">⛳</span>
-                                        <span className="text-[12px] text-blue-400 font-black">{displayGolfExp}</span>
-                                    </div>
-                                )}
-                                {handicap !== null && (
-                                    <div className="flex items-center gap-1.5 bg-emerald-500/10 px-2.5 py-1.5 rounded-xl border border-emerald-500/20 shadow-sm">
-                                        <span className="text-xs">🏆</span>
-                                        <span className="text-[12px] text-emerald-400 font-black tracking-tight">핸디 {handicap}</span>
-                                    </div>
-                                )}
-                            </div>
+                            {/* Line 4+: Golf Stats (Stacked) */}
+                            {displayGolfExp && (
+                                <div className="flex items-center gap-1.5 bg-blue-500/5 px-2.5 py-1.5 rounded-lg border border-blue-500/10 w-fit">
+                                    <span className="text-sm">⛳</span>
+                                    <span className="text-[14px] text-blue-400 font-black">{displayGolfExp}</span>
+                                </div>
+                            )}
+                            
+                            {handicap !== null && (
+                                <div className="flex items-center gap-1.5 bg-emerald-500/10 px-2.5 py-1.5 rounded-xl border border-emerald-500/20 shadow-sm w-fit">
+                                    <span className="text-sm">🏆</span>
+                                    <span className="text-[14px] text-emerald-400 font-black tracking-tight">핸디 {handicap}</span>
+                                </div>
+                            )}
                         </div>
 
                         {/* Membership Badge (Far Right Column) */}
                         {membershipLevel && (
                              <MembershipBadge 
                                 level={membershipLevel} 
-                                className="shrink-0 mt-2"
+                                className="shrink-0 self-start mt-2"
                             />
                         )}
                     </div>
@@ -265,10 +274,20 @@ export default async function MyPage() {
                 </Link>
                 <Link href="/notifications" className="flex items-center justify-between p-4 bg-[var(--color-gray-100)] rounded-xl border border-[var(--color-divider)] active:bg-[var(--color-surface-hover)]">
                     <div className="flex items-center gap-3">
-                        <Bell size={20} className="text-white/60" />
+                        <div className="relative">
+                            <Bell size={20} className={`text-white/60 ${(unreadCount || 0) > 0 ? 'animate-[swing_1s_ease-in-out_infinite]' : ''}`} />
+                            {(unreadCount || 0) > 0 && (
+                                <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border border-[#121212] flex items-center justify-center">
+                                    <span className="text-[6px] text-white font-bold"></span>
+                                </span>
+                            )}
+                        </div>
                         <span className="text-[14px] font-bold text-[var(--color-text-primary)]">최근메세지</span>
                     </div>
                     <div className="flex items-center gap-2">
+                        {(unreadCount || 0) > 0 && (
+                            <span className="text-[13px] font-bold text-red-500">{(unreadCount || 0) > 9 ? '9+' : unreadCount}건</span>
+                        )}
                         <span className="text-[var(--color-text-desc)] text-xs">→</span>
                     </div>
                 </Link>

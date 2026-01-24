@@ -14,13 +14,14 @@ export default function MembershipBadge({ level, className }: MembershipBadgePro
     // Handle case-insensitive level check
     const normalizedLevel = level.toLowerCase()
 
+    // Order: Highest to Lowest for the stack (Black is top)
     const levels = ['black', 'blue', 'white', 'yellow', 'red']
     
     const levelStyles: Record<string, { active: string; label: string }> = {
         'red': { active: 'bg-red-500 text-white', label: 'RED' },
+        'yellow': { active: 'bg-yellow-500 text-black', label: 'YELLOW' },
         'white': { active: 'bg-white text-black', label: 'WHITE' },
         'blue': { active: 'bg-blue-500 text-white', label: 'BLUE' },
-        'yellow': { active: 'bg-yellow-500 text-black', label: 'YELLOW' },
         'black': { active: 'bg-black text-white border border-white/30', label: 'BLACK' }
     }
 
@@ -39,7 +40,7 @@ export default function MembershipBadge({ level, className }: MembershipBadgePro
                                 setIsOpen(true)
                             }}
                             className={`
-                                text-[7px] font-black w-11 py-0.5 rounded-full uppercase tracking-tighter transition-all duration-300 text-center
+                                text-[9px] font-black w-14 py-1 rounded-full uppercase tracking-tighter transition-all duration-300 text-center
                                 ${isActive 
                                     ? `${style.active} shadow-[0_0_10px_rgba(255,255,255,0.1)] scale-110 z-10` 
                                     : 'bg-white/5 text-white/20 hover:bg-white/10'
@@ -89,22 +90,22 @@ export default function MembershipBadge({ level, className }: MembershipBadgePro
                                 desc="신규 가입 회원입니다." 
                             />
                              <LevelItem 
+                                current={normalizedLevel === 'yellow'} 
+                                color="bg-yellow-500 text-black" 
+                                name="YELLOW" 
+                                desc="기본 활동을 시작한 멤버입니다." 
+                            />
+                             <LevelItem 
                                 current={normalizedLevel === 'white'} 
                                 color="bg-white text-black" 
                                 name="WHITE" 
-                                desc="활동 인증이 완료된 정회원입니다. 라운드 참여가 가능합니다." 
+                                desc="활동 인증이 완료된 정회원입니다." 
                             />
                              <LevelItem 
                                 current={normalizedLevel === 'blue'} 
                                 color="bg-blue-500 text-white" 
                                 name="BLUE" 
                                 desc="신뢰할 수 있는 회원으로, 라운드(방)를 직접 개설할 수 있습니다." 
-                            />
-                             <LevelItem 
-                                current={normalizedLevel === 'yellow'} 
-                                color="bg-yellow-500 text-black" 
-                                name="YELLOW" 
-                                desc="특별 멤버십 혜택을 받는 골드 회원입니다." 
                             />
                              <LevelItem 
                                 current={normalizedLevel === 'black'} 

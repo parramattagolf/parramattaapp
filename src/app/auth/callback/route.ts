@@ -38,10 +38,38 @@ export async function GET(request: Request) {
     
     if (!error && data.user) {
       // Extract Kakao profile info from auth metadata
-      const kakaoProfile = data.user.user_metadata?.kakao_account?.profile
-      const kakaoId = data.user.user_metadata?.provider_id
-      const profileImageUrl = kakaoProfile?.profile_image_url || kakaoProfile?.thumbnail_image_url
-      const nickname = kakaoProfile?.nickname
+      const meta = data.user.user_metadata
+      const kakaoProfile = meta?.kakao_account?.profile
+      const kakaoId = meta?.provider_id || meta?.sub
+
+      // Try various paths for profile image
+      const profileImageUrl = 
+          kakaoProfile?.profile_image_url || 
+          kakaoProfile?.thumbnail_image_url || 
+          meta?.avatar_url || 
+          meta?.picture ||
+          null
+
+      // Try various paths for nickname
+      let nickname = 
+          kakaoProfile?.nickname || 
+          meta?.full_name || 
+          meta?.name || 
+          meta?.preferred_username ||
+          null
+
+      // Fallback to email username if nickname is missing
+      if (!nickname && (data.user.email || meta?.email)) {
+         const email = data.user.email || meta?.email
+         const emailPrefix = email.split('@')[0]
+         // Add random suffix to ensure uniqueness for email-based nicknames
+         nickname = `${emailPrefix}_${Math.floor(Math.random() * 10000)}`
+      }
+
+      // If still no nickname, generate a random one
+      if (!nickname) {
+          nickname = `Member_${Math.floor(Math.random() * 100000)}`
+      }
       
       // Check if user exists in our users table
       const { data: profile } = await supabase
@@ -73,6 +101,7 @@ export async function GET(request: Request) {
             nickname: nickname || null,
             profile_img: profileImageUrl || null,
             real_name: '', // Empty initially
+            membership_level: 'red',
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           })

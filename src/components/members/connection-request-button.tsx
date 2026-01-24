@@ -35,7 +35,7 @@ export default function ConnectionRequestButton({ targetUserId, isAlreadyFriend,
         setLoading(true)
         try {
             await sendLike(targetUserId)
-            toast.success('1촌 신청을 보냈습니다! 💌')
+            toast.success('1촌 신청을 보냈습니다! 💌', { duration: 2000 })
             router.refresh()
         } catch (error) {
             console.error('Failed to send connection request:', error)

@@ -218,7 +218,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
     const totalActivity = weeks.reduce((sum, w) => sum + w.joinCount + w.preResCount, 0)
 
     return (
-        <div className="min-h-screen bg-[var(--color-bg)] pb-24 font-sans">
+        <div className="min-h-screen bg-[var(--color-bg)] pb-32 font-sans">
             <MemberDetailHeader 
                 nickname={profile.nickname} 
                 targetUserId={id} 
@@ -404,10 +404,9 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
                                 >
                                     <div className="flex justify-between items-start mb-1">
                                         <div className="flex flex-col gap-1 max-w-[70%]">
-                                            <div className="text-sm font-bold text-purple-100 truncate">{pre.event.title}</div>
-                                            <div className="flex items-center gap-1.5">
-                                                <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse"></span>
-                                                <span className="text-[10px] text-purple-400 font-black uppercase">사전예약 완료 (모집 대기)</span>
+                                            <div className="text-lg font-bold text-purple-100 truncate">{pre.event.title}</div>
+                                            <div className="text-[10px] text-purple-400 font-medium">
+                                                예약: {new Date(pre.created_at).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                             </div>
                                         </div>
                                         <div className="text-[10px] text-purple-300 font-mono">

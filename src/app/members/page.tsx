@@ -77,12 +77,6 @@ export default async function MembersPage() {
                                             allowFullScreen
                                             className="grayscale-[0.1] group-hover:grayscale-0 transition-all duration-700"
                                         ></iframe>
-                                        <div className="absolute top-5 left-5 pointer-events-none">
-                                            <div className="bg-[#1c1c1e]/80 backdrop-blur-xl px-4 py-1.5 rounded-full border border-white/10 flex items-center gap-2.5 shadow-2xl">
-                                                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                                                <span className="text-[10px] text-white font-black tracking-[0.1em] uppercase">Recommended Contents</span>
-                                            </div>
-                                        </div>
                                     </div>
                                 </div>
                             )}

@@ -125,7 +125,7 @@
 | 멤버 | Member | 앱에 가입한 사용자 |
 | 닉네임 | Nickname | 앱 내 표시되는 사용자명 (2자 이상, 고유) |
 | 실명 | Real Name | 사용자의 실제 이름 |
-| 매너 점수 | Manner Score | 사용자의 매너 수준을 나타내는 점수 (초기 100점) |
+| 매너 점수 | Manner Score | 사용자의 매너 수준을 나타내는 점수 (초기 0점) |
 | VIP | VIP | 프리미엄 멤버십 상태 |
 | 호스트 | Host | 라운드를 개설한 사용자 |
 
@@ -193,7 +193,7 @@
 | `is_banned` | boolean | 차단 여부 | 기본 false |
 | `is_admin` | boolean | 관리자 여부 | 기본 false |
 | `is_vip` | boolean | VIP 회원 여부 | 기본 false |
-| `membership_level` | text | 멤버십 등급 | bronze/silver/gold/platinum |
+| `membership_level` | text | 멤버십 등급 | red(default)/yellow/white/blue/black |
 | `points` | integer | 보유 포인트 | 기본 0 |
 | `host_count` | integer | 라운드 개최 횟수 | 기본 0 |
 | `invite_count` | integer | 친구 초대 횟수 | 기본 0 |
@@ -688,7 +688,7 @@ USING (
 ## 📝 참고 사항
 
 ### Henry Rule (매너 점수 -50점 이하 자동 차단)
-- 매너 점수는 초기 100점에서 시작
+- 매너 점수는 초기 0점에서 시작
 - 라운드 no-show, 매너 위반 신고, 부정 행위 등으로 감점
 - -50점 이하 시 `is_banned = true`로 자동 설정
 - 차단된 사용자는 로그인 불가 및 모든 기능 제한

@@ -51,8 +51,9 @@
   --radius-xl: 24px;
   --radius-full: 9999px;
 
-  /* Safe Area */
+  /* Safe Area & Sizing */
   --pb-safe: env(safe-area-inset-bottom, 0px);
+  --nav-height: 64px;
   --gutter: 20px;
 }
 

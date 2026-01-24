@@ -22,6 +22,10 @@ export default function NetworkPage() {
                 max_depth: 5
             })
 
+            if (error) {
+                console.error('Error fetching network:', error)
+            }
+
             if (data) {
                 setNetwork(data)
             }
@@ -94,8 +98,8 @@ export default function NetworkPage() {
                                 className="flex items-center gap-4 p-4 bg-[#1c1c1e] border border-white/5 rounded-2xl active:scale-[0.98] transition-all"
                             >
                                 <div className="w-14 h-14 rounded-full bg-white/5 overflow-hidden border border-white/10 shrink-0">
-                                    {member.avatar_url ? (
-                                        <img src={member.avatar_url} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                    {member.profile_img ? (
+                                        <img src={member.profile_img} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center text-2xl bg-gradient-to-br from-white/10 to-white/5">👤</div>
                                     )}
