@@ -150,18 +150,40 @@ export default function RoundDetailContent({ event, participants, isHost, isJoin
             <div className="space-y-8">
                 {(() => {
                     const maxRooms = Math.ceil((event.max_participants || 4) / 4)
-                    let lastOccupiedRoomIndex = -1
-
+                    
+                    // 1. Start with Room 1 and 2 (always visible)
+                    const roomsToShow = new Set<number>([0, 1])
+                    
+                    // 2. Add all rooms that have at least one participant
                     for (let i = 0; i < maxRooms; i++) {
                         const roomSlots = slots.slice(i * 4, (i + 1) * 4)
                         if (roomSlots.some(s => s !== null)) {
-                            lastOccupiedRoomIndex = i
+                            roomsToShow.add(i)
                         }
                     }
 
-                    const roomsToShow = Math.min(lastOccupiedRoomIndex + 2, maxRooms)
+                    // 3. Check if any of the rooms being shown are already empty
+                    const hasAvailableEmptyShown = Array.from(roomsToShow).some(roomIdx => {
+                        const roomSlots = slots.slice(roomIdx * 4, (roomIdx + 1) * 4)
+                        return !roomSlots.every(s => s !== null) // If any slot in shown room is null
+                    })
 
-                    return Array.from({ length: roomsToShow }).map((_, roomIndex) => {
+                    // 4. If all shown rooms are FULL, find the next one empty room to show
+                    if (!hasAvailableEmptyShown) {
+                        for (let i = 0; i < maxRooms; i++) {
+                            if (!roomsToShow.has(i)) {
+                                roomsToShow.add(i)
+                                break
+                            }
+                        }
+                    }
+
+                    // Sort and filter out of bounds
+                    const sortedRoomIndices = Array.from(roomsToShow)
+                        .filter(i => i < maxRooms)
+                        .sort((a, b) => a - b)
+
+                    return sortedRoomIndices.map((roomIndex) => {
                         const roomSlots = slots.slice(roomIndex * 4, (roomIndex + 1) * 4)
                         const roomTitle = maxRooms === 1 ? '1번방 조인' : `${roomIndex + 1}번방 조인`
 

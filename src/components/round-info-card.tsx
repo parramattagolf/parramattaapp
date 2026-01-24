@@ -46,7 +46,7 @@ export default function RoundInfoCard({ event, participants }: RoundInfoCardProp
                         </div>
                         <div>
                             <div className="text-[16px] font-black text-white/90 tracking-tight">
-                                {event.location}
+                                {event.course_name || event.location}
                             </div>
                         </div>
                     </div>

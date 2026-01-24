@@ -25,7 +25,7 @@ export default async function RoundDetailPage({ params }: { params: Promise<{ id
         .from('events')
         .select(`
             *,
-            host:users!events_host_id_fkey (id, nickname, profile_img, phone, is_admin)
+            host:users!events_host_id_fkey (id, nickname, profile_img, is_admin)
         `)
         .eq('id', id)
         .single()

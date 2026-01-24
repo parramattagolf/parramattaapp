@@ -884,13 +884,34 @@ export default function RoomDetailContent({
                 const currentRoomNo = roomIndex + 1;
                 const rooms = [];
                 
+                const currentRoomParticipants = participants.filter(p => (p.group_no || 1) === currentRoomNo);
+                const isAlone = currentRoomParticipants.length === 1;
+
+                let lowestEmptyRoom = -1;
                 for (let i = 1; i <= totalRooms; i++) {
                   if (i === currentRoomNo) continue;
                   const roomParticipants = participants.filter(p => (p.group_no || 1) === i);
-                  if (roomParticipants.length < 4) {
-                    rooms.push({ number: i, count: roomParticipants.length });
+                  const isOccupied = roomParticipants.length > 0;
+                  
+                  if (isOccupied) {
+                    // Always show occupied rooms (to join others)
+                    if (roomParticipants.length < 4) {
+                      rooms.push({ number: i, count: roomParticipants.length });
+                    }
+                  } else if (lowestEmptyRoom === -1) {
+                    // Only allow moving to an empty room if it's a LOWER number than current (consolidation)
+                    // or if not alone (to leave a crowd)
+                    if (i < currentRoomNo || !isAlone) {
+                      lowestEmptyRoom = i;
+                    }
                   }
                 }
+
+                if (lowestEmptyRoom !== -1) {
+                  rooms.push({ number: lowestEmptyRoom, count: 0 });
+                }
+
+                rooms.sort((a, b) => a.number - b.number);
 
                 if (rooms.length === 0) {
                   return (

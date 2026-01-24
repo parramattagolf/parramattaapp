@@ -10,7 +10,6 @@ export default function OnboardingPage() {
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     real_name: '',
-    phone: '',
     nickname: '',
     job: '',
     mbti: '',
@@ -43,7 +42,6 @@ export default function OnboardingPage() {
         .from('users')
         .update({
           real_name: formData.real_name,
-          phone: formData.phone,
           nickname: formData.nickname,
           job: formData.job,
           mbti: formData.mbti,
@@ -107,17 +105,7 @@ export default function OnboardingPage() {
             />
           </div>
 
-          <div>
-            <label className="block text-[11px] font-bold text-[var(--color-text-desc)] mb-1.5 ml-1">연락처</label>
-            <input
-              required
-              type="tel"
-              className="bg-[var(--color-gray-100)] w-full border border-[var(--color-divider)] rounded-xl p-4 text-[14px] focus:outline-none focus:border-blue-500 transition-colors text-[var(--color-text-primary)] font-mono"
-              placeholder="010-0000-0000"
-              value={formData.phone}
-              onChange={e => setFormData({ ...formData, phone: e.target.value })}
-            />
-          </div>
+
 
           <div className="grid grid-cols-2 gap-4">
             <div>

@@ -44,13 +44,13 @@ export async function GET(request: Request) {
       const nickname = kakaoProfile?.nickname
       
       // Check if user exists in our users table
-      const { data: existingUser } = await supabase
+      const { data: profile } = await supabase
         .from('users')
-        .select('id')
+        .select('*')
         .eq('id', data.user.id)
         .single()
       
-      if (existingUser) {
+      if (profile) {
         // User exists - update profile_img, nickname, and email
         await supabase
           .from('users')
@@ -63,7 +63,7 @@ export async function GET(request: Request) {
           })
           .eq('id', data.user.id)
       } else {
-        // New user - insert with minimal data (email, profile_img, nickname, kakao_id)
+        // New user - insert with minimal data
         await supabase
           .from('users')
           .insert({
@@ -76,6 +76,22 @@ export async function GET(request: Request) {
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           })
+      }
+
+      // Re-fetch or use logic to check if incomplete
+      const checkProfile = profile || { real_name: '', gender: '', age_range: '', district: '', job: '', mbti: '', golf_experience: '', handicap: null, onboarding_reward_received: false };
+      
+      const isProfileIncomplete = !checkProfile.real_name || 
+        !checkProfile.gender || 
+        !checkProfile.age_range || 
+        !checkProfile.district || 
+        !checkProfile.job || 
+        !checkProfile.mbti || 
+        !checkProfile.golf_experience || 
+        checkProfile.handicap === null;
+
+      if (isProfileIncomplete && !checkProfile.onboarding_reward_received) {
+        return NextResponse.redirect(`${origin}/settings?gift_notice=true`)
       }
       
       return NextResponse.redirect(`${origin}${next}`)
