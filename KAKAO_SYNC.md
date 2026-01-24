@@ -103,10 +103,11 @@ if (existingUser) {
 
 | 필드 | 최초 로그인 | 재로그인 | 사용자 수정 가능 |
 |------|------------|---------|----------------|
+| `email` | Kakao → DB | Kakao → DB | ❌ (OAuth 연동) |
 | `profile_img` | Kakao → DB | Kakao → DB 덮어쓰기 | ❌ (Kakao 동기화) |
 | `nickname` | Kakao → DB | Kakao → DB 덮어쓰기 | ✅ (하지만 재로그인 시 Kakao 값으로 복원) |
 | `kakao_id` | Kakao → DB | Kakao → DB 갱신 | ❌ |
-| `real_name` | Empty | 유지 | ✅ |
+| `real_name` | Empty | 빈 값 유지 | ✅ |
 | `phone` | Empty | 유지 | ✅ |
 | `manner_score` | 0 (기본값) | 유지 | ❌ (시스템 관리) |
 | 기타 필드 | 기본값/Empty | 유지 | ✅ |

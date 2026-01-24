@@ -3,8 +3,7 @@ import { createClient } from '@/utils/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { getUserBadges } from '@/actions/sponsor-actions'
-import PremiumSubHeader from '@/components/premium-sub-header'
-import ConnectionRequestButton from '@/components/members/connection-request-button'
+import MemberDetailHeader from '@/components/members/member-detail-header'
 import MembershipBadge from '@/components/members/membership-badge'
 import MannerHistoryGraph from '@/components/manner-history-graph'
 
@@ -75,6 +74,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
         .select(`
             id,
             joined_at,
+            payment_status,
             event:events(
                 id, 
                 title, 
@@ -91,6 +91,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
     type RoundData = {
         id: string
         joined_at: string
+        payment_status: string
         event: {
             id: string
             title: string
@@ -113,9 +114,43 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
         .filter(r => r.event && new Date(r.event.start_date) <= new Date())
         .sort((a, b) => new Date(b.event.start_date).getTime() - new Date(a.event.start_date).getTime())
 
-    // Separate Future Rounds into Official (Admin hosted) vs Friendly (User hosted)
-    const officialRounds = futureRounds.filter(r => r.event.host?.is_admin)
-    const friendlyRounds = futureRounds.filter(r => !r.event.host?.is_admin)
+    // 3. Get Pre-reservations (Interest / Interest expressed)
+    const { data: preReservationData } = await supabase
+        .from('pre_reservations')
+        .select(`
+            id,
+            created_at,
+            event:events(
+                id, 
+                title, 
+                start_date, 
+                course_name,
+                event_type,
+                host:users(is_admin)
+            )
+        `)
+        .eq('user_id', id)
+
+    type PreResData = {
+        id: string
+        created_at: string
+        event: {
+            id: string
+            title: string
+            start_date: string
+            course_name: string
+            event_type: string | null
+            host: { is_admin: boolean } | null
+        }
+    }
+
+    const preReservations = (preReservationData || []) as unknown as PreResData[]
+
+    // Official section -> Showing Pre-reservations (Interest expressed)
+    const officialRounds = [] // True official events could go here too, but per user request, we focus on Pre-reservations
+    
+    // Join section -> Future rounds where user is a participant
+    const friendlyRounds = futureRounds
     
     // For backward compatibility with existing render code (if any left below), 
     // we can use pastRounds as 'recentRounds' but I will replace the render section too.
@@ -145,14 +180,42 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
         isPending = relationship?.status === 'pending'
     }
 
+    // 3. Calculate 24-Week Participation Data
+    const now = new Date()
+    const weeks: { weekLabel: string; count: number; isCurrent: boolean }[] = []
+    
+    for (let i = 23; i >= 0; i--) {
+        const weekStart = new Date(now)
+        weekStart.setDate(now.getDate() - (i * 7 + now.getDay())) // Start of week (Sunday)
+        weekStart.setHours(0, 0, 0, 0)
+        
+        const weekEnd = new Date(weekStart)
+        weekEnd.setDate(weekStart.getDate() + 6)
+        weekEnd.setHours(23, 59, 59, 999)
+
+        const count = pastRounds.filter(r => {
+            const rd = new Date(r.event.start_date)
+            return rd >= weekStart && rd <= weekEnd
+        }).length
+
+        weeks.push({
+            weekLabel: `${weekStart.getMonth() + 1}/${weekStart.getDate()}`,
+            count,
+            isCurrent: i === 0
+        })
+    }
+
+    const maxCount = Math.max(...weeks.map(w => w.count), 1)
+    const totalRecentRounds = weeks.reduce((sum, w) => sum + w.count, 0)
+
     return (
         <div className="min-h-screen bg-[var(--color-bg)] pb-24 font-sans">
-            <PremiumSubHeader 
-                title={profile.nickname} 
-                backHref="/members"
-                rightElement={
-                    !isOwnProfile && <ConnectionRequestButton targetUserId={id} isAlreadyFriend={distance === 1} isPending={isPending} />
-                }
+            <MemberDetailHeader 
+                nickname={profile.nickname} 
+                targetUserId={id} 
+                isOwnProfile={isOwnProfile} 
+                distance={distance} 
+                isPending={isPending} 
             />
 
             <div className="pt-24" />
@@ -208,9 +271,9 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
                             <span className="w-8 text-[var(--color-text-desc)] text-[10px]">성별</span>
                             <span className="font-bold text-pink-300">{profile.gender === 'male' ? '남성' : profile.gender === 'female' ? '여성' : '-'}</span>
                         </div>
-                        <div className="flex items-center text-[var(--color-text-secondary)] col-span-2 mt-1 pt-1 border-t border-white/5">
+                        <div className="flex items-center text-[var(--color-text-secondary)]">
                              <span className="w-8 text-[var(--color-text-desc)] text-[10px]">거주</span>
-                             <span className="font-bold text-gray-300">{profile.district || '미입력'}</span>
+                             <span className="font-bold text-gray-300 truncate">{profile.district || '미입력'}</span>
                         </div>
                     </div>
                 </div>
@@ -259,6 +322,67 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
                 </div>
             </div>
 
+            {/* Participation Rate Graph (24-Week Activity) */}
+            <div className="px-gutter mt-10">
+                 <div className="bg-[#1c1c1e] rounded-3xl p-6 border border-white/5 shadow-2xl relative overflow-hidden">
+                    <div className="flex justify-between items-start mb-6">
+                        <div>
+                            <div className="text-[10px] text-white/30 font-black uppercase tracking-[0.2em] mb-1">Weekly Activity</div>
+                            <h2 className="text-lg font-black text-white">최근 24주 참여 현황</h2>
+                            <p className="text-[11px] text-white/40 mt-1">지난 6개월간 총 <b className="text-blue-400">{totalRecentRounds}회</b> 라운딩</p>
+                        </div>
+                        <div className="bg-blue-500/10 px-3 py-1.5 rounded-xl border border-blue-500/20">
+                            <span className="text-[10px] font-bold text-blue-400">Trend: Stable</span>
+                        </div>
+                    </div>
+
+                    {/* Bar Chart Container */}
+                    <div className="flex items-end justify-between gap-[3px] h-24 mb-4">
+                        {weeks.map((week, idx) => (
+                            <div key={idx} className="flex-1 flex flex-col items-center group h-full justify-end">
+                                {/* Tooltip on hover (mobile might ignore, but nice for logic) */}
+                                <div className="invisible group-hover:visible absolute -top-8 bg-white text-black text-[10px] font-bold px-2 py-1 rounded shadow-lg z-20 whitespace-nowrap">
+                                    {week.weekLabel}: {week.count}회
+                                </div>
+                                
+                                {/* Bar */}
+                                <div 
+                                    className={`w-full rounded-t-sm transition-all duration-700 delay-[${idx * 30}ms] ${
+                                        week.count > 0 
+                                            ? week.isCurrent ? 'bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.5)]' : 'bg-blue-500' 
+                                            : 'bg-white/[0.03]'
+                                    }`}
+                                    style={{ 
+                                        height: `${week.count > 0 ? Math.max((week.count / maxCount) * 100, 15) : 8}%`,
+                                        opacity: week.count > 0 ? 1 : 0.3
+                                    }}
+                                />
+                                
+                                {idx % 4 === 0 && (
+                                    <span className="text-[8px] text-white/10 font-bold mt-2 transform scale-75">
+                                        {week.weekLabel}
+                                    </span>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="flex justify-between items-center pt-4 border-t border-white/5 mt-2">
+                        <div className="flex gap-4">
+                            <div className="flex items-center gap-1.5">
+                                <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                                <span className="text-[9px] text-white/30 font-bold">참여함</span>
+                            </div>
+                            <div className="flex items-center gap-1.5">
+                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-400"></div>
+                                <span className="text-[9px] text-white/30 font-bold">이번 주</span>
+                            </div>
+                        </div>
+                        <span className="text-[9px] text-white/20 italic">Last Updated: {new Date().toLocaleDateString('ko-KR')}</span>
+                    </div>
+                 </div>
+            </div>
+
             {/* Participating Rounds (Future) */}
             <div className="px-gutter mt-10 space-y-8">
                 {/* Official Rounds */}
@@ -266,23 +390,31 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
                      <h2 className="text-base font-bold text-[var(--color-text-primary)] mb-4 flex items-center gap-2">
                         사전예약된 일정 <span className="text-blue-500 text-xs ml-1">Official</span>
                     </h2>
-                     <div className="space-y-3">
-                        {officialRounds.length > 0 ? (
-                            officialRounds.map((round) => (
+                      <div className="space-y-3">
+                        {preReservations.length > 0 ? (
+                            preReservations.map((pre) => (
                                 <Link 
-                                    href={`/rounds/${round.event.id}`}
-                                    key={round.id}
-                                    className="block bg-blue-500/5 p-4 rounded-xl border border-blue-500/20 active:scale-[0.98] transition-all"
+                                    href={`/rounds/${pre.event.id}`}
+                                    key={pre.id}
+                                    className="block bg-purple-500/5 p-4 rounded-xl border border-purple-500/20 active:scale-[0.98] transition-all"
                                 >
                                     <div className="flex justify-between items-start mb-1">
-                                        <div className="text-sm font-bold text-blue-100 truncate max-w-[70%]">{round.event.title}</div>
-                                        <div className="text-[10px] text-blue-300 font-mono bg-blue-500/10 px-2 py-0.5 rounded-full">
-                                            {new Date(round.event.start_date).toLocaleDateString()}
+                                        <div className="flex flex-col gap-1 max-w-[70%]">
+                                            <div className="text-sm font-bold text-purple-100 truncate">{pre.event.title}</div>
+                                            <div className="flex items-center gap-1.5">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-purple-500 animate-pulse"></span>
+                                                <span className="text-[10px] text-purple-400 font-black uppercase">사전예약 완료 (모집 대기)</span>
+                                            </div>
+                                        </div>
+                                        <div className="text-[10px] text-purple-300 font-mono">
+                                            {new Date(pre.event.start_date).toLocaleDateString()}
                                         </div>
                                     </div>
-                                    <div className="text-xs text-blue-200/70 mt-1">
-                                        📍 {round.event.course_name || '미정'}
-                                    </div>
+                                    {pre.event.course_name && (
+                                        <div className="text-xs text-purple-200/70 mt-1.5">
+                                            📍 {pre.event.course_name}
+                                        </div>
+                                    )}
                                 </Link>
                             ))
                         ) : (
@@ -304,17 +436,31 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
                                 <Link 
                                     href={`/rounds/${round.event.id}`}
                                     key={round.id}
-                                    className="block bg-[var(--color-gray-100)] p-4 rounded-xl border border-[var(--color-divider)] active:scale-[0.98] transition-all"
+                                    className={`block p-4 rounded-xl border active:scale-[0.98] transition-all ${
+                                        round.payment_status !== 'paid' 
+                                            ? 'bg-red-500/5 border-red-500/20' 
+                                            : 'bg-[var(--color-gray-100)] border-[var(--color-divider)]'
+                                    }`}
                                 >
                                     <div className="flex justify-between items-start mb-1">
-                                        <div className="text-sm font-bold text-white truncate max-w-[70%]">{round.event.title}</div>
+                                        <div className="flex flex-col gap-1 max-w-[70%]">
+                                            <div className="text-sm font-bold text-white truncate">{round.event.title}</div>
+                                            {round.payment_status !== 'paid' && (
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+                                                    <span className="text-[10px] text-red-400 font-black uppercase">결제 대기중 (3시간 내 미결제 시 취소)</span>
+                                                </div>
+                                            )}
+                                        </div>
                                         <div className="text-[10px] text-[var(--color-text-desc)] font-mono">
                                             {new Date(round.event.start_date).toLocaleDateString()}
                                         </div>
                                     </div>
-                                    <div className="text-xs text-[var(--color-text-desc)] mt-1">
-                                        📍 {round.event.course_name || '미정'}
-                                    </div>
+                                    {round.event.course_name && (
+                                        <div className="text-xs text-[var(--color-text-desc)] mt-1">
+                                            📍 {round.event.course_name}
+                                        </div>
+                                    )}
                                 </Link>
                             ))
                         ) : (

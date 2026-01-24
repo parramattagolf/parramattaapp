@@ -69,7 +69,7 @@ export default function PreReservationButton({ eventId, isReserved }: { eventId:
                     : 'bg-blue-600 text-white hover:bg-blue-500 shadow-blue-900/30'}
             `}
         >
-            {loading ? '처리중...' : (isReserved ? '예약취소' : '사전예약')}
+            {loading ? '처리중...' : (isReserved ? '사전예약취소' : '사전예약')}
         </button>
     )
 }

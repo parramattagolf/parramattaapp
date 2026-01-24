@@ -14,24 +14,42 @@ export default function MembershipBadge({ level, className }: MembershipBadgePro
     // Handle case-insensitive level check
     const normalizedLevel = level.toLowerCase()
 
-    const levelColors: Record<string, string> = {
-        'red': 'bg-red-500',
-        'white': 'bg-white text-black',
-        'blue': 'bg-blue-500',
-        'black': 'bg-black border border-white/20'
+    const levels = ['black', 'blue', 'white', 'red']
+    
+    const levelStyles: Record<string, { active: string; label: string }> = {
+        'red': { active: 'bg-red-500 text-white', label: 'RED' },
+        'white': { active: 'bg-white text-black', label: 'WHITE' },
+        'blue': { active: 'bg-blue-500 text-white', label: 'BLUE' },
+        'black': { active: 'bg-black text-white border border-white/30', label: 'BLACK' }
     }
 
     return (
         <>
-            <button 
-                onClick={(e) => {
-                    e.stopPropagation() // Prevent header click issues
-                    setIsOpen(true)
-                }}
-                className={`${levelColors[normalizedLevel] || 'bg-gray-500'} text-[9px] font-black px-2 py-0.5 rounded-full uppercase tracking-tighter hover:scale-105 active:scale-95 transition-transform cursor-pointer shadow-lg ${className || ''}`}
-            >
-                {level.toUpperCase()}
-            </button>
+            <div className={`flex flex-col gap-1 items-center ${className || ''}`}>
+                {levels.map((l) => {
+                    const isActive = normalizedLevel === l
+                    const style = levelStyles[l]
+                    
+                    return (
+                        <button 
+                            key={l}
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                setIsOpen(true)
+                            }}
+                            className={`
+                                text-[7px] font-black w-11 py-0.5 rounded-full uppercase tracking-tighter transition-all duration-300 text-center
+                                ${isActive 
+                                    ? `${style.active} shadow-[0_0_10px_rgba(255,255,255,0.1)] scale-110 z-10` 
+                                    : 'bg-white/5 text-white/20 hover:bg-white/10'
+                                }
+                            `}
+                        >
+                            {style.label}
+                        </button>
+                    )
+                })}
+            </div>
 
             {/* Modal Overlay */}
             {isOpen && (

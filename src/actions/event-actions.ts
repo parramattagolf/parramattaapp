@@ -665,12 +665,22 @@ export async function holdSlot(eventId: string, groupNo: number, slotIndex: numb
 
     if (!user) throw new Error('Unauthorized')
 
-    // Check if user is room host or admin
-    const isHost = await checkIsRoomHost(eventId, groupNo)
-    const { data: userData } = await supabase.from('users').select('is_admin').eq('id', user.id).single()
+    // Check if user is a participant in the event
+    const { data: participant } = await supabase.from('participants').select('id, group_no').eq('event_id', eventId).eq('user_id', user.id).single()
+    const { data: userData } = await supabase.from('users').select('is_admin, nickname').eq('id', user.id).single()
     const isAdmin = userData?.is_admin === true
 
-    if (!isHost && !isAdmin) throw new Error('조인방 호스트나 관리자만 슬롯을 홀드할 수 있습니다.')
+    if (!participant && !isAdmin) throw new Error('조인방에 참가 중인 회원만 슬롯을 홀드할 수 있습니다.')
+
+    // Check if user already held a slot in this event/room (history)
+    const { data: history } = await supabase
+        .from('held_slots_history')
+        .select('id')
+        .eq('event_id', eventId)
+        .eq('user_id', user.id)
+        .single()
+    
+    if (history && !isAdmin) throw new Error('슬롯 홀드는 1회만 가능하며, 이미 사용하셨습니다.')
 
     // Check if slot is already held or occupied
     const { data: existingHold } = await supabase
@@ -695,6 +705,26 @@ export async function holdSlot(eventId: string, groupNo: number, slotIndex: numb
     if (error) {
         console.error('Hold slot error:', error)
         throw new Error('슬롯 홀드 실패')
+    }
+
+    // Record in history
+    await supabase.from('held_slots_history').insert({
+        user_id: user.id,
+        event_id: eventId,
+        group_no: groupNo,
+        slot_index: slotIndex
+    })
+
+    // Send notification to the user who held the slot
+    const { data: eventData } = await supabase.from('events').select('title').eq('id', eventId).single()
+    if (eventData) {
+        await supabase.from('notifications').insert({
+            receiver_id: user.id,
+            type: 'system',
+            title: '슬롯 홀드 알림',
+            content: `'${eventData.title}' ${groupNo}번방 슬롯을 홀드했습니다. 6시간 내에 '초대하기'를 통해 친구를 불러주세요. 이 홀드가 해제되거나 만료되면 다시 홀드할 수 없습니다.`,
+            is_read: false
+        })
     }
 
     revalidatePath(`/rounds/${eventId}`)
@@ -739,7 +769,10 @@ export async function getHeldSlots(eventId: string) {
 
     const { data: holds } = await supabase
         .from('held_slots')
-        .select('*')
+        .select(`
+            *,
+            holder:users!held_slots_held_by_fkey(nickname)
+        `)
         .eq('event_id', eventId)
 
     if (!holds || holds.length === 0) return []
@@ -846,4 +879,67 @@ export async function handleHostSuccession(eventId: string, groupNo: number, lea
             }).eq('id', nextParticipant.user_id)
         }
     }
+}
+
+export async function moveRoom(eventId: string, targetGroupNo: number) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Unauthorized')
+
+    // 1. Get current participant info
+    const { data: participant } = await supabase
+        .from('participants')
+        .select('group_no')
+        .eq('event_id', eventId)
+        .eq('user_id', user.id)
+        .single()
+    
+    if (!participant) throw new Error('참가 정보가 없습니다.')
+    const oldGroupNo = participant.group_no || 1
+    if (oldGroupNo === targetGroupNo) throw new Error('이미 같은 방에 있습니다.')
+
+    // 2. Check if target group is full (Max 4)
+    const { count: groupCount } = await supabase
+        .from('participants')
+        .select('*', { count: 'exact' })
+        .eq('event_id', eventId)
+        .eq('group_no', targetGroupNo)
+    
+    if (groupCount && groupCount >= 4) throw new Error(`${targetGroupNo}번 방은 이미 꽉 찼습니다.`)
+
+    // 3. Update group_no
+    const { error: updateError } = await supabase
+        .from('participants')
+        .update({ group_no: targetGroupNo })
+        .eq('event_id', eventId)
+        .eq('user_id', user.id)
+    
+    if (updateError) throw new Error('방 이동 실패')
+
+    // 4. Release held slots in OLD group
+    await supabase
+        .from('held_slots')
+        .delete()
+        .eq('event_id', eventId)
+        .eq('group_no', oldGroupNo)
+        .eq('held_by', user.id)
+    
+    // 5. Host Succession in OLD group
+    await handleHostSuccession(eventId, oldGroupNo, user.id)
+
+    // 6. Check if user becomes host in NEW group (first joiner)
+    if (groupCount === 0) {
+         await supabase.from('host_history').insert({
+             event_id: eventId,
+             group_no: targetGroupNo,
+             user_id: user.id
+         })
+         const { data: u } = await supabase.from('users').select('host_count').eq('id', user.id).single()
+         if (u) {
+            await supabase.from('users').update({ host_count: (u.host_count || 0) + 1 }).eq('id', user.id)
+         }
+    }
+
+    revalidatePath(`/rounds/${eventId}`)
+    return { success: true, message: `${targetGroupNo}번 방으로 이동되었습니다.` }
 }

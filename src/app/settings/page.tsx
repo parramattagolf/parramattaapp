@@ -229,12 +229,7 @@ export default function SettingsPage() {
                             onChange={(e) => setProfile({ ...profile, phone: e.target.value })} 
                             placeholder="전화번호"
                         />
-                        <SettingsInput 
-                            icon={MapPin} 
-                            value={profile.district} 
-                            onChange={(e) => setProfile({ ...profile, district: e.target.value })} 
-                            placeholder="거주 지역 (예: 분당구 정자동)"
-                        />
+
 
                          {/* Gender & Age Range Grid */}
                         <div className="grid grid-cols-2 gap-4">
@@ -311,6 +306,13 @@ export default function SettingsPage() {
                                 </div>
                             </div>
                         </div>
+
+                        <SettingsInput 
+                            icon={MapPin} 
+                            value={profile.district} 
+                            onChange={(e) => setProfile({ ...profile, district: e.target.value })} 
+                            placeholder="거주 지역 (예: 분당구 정자동)"
+                        />
                         
                         <SettingsInput 
                             icon={FileText} 

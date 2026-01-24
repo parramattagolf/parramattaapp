@@ -65,6 +65,29 @@ export default function RoundInfoCard({ event, participants }: RoundInfoCardProp
                         </div>
                     </div>
 
+                    {/* 3.5. Cost */}
+                    <div className="flex items-center gap-5 p-2 -ml-2">
+                        <div className="w-12 h-12 rounded-[18px] bg-[#2c2c2e] flex items-center justify-center border border-white/5 shadow-inner shrink-0">
+                            <span className="text-xl">💰</span>
+                        </div>
+                        <div>
+                            <div className="text-[16px] font-black text-white/90 tracking-tight">
+                                <span className="text-emerald-500">{event.cost?.toLocaleString() || 0}원</span>
+                            </div>
+                            <div className="text-[11px] text-white/40 font-medium mt-1 leading-tight">
+                                {(() => {
+                                    const start = new Date(event.start_date)
+                                    const end = event.end_date ? new Date(event.end_date) : start
+                                    const isMultiDay = end.getTime() - start.getTime() > 1000 * 60 * 60 * 24
+                                    
+                                    return isMultiDay 
+                                        ? "그린피, 숙박비 (카트비, 캐디피등 부대비용은 현장결제)"
+                                        : "그린피 (카트비, 캐디피등 부대비용은 현장결제)";
+                                })()}
+                            </div>
+                        </div>
+                    </div>
+
                     {/* 4. Host (Hidden if admin) */}
                     {!event.host?.is_admin && (
                         <div className="flex items-center gap-5 p-2 -ml-2">

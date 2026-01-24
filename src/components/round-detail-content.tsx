@@ -207,7 +207,7 @@ export default function RoundDetailContent({ event, participants, isHost, isJoin
                                                 {slot ? (
                                                     <div className="w-full h-full flex flex-col items-center justify-center">
                                                         <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                                        <div className="w-10 h-10 bg-[#2c2c2e] rounded-xl mb-2 overflow-hidden border border-white/10 shadow-inner translate-y-0 group-hover:-translate-y-1 transition-transform active:scale-90 relative z-10">
+                                                        <div className="w-10 h-10 bg-[#2c2c2e] rounded-xl mb-2 overflow-hidden border border-white/10 shadow-inner translate-y-0 group-hover:-translate-y-1 transition-transform active:scale-95 relative z-10">
                                                             {slot.user?.profile_img ? (
                                                                 <div className="relative w-full h-full">
                                                                     <Image src={slot.user.profile_img} className="object-cover" alt="" fill unoptimized />
@@ -218,9 +218,7 @@ export default function RoundDetailContent({ event, participants, isHost, isJoin
                                                         </div>
                                                         <div className="text-center w-full px-1 relative z-10">
                                                             <div className="font-black text-[10px] text-white truncate tracking-tighter leading-none">{slot.user?.nickname}</div>
-                                                            {slot.user?.job && (
-                                                                <div className="text-[8px] text-white/30 font-black truncate uppercase tracking-[0.2em] mt-1 hidden sm:block">{slot.user.job}</div>
-                                                            )}
+
                                                             {slot.payment_status !== 'paid' && (
                                                                 <div className="mt-1 bg-red-500/10 px-1.5 py-0.5 rounded-full inline-flex items-center gap-1 border border-red-500/10 shadow-lg">
                                                                     <div className="w-1 h-1 bg-red-500 rounded-full animate-pulse"></div>
@@ -230,13 +228,13 @@ export default function RoundDetailContent({ event, participants, isHost, isJoin
 
                                                         {/* Room Host Badge (first joiner) */}
                                                         {roomHosts[roomIndex + 1] === slot.user_id && (
-                                                            <span className="absolute top-1 left-1 text-[8px] bg-yellow-500/20 text-yellow-500 px-1 py-0.5 rounded font-bold z-20">👑</span>
+                                                            <div className="absolute top-1 left-1 bg-yellow-400 text-black text-[7px] font-black px-1 py-0.5 rounded-[3px] z-20 shadow-sm tracking-tighter">
+                                                                방장
+                                                            </div>
                                                         )}
 
                                                         {/* Event Creator indicator (blue dot) */}
-                                                        {slot.user_id === event.host_id && (
-                                                            <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-blue-500 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.8)] z-20"></span>
-                                                        )}
+
                                                     </div>
                                                 ) : isHeld ? (
                                                     // Held slot UI

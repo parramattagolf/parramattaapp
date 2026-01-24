@@ -51,10 +51,11 @@ export async function GET(request: Request) {
         .single()
       
       if (existingUser) {
-        // User exists - update profile_img and nickname only
+        // User exists - update profile_img, nickname, and email
         await supabase
           .from('users')
           .update({
+            email: data.user.email || null,
             profile_img: profileImageUrl || null,
             nickname: nickname || null,
             kakao_id: kakaoId || null,
@@ -62,11 +63,12 @@ export async function GET(request: Request) {
           })
           .eq('id', data.user.id)
       } else {
-        // New user - insert with minimal data (profile_img, nickname, kakao_id)
+        // New user - insert with minimal data (email, profile_img, nickname, kakao_id)
         await supabase
           .from('users')
           .insert({
             id: data.user.id,
+            email: data.user.email || null,
             kakao_id: kakaoId || null,
             nickname: nickname || null,
             profile_img: profileImageUrl || null,

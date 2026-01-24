@@ -7,11 +7,12 @@ import { ArrowLeft } from 'lucide-react'
 interface PremiumSubHeaderProps {
     title: React.ReactNode;
     backHref: string;
+    onBack?: () => void;
     rightElement?: React.ReactNode;
     titleClassName?: string;
 }
 
-export default function PremiumSubHeader({ title, backHref, rightElement, titleClassName }: PremiumSubHeaderProps) {
+export default function PremiumSubHeader({ title, backHref, onBack, rightElement, titleClassName }: PremiumSubHeaderProps) {
     const [isVisible, setIsVisible] = useState(true)
     const [lastScrollY, setLastScrollY] = useState(0)
 
@@ -39,12 +40,21 @@ export default function PremiumSubHeader({ title, backHref, rightElement, titleC
         >
             <div className="px-gutter flex items-center justify-between">
                 <div className="flex items-center gap-4 min-w-0 flex-1">
-                    <Link
-                        href={backHref}
-                        className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-2xl transition-all active:scale-90 bg-white/5 border border-white/10 text-white hover:text-blue-400"
-                    >
-                        <ArrowLeft size={18} strokeWidth={3} />
-                    </Link>
+                    {onBack ? (
+                        <button
+                            onClick={onBack}
+                            className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-2xl transition-all active:scale-90 bg-white/5 border border-white/10 text-white hover:text-blue-400"
+                        >
+                            <ArrowLeft size={18} strokeWidth={3} />
+                        </button>
+                    ) : (
+                        <Link
+                            href={backHref}
+                            className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-2xl transition-all active:scale-90 bg-white/5 border border-white/10 text-white hover:text-blue-400"
+                        >
+                            <ArrowLeft size={18} strokeWidth={3} />
+                        </Link>
+                    )}
 
                     <h1 className={`text-[15px] font-black text-white tracking-tighter transition-all duration-500 opacity-100 translate-x-0 ${titleClassName || 'truncate'}`}>
                         {/* className={`text-[15px] font-black text-white tracking-tighter truncate transition-all duration-500 ${isScrolled ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4' */}

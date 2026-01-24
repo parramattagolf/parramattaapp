@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation'
 
 import RoomDetailContent from '@/components/room-detail-content'
 import PremiumSubHeader from '@/components/premium-sub-header'
+import BecomeHostBanner from '@/components/rounds/become-host-banner'
 
 export default async function RoomDetailPage({ params }: { params: Promise<{ id: string, roomNumber: string }> }) {
     const { id, roomNumber } = await params
@@ -42,9 +43,7 @@ export default async function RoomDetailPage({ params }: { params: Promise<{ id:
     const roomHostId = await getRoomHost(id, parseInt(roomNumber))
 
     // Calculate room name
-    const maxParticipants = event.max_participants || 4
-    const totalRooms = Math.ceil(maxParticipants / 4)
-    const roomTitle = totalRooms === 1 ? '조인방' : `${roomNumber}번 조인방`
+    const roomTitle = `${roomNumber}번방 ${event.title}`
 
     return (
         <div className="min-h-screen bg-[#121212] font-sans pb-32">
@@ -54,6 +53,11 @@ export default async function RoomDetailPage({ params }: { params: Promise<{ id:
             />
 
             <main className="px-6 pt-24 space-y-8 animate-fade-in">
+                {/* 1. Host Encouragement Banner (If room is empty) */}
+                {!roomHostId && (
+                    <BecomeHostBanner />
+                )}
+
                 {/* Chat Section */}
 
 

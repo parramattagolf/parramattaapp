@@ -8,11 +8,15 @@ import PreReservationButton from '@/components/pre-reservation-button'
 import PreReservationList from '@/components/pre-reservation-list'
 
 import RoundEntranceGuard from '@/components/rounds/round-entrance-guard'
+import PreReservationBanner from '@/components/rounds/pre-reservation-banner'
+import HostBenefitsBanner from '@/components/rounds/host-benefits-banner'
+import RoundRealtimeListener from '@/components/rounds/round-realtime-listener'
 
 export default async function RoundDetailPage({ params }: { params: Promise<{ id: string }> }) {
     // In Next.js 15+, params is a Promise. 
     // Wait for params to resolve before using params.id
     const { id } = await params;
+
 
     const supabase = await createClient()
 
@@ -64,8 +68,18 @@ export default async function RoundDetailPage({ params }: { params: Promise<{ id
     const isPreReserved = !!currentUserPreReservation
     const isJoined = !!currentUserParticipant
 
+    // 4. Check for active invitation for this user in this event
+    const { data: invitation } = (user && userStatus === 'pre_reserved') ? await supabase
+        .from('held_slots')
+        .select('group_no')
+        .eq('event_id', id)
+        .eq('invited_user_id', user.id)
+        .maybeSingle() : { data: null }
+
     return (
-        <div className="min-h-screen bg-[#121212] pb-32 font-sans overflow-x-hidden">
+        <>
+            <RoundRealtimeListener eventId={id} />
+            <div className="min-h-screen bg-[#121212] pb-32 font-sans overflow-x-hidden">
             <RoundEntranceGuard 
                 status={userStatus}
                 paymentStatus={currentUserParticipant?.payment_status as 'paid' | 'unpaid' | null}
@@ -100,10 +114,26 @@ export default async function RoundDetailPage({ params }: { params: Promise<{ id
             </div>
 
             <main className="px-6 space-y-12">
+                {/* 0. Pre-reservation List (Now at the top) */}
+                <PreReservationList reservations={preReservations || []} />
+
+                {/* 1. Pre-reservation Encouragement Banner (Inline) */}
+                {userStatus === 'none' && (
+                    <div className="animate-fade-in">
+                        <PreReservationBanner eventId={event.id} />
+                    </div>
+                )}
+
+                {/* 2. Host Benefits Banner (For Pre-reserved Users) */}
+                {userStatus === 'pre_reserved' && (
+                    <div className="animate-fade-in">
+                        <HostBenefitsBanner eventId={event.id} invitation={invitation} />
+                    </div>
+                )}
+
                 {/* Master Info Card (Client Component with Interaction) */}
                 <div>
                     <RoundInfoCard event={event} participants={participants || []} />
-                    <PreReservationList reservations={preReservations || []} />
                 </div>
 
                 {/* Chat Section (Moved from Content) */}
@@ -121,5 +151,6 @@ export default async function RoundDetailPage({ params }: { params: Promise<{ id
                 </div>
             </main>
         </div>
+        </>
     )
 }

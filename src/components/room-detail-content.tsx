@@ -7,14 +7,14 @@ import {
   inviteParticipant,
   holdSlot,
   releaseSlot,
+  moveRoom,
 } from "@/actions/event-actions";
 import InviteModal from "@/components/invite-modal";
-import RoomInfoPopup from "@/components/room-info-popup";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import confetti from "canvas-confetti";
-import { Lock, Unlock } from "lucide-react";
+import { Lock, Unlock, AlertCircle, Users } from "lucide-react";
 
 interface Participant {
   id: string;
@@ -61,6 +61,8 @@ interface HeldSlot {
   slot_index: number;
   held_by: string;
   invited_user_id?: string;
+  created_at: string;
+  holder?: { nickname: string };
 }
 
 export default function RoomDetailContent({
@@ -84,21 +86,14 @@ export default function RoomDetailContent({
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [heldSlots, setHeldSlots] = useState<HeldSlot[]>([]);
   const [userData, setUserData] = useState<UserData | null>(null);
-  const [showInfoPopup, setShowInfoPopup] = useState(false);
   const [isJoinConfirmOpen, setIsJoinConfirmOpen] = useState(false);
+  const [isMoveRoomOpen, setIsMoveRoomOpen] = useState(false);
+  const [isMoving, setIsMoving] = useState(false);
   const [holdConfirmSlot, setHoldConfirmSlot] = useState<number | null>(null);
   const router = useRouter();
   const supabase = createClient();
 
-  // Show info popup on first visit to room detail
-  useEffect(() => {
-    const popupKey = `hasSeenRoomInfoPopup_${event.id}_${roomIndex}`;
-    const hasSeenPopup = localStorage.getItem(popupKey);
-    if (!hasSeenPopup) {
-      setShowInfoPopup(true);
-      localStorage.setItem(popupKey, "true");
-    }
-  }, [event.id, roomIndex]);
+
 
   useEffect(() => {
     if (authUser) {
@@ -201,6 +196,23 @@ export default function RoomDetailContent({
     setIsJoinConfirmOpen(true);
   };
 
+  const handleMoveRoom = async (targetRoom: number) => {
+    if (isMoving) return;
+    setIsMoving(true);
+    try {
+      const result = await moveRoom(event.id, targetRoom);
+      if (result.success) {
+        alert(result.message);
+        setIsMoveRoomOpen(false);
+        router.push(`/rounds/${event.id}/rooms/${targetRoom}`);
+      }
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "이동 실패");
+    } finally {
+      setIsMoving(false);
+    }
+  };
+
   const confirmJoin = async () => {
     setIsJoinConfirmOpen(false);
     try {
@@ -250,14 +262,22 @@ export default function RoomDetailContent({
       return;
     }
 
-    // Check if user can hold/release (either room host or admin)
-    const canManageSlot = isRoomHost || userData?.is_admin;
+    // Check if user can hold/release (anyone joined can hold if it's empty, holder or admin can release)
+    const canHoldSlot = isJoined || userData?.is_admin;
+    const heldSlot = heldSlots.find(s => s.group_no === roomIndex + 1 && s.slot_index === slotIndex);
+    const isHolder = heldSlot?.held_by === authUser?.id;
+    const canReleaseSlot = isHolder || userData?.is_admin;
 
-    if (canManageSlot) {
-      setHoldConfirmSlot(slotIndex);
-    } else if (!isJoined) {
-      // Regular user clicking empty slot - open join modal
-      handleJoinClick();
+    if (isHeld) {
+      if (canReleaseSlot) {
+        setHoldConfirmSlot(slotIndex);
+      }
+    } else {
+      if (canHoldSlot) {
+        setHoldConfirmSlot(slotIndex);
+      } else if (!isJoined) {
+        handleJoinClick();
+      }
     }
   };
 
@@ -350,10 +370,64 @@ export default function RoomDetailContent({
 
     return (
       <span
-        className={`font-mono font-bold text-xs ${isExpired ? "text-gray-500" : "text-red-500"}`}
+        className={`font-mono font-black text-lg ${isExpired ? "text-gray-500" : "text-red-500"}`}
       >
         {left}
       </span>
+    );
+  };
+
+  const HoldTimer = ({
+    heldAt,
+    onExpire,
+  }: {
+    heldAt: string;
+    onExpire: () => void;
+  }) => {
+    const [left, setLeft] = useState("");
+    const [isExpired, setIsExpired] = useState(false);
+
+    useEffect(() => {
+      const checkExpiration = () => {
+        const deadline = new Date(
+          new Date(heldAt).getTime() + 6 * 60 * 60 * 1000,
+        );
+        const now = new Date();
+        const diff = deadline.getTime() - now.getTime();
+
+        if (diff <= 0) {
+          setLeft("만료됨");
+          if (!isExpired) {
+            setIsExpired(true);
+            onExpire();
+          }
+          return true;
+        } else {
+          const h = Math.floor(diff / (1000 * 60 * 60));
+          const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+          const s = Math.floor((diff % (1000 * 60)) / 1000);
+          setLeft(`${h}:${m < 10 ? "0" + m : m}:${s < 10 ? "0" + s : s}`);
+          return false;
+        }
+      };
+
+      if (checkExpiration()) return;
+
+      const timer = setInterval(() => {
+        if (checkExpiration()) {
+          clearInterval(timer);
+        }
+      }, 1000);
+      return () => clearInterval(timer);
+    }, [heldAt, isExpired, onExpire]);
+
+    return (
+      <div className="mt-3 bg-yellow-500/10 px-4 py-2 rounded-2xl inline-flex items-center gap-2 border border-yellow-500/20 shadow-[0_0_20px_rgba(234,179,8,0.15)]">
+         <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(234,179,8,0.6)]"></div>
+         <span className="font-mono font-black text-lg text-yellow-500 tracking-tight">
+           {left}
+         </span>
+      </div>
     );
   };
 
@@ -371,12 +445,22 @@ export default function RoomDetailContent({
 
   return (
     <div>
-      {/* Event Title */}
-      <div className="text-center mb-6 px-4">
-        <h2 className="text-xl font-black text-white leading-relaxed tracking-tight break-keep border-b border-white/10 pb-4">
-          {event.title}
-        </h2>
-      </div>
+
+
+      {/* Held Slot Guidance for Holder */}
+      {heldSlots.some(s => s.group_no === roomIndex + 1 && s.held_by === authUser?.id) && (
+        <div className="mb-6 mx-4 animate-bounce-subtle">
+          <div className="bg-blue-600/10 border border-blue-500/30 rounded-2xl p-4 flex items-center gap-3 shadow-[0_0_20px_rgba(37,99,235,0.1)]">
+            <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center shrink-0 shadow-lg">
+              <Users size={20} className="text-white" />
+            </div>
+            <div className="flex-1">
+              <p className="text-[14px] text-white font-black leading-tight">선점한 홀드 슬롯이 있습니다! 🔐</p>
+              <p className="text-[12px] text-blue-400 font-bold mt-1">&quot;초대하기&quot;를 통해 친구를 참가시켜 주세요.</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Action Buttons for joined users */}
       <div className="flex items-center mb-6 gap-2 w-full">
@@ -389,7 +473,7 @@ export default function RoomDetailContent({
               초대하기
             </button>
             <button
-              onClick={() => alert("준비중입니다.")}
+              onClick={() => setIsMoveRoomOpen(true)}
               className="flex-1 text-[15px] bg-yellow-500 text-black py-4 rounded-2xl font-black border border-yellow-500/20 active:scale-95 transition-all shadow-[0_4px_12px_rgba(234,179,8,0.3)] tracking-tight hover:bg-yellow-400"
             >
               방옮기기
@@ -457,6 +541,11 @@ export default function RoomDetailContent({
               {slot ? (
                 <>
                   <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  {slot.user_id === roomHostId && (
+                    <div className="absolute top-4 left-4 bg-yellow-400 text-black text-[9px] font-black px-1.5 py-0.5 rounded-[5px] z-20 shadow-lg tracking-tighter ring-1 ring-black/10">
+                      방장
+                    </div>
+                  )}
                   <div className="w-16 h-16 bg-[#2c2c2e] rounded-[22px] mb-4 overflow-hidden border border-white/10 shadow-inner translate-y-0 group-hover:-translate-y-1 transition-transform active:scale-90 relative z-10">
                     {slot.user?.profile_img ? (
                       <div className="relative w-full h-full">
@@ -473,24 +562,16 @@ export default function RoomDetailContent({
                         👤
                       </div>
                     )}
-                    {slot.user_id === roomHostId && (
-                      <div className="absolute -top-1 -right-1 text-lg z-20 drop-shadow-md">
-                        👑
-                      </div>
-                    )}
+
                   </div>
                   <div className="text-center w-full px-2 relative z-10">
                     <div className="font-black text-[15px] text-white truncate tracking-tighter leading-none">
                       {slot.user?.nickname}
                     </div>
-                    {slot.user?.job && (
-                      <div className="text-[10px] text-white/30 font-black truncate uppercase tracking-[0.2em] mt-2 mb-1">
-                        {slot.user.job}
-                      </div>
-                    )}
+
                     {slot.payment_status !== "paid" && (
-                      <div className="mt-2 bg-red-500/10 px-3 py-1 rounded-full inline-flex items-center gap-1.5 border border-red-500/10 shadow-lg">
-                        <div className="w-1 h-1 bg-red-500 rounded-full animate-pulse"></div>
+                      <div className="mt-3 bg-red-500/20 px-4 py-2 rounded-2xl inline-flex items-center gap-2 border border-red-500/30 shadow-[0_0_20px_rgba(239,68,68,0.2)]">
+                        <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
                         <TimeDisplay
                           joinedAt={slot.joined_at}
                           onExpire={async () => {
@@ -519,24 +600,45 @@ export default function RoomDetailContent({
                     </button>
                   )}
 
-                  {slot.user_id === event.host_id && (
-                    <span className="absolute top-5 left-5 w-2 h-2 bg-blue-500 rounded-full shadow-[0_0_10px_rgba(59,130,246,0.8)] z-20"></span>
-                  )}
+
                 </>
               ) : isHeld ? (
-                <div className="flex flex-col items-center justify-center text-yellow-500/50 gap-2">
-                  <Lock size={28} className="text-yellow-500/60" />
-                  <span className="text-[11px] font-black uppercase tracking-widest">
+                <div className="flex flex-col items-center justify-center text-yellow-500/50 gap-1 w-full relative h-full">
+                  {/* Holder Nickname Badge */}
+                  <div className="absolute top-4 left-4 bg-white text-black text-[10px] font-black px-2.5 py-1 rounded-[6px] z-20 shadow-xl tracking-tighter ring-1 ring-black/5 flex items-center gap-1.5">
+                    <span className="opacity-30 text-[8px] font-black">BY</span>
+                    <span>{heldSlot.holder?.nickname || 'Unknown'}</span>
+                  </div>
+
+                  <div className="bg-yellow-500/10 p-3 rounded-2xl border border-yellow-500/10 mb-1 group-hover:scale-110 transition-transform">
+                    <Lock size={20} className="text-yellow-500/60" />
+                  </div>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-yellow-500/80">
                     Reserved
                   </span>
+                  
+                  {/* Hold Timer */}
+                  <HoldTimer 
+                    heldAt={heldSlot.created_at} 
+                    onExpire={async () => {
+                      try {
+                        await releaseSlot(event.id, roomIndex + 1, i);
+                        await fetchHeldSlots();
+                        router.refresh();
+                      } catch (e) {
+                        console.error("Hold expiry cleanup failed", e);
+                      }
+                    }} 
+                  />
+
                   {isInvitedHere && (
-                    <span className="text-[10px] text-blue-400 font-bold mt-1 animate-pulse">
+                    <span className="text-[10px] text-blue-400 font-bold mt-2 bg-blue-500/10 px-2 py-0.5 rounded-full animate-pulse border border-blue-500/20">
                       초대됨 - 클릭하여 참가
                     </span>
                   )}
-                  {(isRoomHost || userData?.is_admin) && (
-                    <span className="text-[9px] text-white/30 mt-1">
-                      클릭하여 홀드 해제
+                  {(heldSlot?.held_by === authUser?.id || userData?.is_admin) && (
+                    <span className="text-[9px] text-white/30 absolute bottom-3 uppercase font-black tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
+                      Click to release
                     </span>
                   )}
                 </div>
@@ -548,20 +650,11 @@ export default function RoomDetailContent({
                     </span>
                   </div>
                   <div className="flex flex-col items-center mt-3">
-                    <span className="text-[11px] font-black uppercase tracking-[0.2em] opacity-30">
-                      Available
+                    <span className="text-[13px] font-black text-white/30 tracking-tight">
+                      조인하기
                     </span>
-                    {isJoined ? (
-                      <span className="text-[9px] text-blue-500/40 font-black mt-2 tracking-widest uppercase">
-                        (JOINED)
-                      </span>
-                    ) : (
-                      <span className="text-[9px] text-green-400/60 font-bold mt-2">
-                        클릭하여 조인
-                      </span>
-                    )}
-                    {(isRoomHost || userData?.is_admin) && (
-                      <span className="text-[9px] text-yellow-500/50 mt-1 flex items-center gap-1">
+                    {(isJoined || userData?.is_admin) && !isHeld && (
+                      <span className="text-[9px] text-yellow-500/50 mt-1 flex items-center gap-1 font-bold">
                         <Lock size={10} /> 홀드 가능
                       </span>
                     )}
@@ -573,11 +666,53 @@ export default function RoomDetailContent({
         })}
       </div>
 
-      {/* Info Popup */}
-      <RoomInfoPopup
-        isOpen={showInfoPopup}
-        onClose={() => setShowInfoPopup(false)}
-      />
+      {/* Hold Slots Explanation - Hide if user already held a slot */}
+      {!heldSlots.some(s => s.group_no === roomIndex + 1 && s.held_by === authUser?.id) && (
+        <div className="mt-10 bg-[#1c1c1e] border border-white/5 rounded-[32px] overflow-hidden shadow-2xl group">
+          <div className="bg-yellow-500/10 px-6 py-4 border-b border-yellow-500/10 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 bg-yellow-400 rounded-lg flex items-center justify-center shadow-lg transform group-hover:rotate-12 transition-transform">
+                <Lock size={16} className="text-black font-bold" />
+              </div>
+            <h4 className="text-[14px] font-black text-white tracking-tighter">슬롯 홀드 가이드 🔐</h4>
+          </div>
+        </div>
+
+          <div className="p-6 space-y-6">
+            <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-yellow-500"></div>
+                  <p className="text-[13px] font-black text-white/90">참가자라면 누구나 선점 가능!</p>
+                </div>
+                <p className="pl-3.5 text-[12px] text-white/40 leading-relaxed font-medium">
+                  빈 슬롯을 <span className="text-yellow-500 font-black">6시간 동안</span> 홀드(잠금)할 수 있습니다.
+                </p>
+              </div>
+
+              <div className="space-y-2 border-t border-white/5 pt-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                  <p className="text-[13px] font-black text-white/90">반드시 초대하기 기능을 이용하세요!</p>
+                </div>
+                <p className="pl-3.5 text-[12px] text-white/40 leading-relaxed font-medium">
+                  홀드 후에는 <span className="text-blue-400 font-black underline underline-offset-4">&apos;초대하기&apos;</span>를 통해 친구를 방으로 불러와야 합니다.
+                </p>
+              </div>
+
+              <div className="space-y-2 border-t border-white/5 pt-4 bg-red-500/[0.02] -mx-6 px-6 pb-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-red-500"></div>
+                  <p className="text-[13px] font-black text-red-400">재사용 불가 주의!</p>
+                </div>
+                <p className="pl-3.5 text-[12px] text-red-400/60 leading-relaxed font-bold">
+                  홀드가 해제되거나 만료된 후 <span className="border-b border-red-500/30">동일 사용자는 다시 홀드할 수 없으니</span> 신중하게 사용해 주세요.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Invite Modal */}
       <InviteModal
@@ -690,11 +825,24 @@ export default function RoomDetailContent({
             ) : (
               <>
                 <div className="text-center mb-6">
-                  <Lock size={40} className="text-yellow-500 mx-auto mb-3" />
-                  <h3 className="text-xl font-black text-white">슬롯 홀드</h3>
-                  <p className="text-white/60 text-sm mt-2">
-                    이 슬롯을 초대할 분을 위해 홀드하시겠습니까?
-                  </p>
+                  <Lock size={44} className="text-yellow-500 mx-auto mb-4" />
+                  <h3 className="text-xl font-black text-white tracking-tighter">슬롯 홀드</h3>
+                  
+                  <div className="mt-4 space-y-1">
+                    <p className="text-white/80 text-[15px] font-bold">
+                      초대할 분을 위해 슬롯을 선점하시겠습니까?
+                    </p>
+                    <p className="text-white/40 text-sm font-medium">
+                      선점된 슬롯은 <span className="text-yellow-500/80 font-black">6시간</span> 동안 유지됩니다.
+                    </p>
+                  </div>
+
+                  <div className="mt-5 bg-red-500/10 py-3 px-4 rounded-2xl border border-red-500/20 flex items-center justify-center gap-2">
+                    <AlertCircle size={14} className="text-red-400 shrink-0" />
+                    <p className="text-[12px] text-red-400 font-black tracking-tight">
+                      홀드 해제 시 동일 방 재사용 불가!
+                    </p>
+                  </div>
                 </div>
                 <div className="flex gap-3">
                   <button
@@ -712,6 +860,83 @@ export default function RoomDetailContent({
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+      {/* Move Room Modal */}
+      {isMoveRoomOpen && (
+        <div 
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[200] flex items-center justify-center p-6"
+          onClick={() => setIsMoveRoomOpen(false)}
+        >
+          <div 
+            className="bg-[#1c1c1e] w-full max-w-sm rounded-[32px] overflow-hidden border border-white/10 shadow-2xl animate-scale-up"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="p-6 border-b border-white/5 flex justify-between items-center bg-white/[0.02]">
+              <h3 className="text-lg font-black text-white">이동할 방 선택</h3>
+              <button onClick={() => setIsMoveRoomOpen(false)} className="text-white/40 hover:text-white">&times;</button>
+            </div>
+            
+            <div className="p-6 space-y-3">
+              {(() => {
+                const totalRooms = Math.ceil((event.max_participants || 4) / 4);
+                const currentRoomNo = roomIndex + 1;
+                const rooms = [];
+                
+                for (let i = 1; i <= totalRooms; i++) {
+                  if (i === currentRoomNo) continue;
+                  const roomParticipants = participants.filter(p => (p.group_no || 1) === i);
+                  if (roomParticipants.length < 4) {
+                    rooms.push({ number: i, count: roomParticipants.length });
+                  }
+                }
+
+                if (rooms.length === 0) {
+                  return (
+                    <div className="py-10 text-center">
+                      <AlertCircle className="mx-auto text-white/20 mb-3" size={40} />
+                      <p className="text-white/40 font-bold">옮길 수 있는 방이 없습니다.</p>
+                    </div>
+                  );
+                }
+
+                return rooms.map(room => (
+                  <button
+                    key={room.number}
+                    onClick={() => handleMoveRoom(room.number)}
+                    disabled={isMoving}
+                    className="w-full flex items-center justify-between p-4 bg-white/5 hover:bg-white/10 rounded-2xl border border-white/5 transition-all active:scale-98 group"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-blue-600/20 flex items-center justify-center text-blue-400 font-black">
+                        {room.number}
+                      </div>
+                      <span className="text-[15px] font-bold text-white/90">{room.number}번 조인방</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="flex gap-0.5">
+                        {[...Array(4)].map((_, idx) => (
+                          <div 
+                            key={idx} 
+                            className={`w-1.5 h-1.5 rounded-full ${idx < room.count ? 'bg-blue-500' : 'bg-white/10'}`}
+                          />
+                        ))}
+                      </div>
+                      <span className="text-[11px] font-black text-blue-400">{room.count}/4</span>
+                    </div>
+                  </button>
+                ));
+              })()}
+            </div>
+            
+            <div className="p-6 pt-0">
+               <div className="bg-yellow-500/5 border border-yellow-500/10 rounded-2xl p-4">
+                  <p className="text-[11px] text-yellow-500/70 leading-relaxed font-medium">
+                    ⚠️ 방을 이동하면 현재 방에서 선점(홀드)한 슬롯은 자동으로 해제되며, 방장 권한은 다른 멤버에게 승계됩니다.
+                  </p>
+               </div>
+            </div>
           </div>
         </div>
       )}
