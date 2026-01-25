@@ -17,8 +17,9 @@ interface EventData {
 }
 
 interface RoundData {
-    joined_at: string;
-    payment_status: string;
+    joined_at?: string; // made optional as pre_reservations might not have it or have different name
+    created_at?: string; // for pre_reservations
+    payment_status?: string; // optional
     events: EventData;
 }
 

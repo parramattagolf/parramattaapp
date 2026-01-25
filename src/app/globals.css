@@ -297,7 +297,6 @@ textarea::placeholder {
   position: sticky;
   top: 0;
   z-index: 40;
-  border-bottom: 1px solid var(--color-divider);
 }
 
 .nav-lpga-link {
@@ -326,7 +325,6 @@ textarea::placeholder {
   width: 100%;
   max-width: 500px;
   background: var(--color-bg);
-  border-top: 1px solid var(--color-divider);
   height: var(--nav-height);
   padding-bottom: env(safe-area-inset-bottom);
   display: flex;
@@ -347,15 +345,8 @@ textarea::placeholder {
   padding: 0;
 }
 
-.bottom-nav-item:hover,
-.bottom-nav-item.active {
-  color: var(--color-gray-900);
-  /* Dark for active (Kakao style) */
-}
-
-/* Override for specific brand color if needed, but Kakao is usually black/dark gray icons */
-.bottom-nav-item.active {
-  color: var(--color-navy);
+.bottom-nav-item:hover {
+  opacity: 0.8;
 }
 
 .bottom-nav-item .icon {

@@ -133,7 +133,7 @@ export default async function MembersPage() {
                 rightElement={<Link href="/members/search" className="text-blue-500 font-bold text-sm">인맥찾기</Link>}
             />
 
-            <div className="divide-y divide-[var(--color-divider)]">
+            <div className="">
                 {combinedMembers.map((member: any, index: number) => {
                     return (
                         <div key={member.id}>

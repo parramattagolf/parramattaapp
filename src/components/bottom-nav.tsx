@@ -23,7 +23,7 @@ export default function BottomNav() {
   if (pathname === '/') return null
 
   return (
-    <nav className="bottom-nav">
+    <nav className="bottom-nav border-none border-t-0 shadow-none">
       <div className="flex w-full h-full justify-around items-center">
         {navItems.map(item => {
           const isActive = activePath === item.href || activePath.startsWith(item.href + '/')

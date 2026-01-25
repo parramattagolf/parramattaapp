@@ -50,7 +50,7 @@ export default function RoundFilter({ themes = [], activeTheme = 'all' }: { them
   })]
 
   return (
-    <div className={`fixed top-[50px] left-1/2 -translate-x-1/2 w-full max-w-[500px] z-[80] bg-[#121212] border-b border-white/10 py-4 font-sans transition-transform duration-300 ${isVisible ? 'translate-y-0' : '-translate-y-[120%]'}`}>
+    <div className={`fixed top-[50px] left-1/2 -translate-x-1/2 w-full max-w-[500px] z-[80] bg-[#121212] py-4 font-sans transition-transform duration-300 ${isVisible ? 'translate-y-0' : '-translate-y-[120%]'}`}>
       <div className="relative w-full px-6">
         <div className="flex flex-wrap gap-2 justify-center">
           {allThemes.map((theme) => {

@@ -125,7 +125,7 @@ function TopNavContent() {
   }
 
   return (
-    <nav className={`fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[500px] z-[100] transition-all duration-300 ease-in-out flex items-center justify-between px-6 bg-[#121212]/90 backdrop-blur-2xl border-b border-white/10 py-3 ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}
+    <nav className={`fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[500px] z-[100] transition-all duration-300 ease-in-out flex items-center justify-between px-6 bg-[#121212]/90 backdrop-blur-2xl py-3 ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}
     >
       <div className="flex flex-col">
         <div
