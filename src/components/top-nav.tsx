@@ -188,23 +188,25 @@ function TopNavContent() {
         {pathname === '/my' && (
           <button
             onClick={async () => {
-              showToast('로그아웃 되었습니다')
-              const supabase = createClient()
-              await supabase.auth.signOut()
+              if (window.confirm('정말 로그아웃 하시겠습니까?')) {
+                showToast('로그아웃 되었습니다')
+                const supabase = createClient()
+                await supabase.auth.signOut()
 
-              // 카카오 계정까지 함께 로그아웃 처리
-              const kakaoApiKey = process.env.NEXT_PUBLIC_KAKAO_REST_API_KEY;
-              const logoutRedirectUri = window.location.origin; // 로그아웃 후 돌아올 주소
+                // 카카오 계정까지 함께 로그아웃 처리
+                const kakaoApiKey = process.env.NEXT_PUBLIC_KAKAO_REST_API_KEY;
+                const logoutRedirectUri = window.location.origin; // 로그아웃 후 돌아올 주소
 
-              setTimeout(() => {
-                if (kakaoApiKey) {
-                  // 카카오 계정 로그아웃 URL로 리다이렉트
-                  window.location.href = `https://kauth.kakao.com/oauth/logout?client_id=${kakaoApiKey}&logout_redirect_uri=${logoutRedirectUri}`;
-                } else {
-                  console.warn('카카오 REST API 키가 없습니다. 일반 로그아웃만 수행합니다.');
-                  window.location.href = '/';
-                }
-              }, 500)
+                setTimeout(() => {
+                  if (kakaoApiKey) {
+                    // 카카오 계정 로그아웃 URL로 리다이렉트
+                    window.location.href = `https://kauth.kakao.com/oauth/logout?client_id=${kakaoApiKey}&logout_redirect_uri=${logoutRedirectUri}`;
+                  } else {
+                    console.warn('카카오 REST API 키가 없습니다. 일반 로그아웃만 수행합니다.');
+                    window.location.href = '/';
+                  }
+                }, 500)
+              }
             }}
             className="w-8 h-8 flex items-center justify-center rounded-xl transition-all active:scale-90 bg-white/5 border border-white/10 text-white hover:text-red-400"
           >

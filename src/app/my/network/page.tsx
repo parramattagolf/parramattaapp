@@ -27,7 +27,28 @@ export default function NetworkPage() {
             }
 
             if (data) {
-                setNetwork(data)
+                // Fetch detailed profile info for these members manually because the RPC might be outdated
+                const memberIds = data.map((m: any) => m.id)
+                
+                if (memberIds.length > 0) {
+                    const { data: profiles } = await supabase
+                        .from('members')
+                        .select('id, nickname, real_name, profile_img, job, manner_score, golf_experience')
+                        .in('id', memberIds)
+                    
+                    if (profiles) {
+                        // Merge profile data into network data
+                        const mergedData = data.map((netMember: any) => {
+                            const profile = profiles.find(p => p.id === netMember.id)
+                            return profile ? { ...netMember, ...profile } : netMember
+                        })
+                        setNetwork(mergedData)
+                    } else {
+                        setNetwork(data)
+                    }
+                } else {
+                    setNetwork(data)
+                }
             }
             setLoading(false)
         }
@@ -35,7 +56,9 @@ export default function NetworkPage() {
         fetchNetwork()
     }, [])
 
-    const filteredList = network.filter(member => member.distance === activeTab)
+    const filteredList = network
+        .filter(member => member.distance === activeTab)
+        .sort((a, b) => (b.manner_score || 0) - (a.manner_score || 0))
 
     if (loading) {
         return (

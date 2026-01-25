@@ -129,13 +129,13 @@ export default function MonthSection({ month, events, view }: MonthSectionProps)
                                 return (
                             <div className={`transition-all duration-300 rounded-[24px] py-4 px-6 shadow-xl relative overflow-hidden group/card ${view === 'past' ? 'bg-[#18181a] border border-white/5 opacity-60' : `bg-[#1c1c1e] border ${borderClass} hover:bg-[#252527]`}`}>
 
-                                <div className="flex items-start gap-5">
+                                <div className="flex items-start gap-3">
                                     <div className="flex flex-col items-center gap-2 shrink-0">
-                                        <div className={`flex flex-col items-center justify-center w-15 h-15 rounded-2xl border border-white/5 shadow-inner p-3 ${view === 'past' ? 'bg-[#252527]' : 'bg-[#2c2c2e]'}`}>
-                                            <span className={`text-[15px] font-black uppercase leading-none mb-1.5 ${view === 'past' ? 'text-white/30' : getDayColor(new Date(event.start_date))}`}>
+                                        <div className={`flex flex-col items-center justify-center w-14 h-14 rounded-2xl border border-white/5 shadow-inner p-2 ${view === 'past' ? 'bg-[#252527]' : 'bg-[#2c2c2e]'}`}>
+                                            <span className={`text-[13px] font-black uppercase leading-none mb-1 ${view === 'past' ? 'text-white/30' : getDayColor(new Date(event.start_date))}`}>
                                                 {format(new Date(event.start_date), 'EEE', { locale: ko })}
                                             </span>
-                                            <span className="text-2xl font-black text-white leading-none tracking-tighter">
+                                            <span className="text-xl font-black text-white leading-none tracking-tighter">
                                                 {format(new Date(event.start_date), 'd')}
                                             </span>
                                         </div>
@@ -152,7 +152,7 @@ export default function MonthSection({ month, events, view }: MonthSectionProps)
 
                                             return (
                                                 <div className="flex flex-col gap-1 mt-0.5">
-                                                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md text-center ${colorClass}`}>
+                                                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-md text-center ${colorClass}`}>
                                                         {label}
                                                     </span>
                                                     {isFull && (
@@ -166,10 +166,10 @@ export default function MonthSection({ month, events, view }: MonthSectionProps)
                                     </div>
 
                                     <div className="flex-1 min-w-0 pt-0.5">
-                                        <div className="flex items-center justify-between mb-2">
+                                        <div className="flex items-center justify-between mb-1.5">
                                             <div className="flex items-center gap-2">
                                                 {event.sponsor && !view && (
-                                                    <span className="text-[10px] font-black bg-blue-600 text-white px-2 py-0.5 rounded-md uppercase tracking-widest shadow-[0_0_15px_rgba(37,99,235,0.4)]">
+                                                    <span className="text-[9px] font-black bg-blue-600 text-white px-1.5 py-0.5 rounded-md uppercase tracking-widest shadow-[0_0_15px_rgba(37,99,235,0.4)]">
                                                         Premium
                                                     </span>
                                                 )}
@@ -177,11 +177,11 @@ export default function MonthSection({ month, events, view }: MonthSectionProps)
                                             </div>
                                         </div>
 
-                                        <h3 className={`text-[18px] font-black leading-tight mb-1 tracking-tight ${view === 'past' ? 'text-white/40' : 'text-white'}`}>
+                                        <h3 className={`text-[15px] font-black leading-snug mb-1 tracking-tighter break-keep ${view === 'past' ? 'text-white/40' : 'text-white'}`}>
                                             {event.title}
                                         </h3>
                                         {event.description && (
-                                            <p className={`text-[12px] leading-tight break-keep line-clamp-3 mb-3 ${view === 'past' ? 'text-white/20' : 'text-white/40'}`}>
+                                            <p className={`text-[11px] leading-snug truncate mb-2 tracking-tighter ${view === 'past' ? 'text-white/20' : 'text-white/40'}`}>
                                                 {event.description}
                                             </p>
                                         )}

@@ -75,15 +75,22 @@ export async function GET(request: Request) {
       
       if (profile) {
         // User exists - update profile_img, nickname, and email
-        await supabase
-          .from('users')
-          .update({
+        // Also ensure membership_level is set if missing
+        const updates: any = {
             email: data.user.email || null,
             profile_img: profileImageUrl || null,
             nickname: nickname || null,
             kakao_id: kakaoId || null,
             updated_at: new Date().toISOString()
-          })
+        }
+
+        if (!profile.membership_level) {
+            updates.membership_level = 'red'
+        }
+
+        await supabase
+          .from('users')
+          .update(updates)
           .eq('id', data.user.id)
       } else {
         // New user - insert with minimal data

@@ -144,54 +144,61 @@ export default async function MyPage() {
                                     </div>
                                 )}
                             </div>
-                            {/* Real Name under Avatar + Settings */}
-                            {/* Name & Nickname Display */}
-                            {/* Name & Nickname Display */}
+                            {/* Real Name under Avatar + Settings (Restored, Nickname removed) */}
                             <div className="flex flex-col items-center mt-2">
-                                {/* Primary Name (Real Name Priority) */}
                                 <div className="flex items-center gap-1.5">
-                                    <div className="text-[16px] font-bold text-white/90 tracking-tight">
-                                        {/* 실명(realName)을 최우선으로, 없으면 닉네임 표시 */}
+                                    <div className="text-[16px] font-bold text-white/90 tracking-tight truncate max-w-[150px]">
                                         {realName || displayName}
                                     </div>
                                     <Link
                                         href="/settings"
-                                        className="w-5 h-5 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white/50 hover:text-white transition-colors"
+                                        className="w-5 h-5 flex-shrink-0 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white/50 hover:text-white transition-colors"
                                     >
                                         <Settings size={12} />
                                     </Link>
                                 </div>
-                                
-                                {/* Secondary Display (Nickname below, if Real Name exists) */}
-                                {realName && realName !== displayName && (
-                                    <div className="text-[12px] text-[#A1A1AA] font-normal tracking-wide">
-                                        @{displayName}
-                                    </div>
-                                )}
                             </div>
                         </div>
-                        
+
                         <div className="flex-1 min-w-0 flex flex-col justify-center gap-2" id="header_info">
-
-
-
                             {SHOW_KAKAO_ID && displayKakaoId && (
                                 <KakaoIdDisplay kakaoId={displayKakaoId} />
                             )}
 
-                            <div className="flex flex-col gap-1 mt-1">
-                                {/* 1. Golf Experience */}
-                                {displayGolfExp && (
-                                    <span className="text-[14px] text-blue-400 font-bold">구력 {displayGolfExp}</span>
-                                )}
-                                
-                                {/* 2. Handicap */}
-                                {handicap !== null && (
-                                    <span className="text-[14px] text-emerald-400 font-bold tracking-tight">핸디 {handicap}</span>
-                                )}
+                            <div className="flex flex-col gap-3 mt-1">
+                                {/* Group 1: Golf Stats (Highlighted) */}
+                                <div className="flex flex-col gap-1">
+                                    {displayGolfExp && (
+                                        <div className="text-[14px] text-blue-400 font-bold leading-tight">구력 {displayGolfExp}</div>
+                                    )}
+                                    {handicap !== null && (
+                                        <div className="text-[14px] text-emerald-400 font-bold tracking-tight leading-tight">핸디 {handicap}</div>
+                                    )}
+                                </div>
 
-                                {/* 3. Interest */}
-                                <span className="text-[14px] text-white/90 font-bold">{displayJob || '미입력'}</span>
+                                {/* Group 2: Personal Info (Job & Email) */}
+                                <div className="flex flex-col gap-1 font-sans">
+                                    <div className="text-[14px] text-white/90 font-bold leading-tight tracking-tight">{displayJob || '미입력'}</div>
+                                    {displayEmail && (
+                                        <div className="text-[11px] text-[#A1A1AA] font-normal truncate max-w-[160px] leading-tight tracking-tight">{displayEmail}</div>
+                                    )}
+                                </div>
+
+                                {/* Group 3: Badges (District, Age, MBTI, Gender) */}
+                                <div className="flex flex-wrap gap-1.5 mt-0.5">
+                                    {district && (
+                                        <span className="text-[10px] text-white/60 bg-white/5 px-1.5 py-0.5 rounded-[5px] border border-white/5 whitespace-nowrap">{district}</span>
+                                    )}
+                                    {ageRange && (
+                                        <span className="text-[10px] text-white/60 bg-white/5 px-1.5 py-0.5 rounded-[5px] border border-white/5 whitespace-nowrap">{ageRange}</span>
+                                    )}
+                                    {mbti && (
+                                        <span className="text-[10px] text-white/60 bg-white/5 px-1.5 py-0.5 rounded-[5px] border border-white/5 whitespace-nowrap">{mbti}</span>
+                                    )}
+                                    {gender && (
+                                         <span className="text-[10px] text-white/60 bg-white/5 px-1.5 py-0.5 rounded-[5px] border border-white/5 whitespace-nowrap">{gender === 'male' ? '남성' : gender === 'female' ? '여성' : gender}</span>
+                                    )}
+                                </div>
                             </div>
                         </div>
 

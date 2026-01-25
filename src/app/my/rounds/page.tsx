@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import PremiumSubHeader from '@/components/premium-sub-header'
 import Link from 'next/link'
-import Image from 'next/image'
+
 import { format } from 'date-fns'
 import { Trophy, Calendar, MapPin } from 'lucide-react'
 
@@ -27,7 +27,7 @@ export default function MyRoundsPage() {
     const [loading, setLoading] = useState(true)
     const [activeTab, setActiveTab] = useState<'current' | 'pre' | 'past'>('current')
     const [rounds, setRounds] = useState<RoundData[]>([])
-    const [preReservations, setPreReservations] = useState<any[]>([])
+    const [preReservations, setPreReservations] = useState<RoundData[]>([])
 
     useEffect(() => {
         const fetchRounds = async () => {
@@ -51,6 +51,7 @@ export default function MyRoundsPage() {
                 .order('joined_at', { ascending: false })
 
             if (participantsData) {
+                // Cast to unknown first to avoid deep type mismatch with Supabase auto-types
                 setRounds(participantsData as unknown as RoundData[])
             }
 
@@ -70,13 +71,15 @@ export default function MyRoundsPage() {
                 .order('created_at', { ascending: false })
             
             if (preData) {
-                setPreReservations(preData)
+                 // Cast to unknown first
+                setPreReservations(preData as unknown as RoundData[])
             }
 
             setLoading(false)
         }
 
         fetchRounds()
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
 
     const filteredList = (() => {
@@ -139,9 +142,10 @@ export default function MyRoundsPage() {
 
                 <div className="space-y-4">
                     {filteredList.length > 0 ? (
-                        filteredList.map((item: any) => {
-                            // Normalize data structure since pre-reservations and participants might differ slightly
-                            const event = item.events
+                        filteredList.map((item) => {
+                            // Cast item to concrete type to access properties safely
+                            const roundItem = item as RoundData;
+                            const event = roundItem.events;
                             
                             // Safety check: if event is null (e.g. deleted event), skip rendering
                             if (!event) return null

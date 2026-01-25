@@ -60,10 +60,10 @@ export default function RoundFilter({ themes = [], activeTheme = 'all' }: { them
                 key={theme}
                 data-active={isActive}
                 onClick={() => handleThemeChange(theme)}
-                className={`px-4 py-2 rounded-xl text-[13px] font-bold transition-all duration-200 active:scale-95 ${
+                className={`px-3 py-1.5 rounded-full text-[12px] font-bold tracking-tight transition-all duration-200 active:scale-95 border ${
                   isActive
-                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/40 ring-1 ring-blue-500/50'
-                    : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white/70 border border-white/5'
+                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/40 border-blue-500'
+                    : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white/70 border-white/5'
                 }`}
               >
                 {theme === 'all' ? '전체' : theme}

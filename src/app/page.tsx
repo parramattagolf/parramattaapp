@@ -50,8 +50,8 @@ function LoginContent() {
       <div
         className={`absolute inset-0 flex items-center justify-center transition-opacity duration-1000 ${showLogin ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
       >
-        <h1 className="text-[#D50032] text-6xl md:text-8xl font-black tracking-tighter animate-netflix-intro">
-          파라마타 골프
+        <h1 className="text-[#D50032] text-6xl md:text-8xl font-black text-red tracking-tighter animate-netflix-intro">
+          PARRAMATTA GOLF
         </h1>
       </div>
 
@@ -61,7 +61,7 @@ function LoginContent() {
       >
         <div className="text-center mb-12">
 
-          <h2 className="text-3xl font-bold text-white mb-2 tracking-tight">PARRAMATTA GOLF</h2>
+          <h2 className="text-3xl font-bold text-white mb-2 tracking-tight">파라마타 골프</h2>
           <p className="text-gray-400 text-xs tracking-[0.3em] uppercase">신뢰와 매너, 골프 커뮤니티</p>
         </div>
 
@@ -77,7 +77,7 @@ function LoginContent() {
               <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current">
                 <path d="M12 3C5.373 3 0 7.392 0 12.81c0 3.39 2.138 6.376 5.4 8.086l-1.373 5.09c-.068.254.19.467.42.34l5.968-3.957c.52.05 1.05.077 1.585.077 6.627 0 12-4.392 12-9.81C24 7.392 18.627 3 12 3" />
               </svg>
-              카카오톡으로 1초만에 시작하기
+              카카오톡으로 3초만에 시작하기
             </>
           )}
         </button>
