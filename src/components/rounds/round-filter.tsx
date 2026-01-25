@@ -1,12 +1,35 @@
 'use client'
 
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useState, useEffect, useRef } from 'react'
 
 export default function RoundFilter({ themes = [], activeTheme = 'all' }: { themes?: string[], activeTheme?: string }) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const [isVisible, setIsVisible] = useState(true)
+  const lastScrollY = useRef(0)
   
   const currentTheme = searchParams.get('theme') || activeTheme
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY
+      
+      // Scrolled down -> Hide
+      if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
+        setIsVisible(false)
+      } 
+      // Scrolled up -> Show
+      else if (currentScrollY < lastScrollY.current) {
+        setIsVisible(true)
+      }
+      
+      lastScrollY.current = currentScrollY
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   const handleThemeChange = (theme: string) => {
     const params = new URLSearchParams(searchParams.toString())
@@ -18,10 +41,16 @@ export default function RoundFilter({ themes = [], activeTheme = 'all' }: { them
     router.push(`/rounds?${params.toString()}`)
   }
 
-  const allThemes = ['all', ...themes]
+  // Sort themes: 'all' first, then by text length (short to long) to optimize space
+  const allThemes = ['all', ...themes.sort((a, b) => {
+    // Primary sort: Length (Shortest first)
+    if (a.length !== b.length) return a.length - b.length;
+    // Secondary sort: Alphabetical
+    return a.localeCompare(b);
+  })]
 
   return (
-    <div className="fixed top-[50px] left-1/2 -translate-x-1/2 w-full max-w-[500px] z-[80] bg-[#121212] border-b border-white/10 py-4 font-sans transition-all duration-300">
+    <div className={`fixed top-[50px] left-1/2 -translate-x-1/2 w-full max-w-[500px] z-[80] bg-[#121212] border-b border-white/10 py-4 font-sans transition-transform duration-300 ${isVisible ? 'translate-y-0' : '-translate-y-[120%]'}`}>
       <div className="relative w-full px-6">
         <div className="flex flex-wrap gap-2 justify-center">
           {allThemes.map((theme) => {

@@ -3,7 +3,8 @@
 import React, { useEffect, useState } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import Link from 'next/link'
-import { Bell, ArrowLeft } from 'lucide-react'
+import { Bell, ArrowLeft, ChevronDown } from 'lucide-react'
+import HoldTimer from '@/components/notifications/hold-timer'
 import { format } from 'date-fns'
 import { useRouter } from 'next/navigation'
 
@@ -23,6 +24,7 @@ interface Notification {
 export default function NotificationsPage() {
     const [notifications, setNotifications] = useState<Notification[]>([])
     const [loading, setLoading] = useState(true)
+    const [visibleCount, setVisibleCount] = useState(5)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [user, setUser] = useState<any>(null)
     const supabase = createClient()
@@ -129,58 +131,99 @@ export default function NotificationsPage() {
 
             <div className="p-6 space-y-4">
                 {notifications.length > 0 ? (
-                    notifications.map((notif) => {
-                        const style = getNotifStyle(notif.type)
-                        return (
-                            <div
-                                key={notif.id}
-                                onClick={() => !notif.is_read && markAsRead(notif.id)}
-                                className={`relative p-5 rounded-[24px] border transition-all active:scale-[0.98] ${notif.is_read
-                                    ? 'bg-[#1c1c1e]/50 border-white/5 opacity-60'
-                                    : 'bg-[#1c1c1e] border-white/10 shadow-xl'
-                                    }`}
-                            >
-                                <div className="flex items-start justify-between mb-3">
-                                    <div className="flex items-center gap-2">
-                                        <div className={`w-2 h-2 rounded-full ${style.dot}`}></div>
-                                        <span className={`text-[10px] font-black uppercase tracking-widest ${style.label}`}>
-                                            {style.labelText}
+                    <>
+                        {notifications.slice(0, visibleCount).map((notif) => {
+                            const style = getNotifStyle(notif.type)
+                            return (
+                                <div
+                                    key={notif.id}
+                                    onClick={() => !notif.is_read && markAsRead(notif.id)}
+                                    className={`relative p-5 rounded-[24px] border transition-all active:scale-[0.98] ${notif.is_read
+                                        ? 'bg-[#1c1c1e]/50 border-white/5 opacity-60'
+                                        : 'bg-[#1c1c1e] border-white/10 shadow-xl'
+                                        }`}
+                                >
+                                    <div className="flex items-start justify-between mb-3">
+                                        <div className="flex items-center gap-2">
+                                            <div className={`w-2 h-2 rounded-full ${style.dot}`}></div>
+                                            <span className={`text-[10px] font-black uppercase tracking-widest ${style.label}`}>
+                                                {style.labelText}
+                                            </span>
+                                        </div>
+                                        <span className="text-[10px] font-medium text-white/20">
+                                            {format(new Date(notif.created_at), 'MM.dd HH:mm')}
                                         </span>
                                     </div>
-                                    <span className="text-[10px] font-medium text-white/20">
-                                        {format(new Date(notif.created_at), 'MM.dd HH:mm')}
-                                    </span>
+
+                                    <h3 className={`text-[15px] font-bold mb-1 tracking-tight ${notif.type === 'global' ? 'text-yellow-100/90' : 'text-white'
+                                        }`}>
+                                        {notif.title || (notif.type === 'global' ? '공지사항' : '알림')}
+                                    </h3>
+                                    <p className="text-[13px] text-white/40 leading-relaxed tracking-tight">
+                                        {notif.content || '내용이 없습니다.'}
+                                    </p>
+
+                                    {/* Action Button for Invite Type */}
+                                    {notif.type === 'invite' && notif.link_url && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation()
+                                                handleAcceptInvite(notif)
+                                            }}
+                                            className="mt-4 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl text-sm active:scale-95 transition-all"
+                                        >
+                                            조인방 확인해보고 결정하기
+                                        </button>
+                                    )}
+
+                                    {/* Slot Hold Notification Actions */}
+                                    {notif.title?.includes('슬롯 홀드 알림') && (
+                                        <div className="mt-4 space-y-2">
+                                            <div className="text-[12px] text-red-500 bg-red-500/10 p-3 rounded-xl border border-red-500/20 flex justify-between items-center">
+                                                <span className="font-bold">⏳ 홀드 만료까지</span>
+                                                <HoldTimer createdAt={notif.created_at} />
+                                            </div>
+                                            {(() => {
+                                                // Extract Room ID from content (e.g., '1번방')
+                                                const text = (notif.title || '') + ' ' + (notif.content || '')
+                                                const match = text.match(/(\d+)번방/)
+                                                const roomId = match ? match[1] : null
+                                                
+                                                if (roomId) {
+                                                    return (
+                                                        <Link
+                                                            href={`/rounds/${roomId}`}
+                                                            onClick={(e) => e.stopPropagation()}
+                                                            className="block w-full text-center bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl text-sm active:scale-95 transition-all"
+                                                        >
+                                                            해당 조인방으로 이동
+                                                        </Link>
+                                                    )
+                                                }
+                                                return null
+                                            })()}
+                                        </div>
+                                    )}
+
+                                    {!notif.is_read && (
+                                        <div className="absolute top-5 right-5">
+                                            <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
+                                        </div>
+                                    )}
                                 </div>
+                            )
+                        })}
 
-                                <h3 className={`text-[15px] font-bold mb-1 tracking-tight ${notif.type === 'global' ? 'text-yellow-100/90' : 'text-white'
-                                    }`}>
-                                    {notif.title || (notif.type === 'global' ? '공지사항' : '알림')}
-                                </h3>
-                                <p className="text-[13px] text-white/40 leading-relaxed tracking-tight">
-                                    {notif.content || '내용이 없습니다.'}
-                                </p>
-
-                                {/* Action Button for Invite Type */}
-                                {notif.type === 'invite' && notif.link_url && (
-                                    <button
-                                        onClick={(e) => {
-                                            e.stopPropagation()
-                                            handleAcceptInvite(notif)
-                                        }}
-                                        className="mt-4 w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl text-sm active:scale-95 transition-all"
-                                    >
-                                        수락하고 조인방 확인하기
-                                    </button>
-                                )}
-
-                                {!notif.is_read && (
-                                    <div className="absolute top-5 right-5">
-                                        <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                                    </div>
-                                )}
-                            </div>
-                        )
-                    })
+                        {visibleCount < notifications.length && (
+                            <button
+                                onClick={() => setVisibleCount(prev => prev + 5)}
+                                className="w-full py-4 bg-[#1c1c1e] border border-white/5 rounded-2xl text-white/50 font-bold text-sm hover:text-white hover:bg-[#2c2c2e] transition-all flex items-center justify-center gap-2"
+                            >
+                                <span>더보기</span>
+                                <ChevronDown size={16} />
+                            </button>
+                        )}
+                    </>
                 ) : (
                     <div className="py-24 flex flex-col items-center text-center opacity-20">
                         <div className="w-16 h-16 bg-white/5 rounded-[24px] flex items-center justify-center mb-6">

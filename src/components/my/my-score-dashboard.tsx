@@ -37,7 +37,7 @@ export default function MyScoreDashboard({ mannerScore, points, mannerPercentile
                 className="bg-[var(--color-gray-100)] p-4 rounded-xl border border-[var(--color-divider)] cursor-pointer hover:bg-[var(--color-surface-hover)] transition-colors active:scale-95"
             >
                 <div className="flex items-center justify-between mb-1">
-                    <div className="text-[11px] text-[var(--color-text-desc)] font-bold">매너 점수</div>
+                    <div className="text-[11px] text-[var(--color-text-desc)] font-bold">매너</div>
                     <div className="relative">
                         <button
                             onClick={handleMannerClick}
@@ -70,13 +70,13 @@ export default function MyScoreDashboard({ mannerScore, points, mannerPercentile
                 className="bg-[var(--color-gray-100)] p-4 rounded-xl border border-[var(--color-divider)] cursor-pointer hover:bg-[var(--color-surface-hover)] transition-colors active:scale-95"
             >
                 <div className="flex items-center justify-between mb-1">
-                    <div className="text-[11px] text-[var(--color-text-desc)] font-bold">누적 포인트</div>
+                    <div className="text-[11px] text-[var(--color-text-desc)] font-bold">포인트</div>
                     <div className="relative">
                         <button
                             onClick={handleSeedClick}
                             className="text-[10px] text-pink-400 font-bold bg-pink-500/10 px-1.5 py-0.5 rounded hover:bg-pink-500/20 transition-colors active:scale-95"
                         >
-                            시드권 순위 {pointRank}위
+                            {pointRank}위
                         </button>
 
                         {/* Speech Bubble Popup */}

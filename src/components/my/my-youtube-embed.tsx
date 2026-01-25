@@ -93,32 +93,8 @@ export default function MyYoutubeEmbed({ nickname }: MyYoutubeEmbedProps) {
 
     return (
         <div className="px-4 mt-6">
-            <div className="rounded-[24px] overflow-hidden border border-white/10 shadow-xl bg-[#1c1c1e]">
-                <div className="aspect-video w-full">
-                    {loading ? (
-                        <div className="w-full h-full flex items-center justify-center bg-[#2c2c2e]">
-                            <div className="text-white/40 text-sm animate-pulse">회원님을 위한 영상 로딩 중...</div>
-                        </div>
-                    ) : videoId ? (
-                        <iframe 
-                            className="w-full h-full"
-                            src={`https://www.youtube.com/embed/${videoId}?rel=0`}
-                            title="YouTube video player" 
-                            frameBorder="0" 
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-degree; web-share" 
-                            referrerPolicy="strict-origin-when-cross-origin" 
-                            allowFullScreen
-                        ></iframe>
-                    ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-[#2c2c2e]">
-                            <div className="text-white/40 text-sm">추천 영상을 불러올 수 없습니다.</div>
-                        </div>
-                    )}
-                </div>
-            </div>
-
             {/* YouTube Channel Subscription Link */}
-            <div className="mt-4 pb-8">
+            <div className="mb-4">
                 <a 
                     href="https://www.youtube.com/channel/UC0MeKM-YQZ7Kh1o1UMjUObg?sub_confirmation=1" 
                     target="_blank" 
@@ -151,6 +127,30 @@ export default function MyYoutubeEmbed({ nickname }: MyYoutubeEmbedProps) {
                         →
                     </div>
                 </a>
+            </div>
+
+            <div className="rounded-[24px] overflow-hidden border border-white/10 shadow-xl bg-[#1c1c1e]">
+                <div className="aspect-video w-full">
+                    {loading ? (
+                        <div className="w-full h-full flex items-center justify-center bg-[#2c2c2e]">
+                            <div className="text-white/40 text-sm animate-pulse">회원님을 위한 영상 로딩 중...</div>
+                        </div>
+                    ) : videoId ? (
+                        <iframe 
+                            className="w-full h-full"
+                            src={`https://www.youtube.com/embed/${videoId}?rel=0`}
+                            title="YouTube video player" 
+                            frameBorder="0" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-degree; web-share" 
+                            referrerPolicy="strict-origin-when-cross-origin" 
+                            allowFullScreen
+                        ></iframe>
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-[#2c2c2e]">
+                            <div className="text-white/40 text-sm">추천 영상을 불러올 수 없습니다.</div>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     )

@@ -18,7 +18,7 @@ export default function NetworkPage() {
             if (!user) return
 
             const { data, error } = await supabase.rpc('get_member_list_with_distance', {
-                viewer_id: user.id,
+                query_user_id: user.id,
                 max_depth: 5
             })
 

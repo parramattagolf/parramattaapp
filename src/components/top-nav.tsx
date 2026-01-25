@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
-import { Bell, Settings } from 'lucide-react'
+import { Bell, LogOut } from 'lucide-react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 
@@ -183,13 +183,19 @@ function TopNavContent() {
           </Link>
         )}
 
+
+
         {pathname === '/my' && (
-          <Link
-            href="/settings"
-            className="w-8 h-8 flex items-center justify-center rounded-xl transition-all active:scale-90 bg-white/5 border border-white/10 text-white hover:text-blue-400"
+          <button
+            onClick={async () => {
+              const supabase = createClient()
+              await supabase.auth.signOut()
+              window.location.href = '/login'
+            }}
+            className="w-8 h-8 flex items-center justify-center rounded-xl transition-all active:scale-90 bg-white/5 border border-white/10 text-white hover:text-red-400"
           >
-            <Settings size={18} strokeWidth={2.5} />
-          </Link>
+            <LogOut size={18} strokeWidth={2.5} />
+          </button>
         )}
 
         {pathname !== '/rounds' && pathname !== '/members' && pathname !== '/sponsors' && pathname !== '/my' && (

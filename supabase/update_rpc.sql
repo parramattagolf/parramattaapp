@@ -1,5 +1,5 @@
 -- Update RPC to include golf_experience
-DROP FUNCTION IF EXISTS get_member_list_with_distance;
+DROP FUNCTION IF EXISTS get_member_list_with_distance(UUID, INT);
 
 CREATE OR REPLACE FUNCTION get_member_list_with_distance(query_user_id UUID, max_depth INT DEFAULT 5)
 RETURNS TABLE (
@@ -7,9 +7,8 @@ RETURNS TABLE (
     nickname TEXT,
     real_name TEXT,
     job TEXT,
-    avatar_url TEXT,
+    profile_img TEXT,
     manner_score FLOAT,
-    best_dresser_score FLOAT, -- Added this too for visualization
     golf_experience TEXT,      -- Added this
     distance INT,
     is_blocked BOOLEAN
@@ -50,9 +49,8 @@ BEGIN
         u.nickname,
         u.real_name,
         u.job,
-        COALESCE(u.avatar_url, '') as avatar_url,
+        COALESCE(u.profile_img, '') as profile_img,
         u.manner_score,
-        u.best_dresser_score,
         u.golf_experience,
         sp.dist as distance,
         EXISTS (

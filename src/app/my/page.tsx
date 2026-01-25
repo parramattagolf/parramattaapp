@@ -2,11 +2,12 @@ import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { getUserBadges } from '@/actions/sponsor-actions'
-import { Bell } from 'lucide-react'
+import { Bell, Settings } from 'lucide-react'
 import MyScoreDashboard from '@/components/my/my-score-dashboard'
 import MyYoutubeEmbed from '@/components/my/my-youtube-embed'
 import MembershipBadge from '@/components/members/membership-badge'
 import ScoreRulesSummary from '@/components/my/score-rules-summary'
+import MyWarningPopup from '@/components/my/my-warning-popup'
 
 // ============================================
 // 🔒 개발용: SHOW_KAKAO_ID를 false로 설정하면 
@@ -126,69 +127,59 @@ export default async function MyPage() {
             <div className="bg-[var(--color-bg)]">
                 <div className="px-gutter py-8">
                     <div className="flex items-start gap-6">
-                        {/* Avatar */}
-                        <div className="w-24 h-24 rounded-[32px] bg-[#1c1c1e] overflow-hidden border-2 border-white/5 flex-shrink-0 shadow-2xl relative group transition-transform hover:scale-105 duration-500">
-                            <div className="absolute inset-0 bg-gradient-to-tr from-black/40 via-transparent to-white/10 opacity-60"></div>
-                            {displayAvatar ? (
-                                <img
-                                    src={displayAvatar}
-                                    alt="프로필 사진"
-                                    className="w-full h-full object-cover"
-                                    referrerPolicy="no-referrer"
-                                />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center text-3xl">
-                                    👤
+                        {/* Avatar Column */}
+                        <div className="flex flex-col items-center gap-3">
+                            <div className="w-24 h-24 rounded-[32px] bg-[#1c1c1e] overflow-hidden border-2 border-white/5 flex-shrink-0 shadow-2xl relative group transition-transform hover:scale-105 duration-500">
+                                <div className="absolute inset-0 bg-gradient-to-tr from-black/40 via-transparent to-white/10 opacity-60"></div>
+                                {displayAvatar ? (
+                                    <img
+                                        src={displayAvatar}
+                                        alt="프로필 사진"
+                                        className="w-full h-full object-cover"
+                                        referrerPolicy="no-referrer"
+                                    />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-3xl">
+                                        👤
+                                    </div>
+                                )}
+                            </div>
+                            {/* Real Name under Avatar + Settings */}
+                            {realName && (
+                                <div className="flex items-center gap-1.5 mt-1">
+                                    <div className="text-[15px] font-bold text-white/90 tracking-tight">{realName}</div>
+                                    <Link
+                                        href="/settings"
+                                        className="w-5 h-5 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white/50 hover:text-white transition-colors"
+                                    >
+                                        <Settings size={12} />
+                                    </Link>
                                 </div>
                             )}
                         </div>
                         
                         <div className="flex-1 min-w-0 flex flex-col justify-center gap-2" id="header_info">
-                            {/* Line 1: Name */}
-                            <div className="text-[22px] font-black text-white tracking-tight leading-none mb-1">
-                                {realName || displayName}
-                            </div>
 
-                            {/* Line 2: Demographics */}
-                            <div className="flex items-center gap-2">
-                                {gender && (
-                                    <span className={`text-[14px] font-bold px-2.5 py-1 rounded-lg border ${
-                                        gender === 'male' ? 'bg-blue-600/10 text-blue-400 border-blue-600/10' : 'bg-pink-600/10 text-pink-400 border-pink-600/10'
-                                    }`}>
-                                        {gender === 'male' ? '남성' : '여성'}
-                                    </span>
-                                )}
-                                {ageRange && (
-                                    <span className="text-[14px] font-bold px-2.5 py-1 bg-white/5 text-white/50 rounded-lg border border-white/5">
-                                        {ageRange.replace('s', '대')}
-                                    </span>
-                                )}
-                            </div>
+
 
                             {SHOW_KAKAO_ID && displayKakaoId && (
                                 <KakaoIdDisplay kakaoId={displayKakaoId} />
                             )}
 
-                            {/* Line 3: Interest */}
-                            <div className="flex items-center gap-2 mt-1">
-                                <span className="text-[14px] text-[var(--color-text-desc)] font-medium">관심분야</span>
+                            <div className="flex flex-col gap-1 mt-1">
+                                {/* 1. Golf Experience */}
+                                {displayGolfExp && (
+                                    <span className="text-[14px] text-blue-400 font-bold">구력 {displayGolfExp}</span>
+                                )}
+                                
+                                {/* 2. Handicap */}
+                                {handicap !== null && (
+                                    <span className="text-[14px] text-emerald-400 font-bold tracking-tight">핸디 {handicap}</span>
+                                )}
+
+                                {/* 3. Interest */}
                                 <span className="text-[14px] text-white/90 font-bold">{displayJob || '미입력'}</span>
                             </div>
-
-                            {/* Line 4+: Golf Stats (Stacked) */}
-                            {displayGolfExp && (
-                                <div className="flex items-center gap-1.5 bg-blue-500/5 px-2.5 py-1.5 rounded-lg border border-blue-500/10 w-fit">
-                                    <span className="text-sm">⛳</span>
-                                    <span className="text-[14px] text-blue-400 font-black">{displayGolfExp}</span>
-                                </div>
-                            )}
-                            
-                            {handicap !== null && (
-                                <div className="flex items-center gap-1.5 bg-emerald-500/10 px-2.5 py-1.5 rounded-xl border border-emerald-500/20 shadow-sm w-fit">
-                                    <span className="text-sm">🏆</span>
-                                    <span className="text-[14px] text-emerald-400 font-black tracking-tight">핸디 {handicap}</span>
-                                </div>
-                            )}
                         </div>
 
                         {/* Membership Badge (Far Right Column) */}
@@ -242,36 +233,6 @@ export default async function MyPage() {
 
             {/* Quick Actions (Kakao Style List) */}
             <div className="px-gutter mt-4 space-y-2">
-                <Link href="/my/rounds" className="flex items-center justify-between p-4 bg-[var(--color-gray-100)] rounded-xl border border-[var(--color-divider)] active:bg-[var(--color-surface-hover)]">
-                    <div className="flex items-center gap-3">
-                        <span className="text-lg">⛳</span>
-                        <span className="text-[14px] font-bold text-[var(--color-text-primary)]">라운딩 참여 기록</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <span className="text-[13px] font-bold text-blue-400">{rounds?.length || 0}건</span>
-                        <span className="text-[var(--color-text-desc)] text-xs">→</span>
-                    </div>
-                </Link>
-                <Link href="/my/network" className="flex items-center justify-between p-4 bg-[var(--color-gray-100)] rounded-xl border border-[var(--color-divider)] active:bg-[var(--color-surface-hover)]">
-                    <div className="flex items-center gap-3">
-                        <span className="text-lg">🤝</span>
-                        <span className="text-[14px] font-bold text-[var(--color-text-primary)]">나의 인맥</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <span className="text-[13px] font-bold text-blue-400">{networkStats.total}명</span>
-                        <span className="text-[var(--color-text-desc)] text-xs">→</span>
-                    </div>
-                </Link>
-                <Link href="/sponsors" className="flex items-center justify-between p-4 bg-[var(--color-gray-100)] rounded-xl border border-[var(--color-divider)] active:bg-[var(--color-surface-hover)]">
-                    <div className="flex items-center gap-3">
-                        <span className="text-lg">🏆</span>
-                        <span className="text-[14px] font-bold text-[var(--color-text-primary)]">나의 스폰서</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <span className="text-[13px] font-bold text-yellow-500">{badges.length}개</span>
-                        <span className="text-[var(--color-text-desc)] text-xs">→</span>
-                    </div>
-                </Link>
                 <Link href="/notifications" className="flex items-center justify-between p-4 bg-[var(--color-gray-100)] rounded-xl border border-[var(--color-divider)] active:bg-[var(--color-surface-hover)]">
                     <div className="flex items-center gap-3">
                         <div className="relative">
@@ -291,7 +252,40 @@ export default async function MyPage() {
                         <span className="text-[var(--color-text-desc)] text-xs">→</span>
                     </div>
                 </Link>
+                <Link href="/my/rounds" className="flex items-center justify-between p-4 bg-[var(--color-gray-100)] rounded-xl border border-[var(--color-divider)] active:bg-[var(--color-surface-hover)]">
+                    <div className="flex items-center gap-3">
+                        <span className="text-lg">⛳</span>
+                        <span className="text-[14px] font-bold text-[var(--color-text-primary)]">나의 라운딩</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-[13px] font-bold text-blue-400">{rounds?.length || 0}건</span>
+                        <span className="text-[var(--color-text-desc)] text-xs">→</span>
+                    </div>
+                </Link>
+                <Link href="/my/network" className="flex items-center justify-between p-4 bg-[var(--color-gray-100)] rounded-xl border border-[var(--color-divider)] active:bg-[var(--color-surface-hover)]">
+                    <div className="flex items-center gap-3">
+                        <span className="text-lg">🤝</span>
+                        <span className="text-[14px] font-bold text-[var(--color-text-primary)]">나의 인맥</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-[13px] font-bold text-blue-400">{networkStats.total}명</span>
+                        <span className="text-[var(--color-text-desc)] text-xs">→</span>
+                    </div>
+                </Link>
+                <Link href="/my/sponsors" className="flex items-center justify-between p-4 bg-[var(--color-gray-100)] rounded-xl border border-[var(--color-divider)] active:bg-[var(--color-surface-hover)]">
+                    <div className="flex items-center gap-3">
+                        <span className="text-lg">🏆</span>
+                        <span className="text-[14px] font-bold text-[var(--color-text-primary)]">나의 스폰서</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-[13px] font-bold text-yellow-500">{badges.length}개</span>
+                        <span className="text-[var(--color-text-desc)] text-xs">→</span>
+                    </div>
+                </Link>
             </div>
+
+            {/* Negative Manner Score Warning Popup */}
+            <MyWarningPopup mannerScore={mannerScore} />
 
             {/* Member Video Recommended for User */}
             <MyYoutubeEmbed nickname={displayName} />

@@ -1,6 +1,6 @@
 import { createClient } from '@/utils/supabase/server'
 import Link from 'next/link'
-import { Heart, Flag } from 'lucide-react'
+import { Flag } from 'lucide-react'
 import PremiumSubHeader from '@/components/premium-sub-header'
 
 export const dynamic = 'force-dynamic'
@@ -28,23 +28,102 @@ export default async function MembersPage() {
 
     const participantIds = [...new Set(participantsData?.map(p => p.user_id) || [])]
 
-    // 2. Fetch all members
-    const { data: members, error } = await supabase
-        .from('users')
-        .select('*')
+    // Fetch Pre-booking (Waitlist) participants
+    // Assuming we use 'waiting_list' table or similar logic. 
+    // Let's check if there is a 'waiting_list' table or we use 'participants' with specific status?
+    // Based on common patterns in this app, maybe 'alerts' for open notification?
+    // User asked for "pre-booking". 
+    // Let's assume we need to join with `waiting_list` table if it exists.
+    // I will try to fetch from `waiting_list`. If it fails, I'll catch it.
+    // Actually, safer to search first.
+    // Use `run_command` to grep or `mcp` to list tables? 
+    // Since I'm in `replace_file_content`, I can't run other tools.
+    // I will use a conservative approach:
+    // If I don't know the table, I cannot write the code.
+    // I will ABORT this tool call and use `grep_search` first.
 
-    if (error) console.error('Error fetching members:', error)
+    // 2. Fetch members with distance
+    // Use the RPC function to get network info including distance
+    // Start with max_depth large enough or assume direct friends + others
+    // Actually, to show distance for everyone, we might need a different approach if the RPC only returns connected users.
+    // However, the RPC returns connected users up to max_depth.
+    // If we want ALL members, we can outer join or fetch all users and merge with RPC result.
+    // Simplifying: Fetch from RPC with deeper depth to catch most network, or fetch all users and merge distance.
+    
+    // Let's try fetching all users as base, and merged with distance info from RPC.
+    const { data: usersData } = await supabase.from('users').select('*')
+    const { data: networkData } = await supabase.rpc('get_member_list_with_distance', { 
+        query_user_id: user.id, 
+        max_depth: 10 
+    })
 
-    const allMembers = members || []
+    const networkMap = new Map()
+    if (networkData) {
+        networkData.forEach((n: any) => {
+            if (n.id !== user.id) { // Exclude self if returned
+                 networkMap.set(n.id, n.distance)
+            }
+        })
+    }
 
-    // 3. Separate into participants and non-participants
-    const roundParticipants = allMembers.filter(m => participantIds.includes(m.id))
-    const others = allMembers.filter(m => !participantIds.includes(m.id))
+    let allMembers: any[] = usersData || []
 
-    // 4. Combine and Sort
+    // Attach distance
+    allMembers = allMembers.map(m => ({
+        ...m,
+        distance: networkMap.get(m.id)
+    })).filter(m => m.id !== user.id) // Filter out self from the list
+
+    // Calculate Percentiles
+    // Sort by manner_score desc to find rank
+    const sortedByManner = [...allMembers].sort((a, b) => (b.manner_score || 0) - (a.manner_score || 0))
+    const totalUsers = sortedByManner.length
+
+    // Create a map of member ID to percentile
+    const percentileMap = new Map()
+    sortedByManner.forEach((member, index) => {
+        // rank is index + 1
+        // percentile = Math.ceil((rank / total) * 100)
+        const rank = index + 1
+        const percentile = Math.ceil((rank / totalUsers) * 100)
+        percentileMap.set(member.id, percentile)
+    })
+
+    // Attach percentile to member objects
+    allMembers = allMembers.map(m => ({
+        ...m,
+        percentile: percentileMap.get(m.id) || 100
+    }))
+
+    // 3. Fetch Pre-reservations (Waitlist / Pre-booking)
+    const { data: preData } = await supabase
+        .from('pre_reservations')
+        .select('user_id')
+    
+    const preBookedIds = [...new Set(preData?.map(p => p.user_id) || [])]
+
+    // 4. Separate into participants and non-participants
+    // Logic update: Combined sorting is better.
+    // We want to prioritise participants, then pre-booked? Or just mark them.
+    // Let's just mark them and keep basic sorting or participant first.
+    // Existing logic: participants first, then others.
+    
+    // We can just add isPreBooked property to allMembers first.
+    allMembers = allMembers.map(m => ({
+        ...m,
+        isParticipant: participantIds.includes(m.id),
+        isPreBooked: preBookedIds.includes(m.id)
+    }))
+
+    const roundParticipants = allMembers.filter(m => m.isParticipant)
+    const preBooked = allMembers.filter(m => !m.isParticipant && m.isPreBooked)
+    const others = allMembers.filter(m => !m.isParticipant && !m.isPreBooked)
+
+    // Combine: Participants -> PreBooked -> Others
     const combinedMembers = [
-        ...roundParticipants.map(m => ({ ...m, isParticipant: true })),
-        ...others.map(m => ({ ...m, isParticipant: false }))
+        ...roundParticipants,
+        ...preBooked,
+        ...others
     ]
 
     return (
@@ -56,30 +135,9 @@ export default async function MembersPage() {
 
             <div className="divide-y divide-[var(--color-divider)]">
                 {combinedMembers.map((member: any, index: number) => {
-                    const videoIndex = (index + 1) / 5;
-                    const randomOffset = Math.floor((index * 7 + 3) % 20); // Deterministic "random" for SSR
-                    
                     return (
                         <div key={member.id}>
                             <MemberItem member={member} isParticipant={member.isParticipant} />
-                            {(index + 1) % 5 === 0 && (
-                                <div className="px-gutter py-8 bg-black/20">
-                                    <div className="rounded-[40px] overflow-hidden border border-white/5 shadow-2xl relative aspect-video group">
-                                        <div className="absolute inset-0 bg-gradient-to-tr from-blue-600/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000"></div>
-                                        <iframe 
-                                            width="100%" 
-                                            height="100%" 
-                                            src={`https://www.youtube.com/embed/videoseries?si=tNkcTeHAjB8inmNC&list=PLpf6bXUHPOxAL93x95ugCLwzXqQlpgRpd&index=${randomOffset}`}
-                                            title="YouTube video player" 
-                                            frameBorder="0" 
-                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                                            referrerPolicy="strict-origin-when-cross-origin" 
-                                            allowFullScreen
-                                            className="grayscale-[0.1] group-hover:grayscale-0 transition-all duration-700"
-                                        ></iframe>
-                                    </div>
-                                </div>
-                            )}
                         </div>
                     );
                 })}
@@ -106,26 +164,33 @@ function MemberItem({ member, isParticipant }: { member: any, isParticipant: boo
             </div>
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                    <div className="font-bold text-[var(--color-text-primary)]">{member.nickname}</div>
-                    {isParticipant && (
-                        <Flag size={12} className="text-red-500 fill-current" />
+                    <div className="font-bold text-[var(--color-text-primary)] truncate">{member.nickname}</div>
+                </div>
+                <div className="flex items-center gap-2 mt-0.5">
+                    {member.distance ? (
+                         <span className="text-[10px] font-black text-white/40 bg-white/5 px-1.5 py-0.5 rounded flex items-center gap-1">
+                            🔗 {member.distance}촌
+                        </span>
+                    ) : (
+                        <span className="text-[10px] font-black text-blue-400 bg-blue-400/10 px-1.5 py-0.5 rounded flex items-center gap-1">
+                            ➕ 1촌신청
+                        </span>
                     )}
                 </div>
+            </div>
+
+            {/* Flags in the Center */}
+            <div className="flex items-center justify-center gap-1.5">
+                {member.isPreBooked && (
+                    <Flag size={20} className="text-blue-500 fill-current animate-pulse" />
+                )}
                 {isParticipant && (
-                    <div className="text-xs text-red-500 font-bold mt-0.5">라운딩참가중</div>
+                    <Flag size={20} className="text-green-500 fill-current animate-pulse" />
                 )}
             </div>
-            <div className="flex flex-col items-end gap-0.5">
-                <div className={`flex items-center gap-1 ${member.gender === 'male' ? 'text-blue-500' :
-                    member.gender === 'female' ? 'text-pink-500' :
-                        'text-gray-400'
-                    }`}>
-                    <Heart size={14} className="fill-current" />
-                    <span className="text-sm font-black">{member.manner_score}</span>
-                </div>
-                <div className="text-[10px] text-[var(--color-text-desc)]">
-                    {member.job || '직업 미입력'} | {member.mbti || 'MBTI 미입력'}
-                </div>
+
+            <div className="flex flex-col items-end min-w-[60px]">
+                <span className="text-xl font-black text-blue-500 italic tracking-tighter">{member.percentile}%</span>
             </div>
         </Link>
     )
