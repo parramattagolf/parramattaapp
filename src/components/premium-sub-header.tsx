@@ -56,8 +56,7 @@ export default function PremiumSubHeader({ title, backHref, onBack, rightElement
                         </Link>
                     ) : null}
 
-                    <h1 className={`text-[15px] font-black text-white tracking-tighter transition-all duration-500 opacity-100 translate-x-0 ${titleClassName || 'truncate'}`}>
-                        {/* className={`text-[15px] font-black text-white tracking-tighter truncate transition-all duration-500 ${isScrolled ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4' */}
+                    <h1 className={`text-[15px] font-black text-white tracking-tighter transition-all duration-500 opacity-100 translate-x-0 truncate ${titleClassName || ''}`}>
                         {title}
                     </h1>
                 </div>

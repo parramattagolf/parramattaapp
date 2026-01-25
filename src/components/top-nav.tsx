@@ -149,7 +149,7 @@ function TopNavContent() {
           {pathname === '/my' && (
             <div className="w-2 h-2 rounded-full bg-red-500 mr-2 shadow-[0_0_8px_rgba(239,68,68,0.6)] animate-pulse" />
           )}
-          <h1 className={`leading-none ${(pathname === '/rounds' || pathname === '/members' || pathname === '/sponsors' || pathname === '/my') ? 'text-[15px] font-bold text-white tracking-normal' : 'text-xl font-black text-white tracking-tighter'}`}>
+          <h1 className={`leading-none truncate max-w-[200px] ${(pathname === '/rounds' || pathname === '/members' || pathname === '/sponsors' || pathname === '/my') ? 'text-[15px] font-bold text-white tracking-normal' : 'text-xl font-black text-white tracking-tighter'}`}>
             {getTitle()}
           </h1>
         </div>

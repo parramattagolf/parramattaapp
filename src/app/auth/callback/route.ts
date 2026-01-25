@@ -12,7 +12,7 @@ export async function GET(request: Request) {
 
   if (errorParam) {
     console.error('OAuth Callback Error:', errorParam, errorDescription)
-    return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(errorDescription || errorParam)}`)
+    return NextResponse.redirect(`${origin}/?error=${encodeURIComponent(errorDescription || errorParam)}`)
   }
 
   if (code) {
@@ -42,29 +42,24 @@ export async function GET(request: Request) {
       const kakaoProfile = meta?.kakao_account?.profile
       const kakaoId = meta?.provider_id || meta?.sub
 
-      // Try various paths for profile image
+      // Try to get profile image strictly from Kakao profile only
       const profileImageUrl = 
           kakaoProfile?.profile_image_url || 
           kakaoProfile?.thumbnail_image_url || 
-          meta?.avatar_url || 
-          meta?.picture ||
           null
 
-      // Try various paths for nickname
+      // Try to get nickname from reliable Kakao paths
       let nickname = 
           kakaoProfile?.nickname || 
-          meta?.full_name || 
-          meta?.name || 
-          meta?.preferred_username ||
+          meta?.nickname || 
+          meta?.properties?.nickname || 
           null
 
-      // Fallback to email username if nickname is missing
-      if (!nickname && (data.user.email || meta?.email)) {
-         const email = data.user.email || meta?.email
-         const emailPrefix = email.split('@')[0]
-         // Add random suffix to ensure uniqueness for email-based nicknames
-         nickname = `${emailPrefix}_${Math.floor(Math.random() * 10000)}`
-      }
+      // Fallback to email username if nickname is missing -> REMOVED to prevent overwriting with email
+      // if (!nickname && (data.user.email || meta?.email)) {
+      //    const email = data.user.email || meta?.email
+      //    nickname = email.split('@')[0]
+      // }
 
       // If still no nickname, generate a random one
       if (!nickname) {
@@ -107,28 +102,15 @@ export async function GET(request: Request) {
           })
       }
 
-      // Re-fetch or use logic to check if incomplete
-      const checkProfile = profile || { real_name: '', gender: '', age_range: '', district: '', job: '', mbti: '', golf_experience: '', handicap: null, onboarding_reward_received: false };
-      
-      const isProfileIncomplete = !checkProfile.real_name || 
-        !checkProfile.gender || 
-        !checkProfile.age_range || 
-        !checkProfile.district || 
-        !checkProfile.job || 
-        !checkProfile.mbti || 
-        !checkProfile.golf_experience || 
-        checkProfile.handicap === null;
-
-      if (isProfileIncomplete && !checkProfile.onboarding_reward_received) {
-        return NextResponse.redirect(`${origin}/settings?gift_notice=true`)
-      }
+      // Profile completeness check removed per user request.
+      // Users can fill in details (real_name, etc.) later in their settings page.
       
       return NextResponse.redirect(`${origin}${next}`)
     } else {
       console.error('Auth Error:', error)
-      return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(error?.message || 'Unknown error')}`)
+      return NextResponse.redirect(`${origin}/?error=${encodeURIComponent(error?.message || 'Unknown error')}`)
     }
   }
   
-  return NextResponse.redirect(`${origin}/login?error=NoCode`)
+  return NextResponse.redirect(`${origin}/?error=NoCode`)
 }

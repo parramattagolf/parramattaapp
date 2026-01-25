@@ -145,9 +145,15 @@ export default async function MyPage() {
                                 )}
                             </div>
                             {/* Real Name under Avatar + Settings */}
-                            {realName && (
-                                <div className="flex items-center gap-1.5 mt-1">
-                                    <div className="text-[15px] font-bold text-white/90 tracking-tight">{realName}</div>
+                            {/* Name & Nickname Display */}
+                            {/* Name & Nickname Display */}
+                            <div className="flex flex-col items-center mt-2">
+                                {/* Primary Name (Real Name Priority) */}
+                                <div className="flex items-center gap-1.5">
+                                    <div className="text-[16px] font-bold text-white/90 tracking-tight">
+                                        {/* 실명(realName)을 최우선으로, 없으면 닉네임 표시 */}
+                                        {realName || displayName}
+                                    </div>
                                     <Link
                                         href="/settings"
                                         className="w-5 h-5 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white/50 hover:text-white transition-colors"
@@ -155,7 +161,14 @@ export default async function MyPage() {
                                         <Settings size={12} />
                                     </Link>
                                 </div>
-                            )}
+                                
+                                {/* Secondary Display (Nickname below, if Real Name exists) */}
+                                {realName && realName !== displayName && (
+                                    <div className="text-[12px] text-[#A1A1AA] font-normal tracking-wide">
+                                        @{displayName}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                         
                         <div className="flex-1 min-w-0 flex flex-col justify-center gap-2" id="header_info">

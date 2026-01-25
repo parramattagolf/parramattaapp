@@ -3,9 +3,15 @@
 -- 이 파일의 내용을 모두 복사하여 Supabase SQL Editor에서 실행해주세요.
 -- ============================================================
 
--- [Part 0] phone 컬럼 제약조건 해제 (가장 중요한 부분)
--- 카카오 로그인 등 소셜 로그인 시 전화번호가 없을 수 있으므로 NULL 허용으로 변경
+-- [Part 0] phone, real_name 컬럼 생성 및 제약조건 해제
+-- 소셜 로그인 시 필수 정보가 없을 수 있으므로 제약조건 완화
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS phone TEXT;
 ALTER TABLE public.users ALTER COLUMN phone DROP NOT NULL;
+
+
+
+-- 닉네임 중복 허용 (카카오 ID로 사용자를 구분하므로 중복 무관)
+ALTER TABLE public.users DROP CONSTRAINT IF EXISTS users_nickname_key;
 
 -- [Part 1] 카카오 로그인 오류 수정 (트리거 함수 오타 수정)
 -- 1. kakao_id 컬럼 추가 (안전 장치)
@@ -36,13 +42,21 @@ BEGIN
         v_kakao_id := NULL;
     END;
 
-    INSERT INTO public.users (id, email, nickname, profile_img, kakao_id)
+    INSERT INTO public.users (id, email, nickname, profile_img, kakao_id, real_name)
     VALUES (
         new.id,
         new.email,
-        new.raw_user_meta_data->>'nickname', -- 카카오 닉네임만 사용
-        COALESCE(new.raw_user_meta_data->>'avatar_url', new.raw_user_meta_data->>'picture'),
-        v_kakao_id
+        COALESCE(
+            new.raw_user_meta_data->'kakao_account'->'profile'->>'nickname',
+            new.raw_user_meta_data->>'nickname',
+            new.raw_user_meta_data->'properties'->>'nickname'
+        ), 
+        COALESCE(
+            new.raw_user_meta_data->'kakao_account'->'profile'->>'profile_image_url',
+            new.raw_user_meta_data->'kakao_account'->'profile'->>'thumbnail_image_url'
+        ),
+        v_kakao_id,
+        ''
     )
     ON CONFLICT (id) DO UPDATE SET
         email = EXCLUDED.email,
@@ -58,13 +72,15 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- 3. 트리거 재설정 (확실히 적용하기 위해 삭제 후 재생성)
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
+  AFTER INSERT OR UPDATE ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user_with_metadata();
 
 
 -- [Part 2] 멤버 리스트 본인 표시 수정
--- 1. 기존 함수 삭제 (파라미터 변경 등에 대비)
-DROP FUNCTION IF EXISTS get_member_list_with_distance;
+-- 1. 기존 함수들 삭제 (파라미터가 다른 여러 버전이 있을 수 있으므로 명시적 삭제)
+DROP FUNCTION IF EXISTS get_member_list_with_distance(UUID, INT);
+DROP FUNCTION IF EXISTS get_member_list_with_distance(UUID);
+DROP FUNCTION IF EXISTS get_member_list_with_distance();
 
 -- 2. 함수 재생성 (본인 제외 조건 삭제됨)
 CREATE OR REPLACE FUNCTION get_member_list_with_distance(query_user_id UUID, max_depth INT DEFAULT 5)
@@ -75,7 +91,6 @@ RETURNS TABLE (
     job TEXT,
     profile_img TEXT,
     manner_score FLOAT,
-    best_dresser_score FLOAT,
     golf_experience TEXT,
     distance INT,
     is_blocked BOOLEAN
@@ -118,7 +133,6 @@ BEGIN
         u.job,
         COALESCE(u.profile_img, '') as profile_img,
         u.manner_score,
-        u.best_dresser_score,
         u.golf_experience,
         sp.dist as distance,
         EXISTS (

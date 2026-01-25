@@ -2,7 +2,7 @@
 
 ## 📌 변경 사항 요약
 
-카카오 로그인 시 프로필 사진과 닉네임이 자동으로 동기화되도록 시스템을 개선했습니다.
+카카오 로그인 시 프로필 사진과 닉네임이 자동으로 동기화되도록 시스템을 개선했습니다. 카카오가 제공하는 데이터는 로그인을 할 때마다 최신 상태로 강제 업데이트(Strict Overwrite)됩니다.
 
 ### 🔄 동작 방식
 
@@ -16,7 +16,9 @@ User → Kakao OAuth → Callback Handler
          - id (from auth)
          - kakao_id
          - nickname (from Kakao)
-         - profile_img (from Kakao)         
+         - profile_img (from Kakao)
+         - email (from Kakao)
+         - real_name = '' (empty)
 ```
 
 #### 2. **재방문 로그인 (Subsequent Logins)**
@@ -35,146 +37,44 @@ User → Kakao OAuth → Callback Handler
 
 ### 📝 수정된 파일
 
-#### `src/app/auth/callback/route.ts`
+#### `src/app/auth/callback/route.ts` & `supabase/execute_me_final.sql` 트리거
 **변경 내용:**
-- Kakao 프로필 데이터 추출 로직 추가
-- 사용자 존재 여부 확인
-- 최초 로그인: INSERT (minimal data)
-- 재방문 로그인: UPDATE (profile_img, nickname only)
-
-**주요 코드:**
-```typescript
-// Extract Kakao profile info
-const kakaoProfile = data.user.user_metadata?.kakao_account?.profile
-const kakaoId = data.user.user_metadata?.provider_id
-const profileImageUrl = kakaoProfile?.profile_image_url || kakaoProfile?.thumbnail_image_url
-const nickname = kakaoProfile?.nickname
-
-// Check if user exists
-const { data: existingUser } = await supabase
-  .from('users')
-  .select('id')
-  .eq('id', data.user.id)
-  .single()
-
-if (existingUser) {
-  // Update existing user (Strict Overwrite)
-  await supabase.from('users').update({
-    email: data.user.email || null,
-    profile_img: profileImageUrl || null,
-    nickname: nickname || null,
-    kakao_id: kakaoId || null,
-    updated_at: new Date().toISOString()
-  }).eq('id', data.user.id)
-} else {
-  // Insert new user
-  await supabase.from('users').insert({
-    id: data.user.id,
-    email: data.user.email || null,
-    kakao_id: kakaoId || null,
-    nickname: nickname || null,
-    profile_img: profileImageUrl || null,
-    real_name: '', // Empty initially
-    ...
-  })
-}
-```
-
-### ✅ 영향받는 기능 확인
-
-다음 기능들이 정상 작동하는지 확인했습니다:
-
-1. **프로필 조회 (`/members/[id]`)**
-   - ✅ `profile_img`, `nickname` 정상 표시
-   
-2. **설정 페이지 (`/settings`)**
-   - ✅ 사용자가 닉네임을 직접 수정 가능 (Kakao에서 가져온 값 override)
-   - ✅ 재로그인 시 Kakao 값으로 재동기화
-   
-3. **온보딩 (`/onboarding`)**
-   - ✅ UPDATE 방식 사용 (사용자가 이미 존재하므로)
-   - ✅ `real_name`, `phone` 등 추가 정보 입력
-   
-4. **마이페이지 (`/my`)**
-   - ✅ `profile_img`, `nickname` Kakao에서 가져온 값 우선 표시
-   - ✅ Fallback to auth metadata if DB is null
+- Kakao 프로필 데이터 추출 로직 최적화
+- 사용자 존재 여부 확인 후 **강제 덮어쓰기(Strict Overwrite)** 적용
 
 ### 🔒 데이터 정책
 
-| 필드 | 최초 로그인 | 재로그인 | 사용자 수정 가능 |
-|------|------------|---------|----------------|
-| `email` | Kakao → DB | Kakao → DB (기존 값 덮어쓰기) | ❌ |
-| `profile_img` | Kakao → DB | Kakao → DB (기존 값 덮어쓰기) | ❌ |
-| `nickname` | Kakao → DB | Kakao → DB (기존 값 덮어쓰기) | ✅ (로그인 시 카카오 값으로 복원됨) |
-| `kakao_id` | Kakao → DB | Kakao → DB (최신화) | ❌ |
-| `full_name` | (미제공) | (미제공) | ✅ (직접 입력 후 유지됨) |
+| 필드 | 최초 로그인 | 재로그인 | 사용자 수정 가능 | 비고 |
+|------|------------|---------|----------------|------|
+| `email` | Kakao → DB | Kakao → DB (덮어쓰기) | ❌ | 카카오 데이터 우선 |
+| `profile_img` | Kakao → DB | Kakao → DB (덮어쓰기) | ❌ | 카카오 데이터 우선 |
+| `nickname` | Kakao → DB | Kakao → DB (덮어쓰기) | ❌ | 카카오 값 고정 (수정 불가) |
+| `kakao_id` | Kakao → DB | Kakao → DB (갱신) | ❌ | 고유 식별값 |
 
 ### ⚠️ 중요 참고사항
 
-1. **닉네임 충돌 방지**
-   - DB에 `nickname` UNIQUE 제약이 있음
-   - Kakao에서 가져온 닉네임이 중복될 경우 에러 발생 가능
-   - 향후 개선: 닉네임에 랜덤 suffix 추가 (예: "홍길동_1234")
+   - 사용자가 카카오톡에서 프로필 사진을 변경하면 다음 로그인 시 앱에 자동 반영됩니다.
 
-2. **프로필 이미지 변경**
-   - 사용자가 Kakao 프로필 사진을 변경하면 다음 로그인 시 자동 반영
-   - 별도 업로드 기능은 없음 (Kakao 연동만 지원)
-
-3. **재로그인 시 데이터 손실?**
-   - ❌ `profile_img`, `nickname`만 덮어쓰기
-   - ✅ 나머지 정보 (real_name, phone, job 등)는 유지됨
+2. **닉네임 중복 허용**
+   - 시스템은 카카오 고유 ID(`kakao_id`)를 기준으로 사용자를 구분합니다. 따라서 닉네임이 다른 사용자와 중복되어도 가입 및 이용에 아무런 문제가 없습니다.
 
 ### 🧪 테스트 시나리오
 
 #### 시나리오 1: 신규 사용자
-```
 1. Kakao 로그인
-2. DB에 사용자 생성 (profile_img, nickname 저장)
-3. 온보딩 페이지로 이동
-4. real_name, phone 등 추가 정보 입력
-5. 프로필 완성
-```
+2. DB에 사용자 생성 (profile_img, nickname, email 저장)
+3. 온보딩 페이지로 이동하여 추가 정보 입력
 
-#### 시나리오 2: 기존 사용자 (Kakao 프로필 변경 후 재로그인)
-```
-1. Kakao에서 프로필 사진 변경
+#### 시나리오 2: 카카오 프로필 변경 후 재로그인
+1. 카카오톡에서 프로필 사진 변경
 2. 앱에서 로그아웃 후 재로그인
-3. DB의 profile_img가 새 이미지로 업데이트됨
-4. 기존 real_name, phone 등은 그대로 유지
-```
+3. DB의 `profile_img`가 새 이미지로 강제 업데이트됨
 
-#### 시나리오 3: 설정에서 닉네임 변경 후 재로그인
-```
-1. 설정 페이지에서 nickname을 "새닉네임"으로 변경
-2. 로그아웃 후 재로그인
-3. 카카오 인증 정보(nickname)가 최우선이므로 다시 덮어쓰기됨
-결론: 카카오 제공 데이터가 항상 우선 (Source of Truth)
-```
-
-#### 시나리오 4: 실명(full_name) 수정 후 재로그인
-```
-1. 사용자가 회원 정보에서 실명을 직접 입력
-2. 로그아웃 후 재로그인
-3. 카카오 인증 정보에는 실명(full_name)이 포함되지 않음 (미제공)
-4. 결론: 카카오에서 보내지 않는 정보는 사용자 입력값이 그대로 보존됨
-```
-
-### 📊 DB 쿼리 패턴 검토
-
-모든 `users` 테이블 관련 쿼리를 검토했습니다:
-
-1. **SELECT 쿼리**: ✅ 정상 (profile_img, nickname 컬럼 존재)
-2. **UPDATE 쿼리**: ✅ 정상 (기존 사용자 정보 업데이트)
-3. **INSERT 쿼리**: ✅ auth callback에서만 발생 (신규 사용자)
-
-### 🚨 알려진 제한사항
-
-1. Kakao에서 제공하지 않는 정보는 동기화 불가 (예: 생년월일, 주소)
-2. 닉네임 중복 시 에러 발생 (현재 해결책 없음, 향후 개선 필요)
-3. 프로필 이미지를 직접 업로드하는 기능 없음 (Kakao만 지원)
+#### 시나리오 3: 닉네임 수동 변경 시도
+1. 앱 내 설정 페이지에서 닉네임 수정을 시도함
+2. 시스템 정책에 의해 수정이 차단됨 (카카오 프로필 연동)
+3. 로그아웃 후 재로그인 시에도 카카오의 최신 닉네임이 유지됨
+4. 결론: 카카오 닉네임이 유일한 기준 (Strict Source of Truth)
 
 ---
-
-**작성일**: 2026-01-23  
-**작성자**: Antigravity AI  
-**상태**: ✅ 적용 완료
+**상태**: ✅ 적용 완료 및 동기화 정책 수립

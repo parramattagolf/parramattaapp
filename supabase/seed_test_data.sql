@@ -74,7 +74,6 @@ BEGIN
         UPDATE public.users 
         SET 
             manner_score = (floor(random() * 40) + 10) / 10.0, -- 1.0 ~ 5.0
-            best_dresser_score = (floor(random() * 40) + 10) / 10.0,
             job = (ARRAY['개발자', '의사', '프로골퍼', '선생님', 'CEO', '디자이너', '변호사'])[floor(random()*7 + 1)],
             golf_experience = (ARRAY['1년차', '3년차', '5년차', '싱글', '프로', '머리올림'])[floor(random()*6 + 1)],
             -- 닉네임이 트리거 기본값일 수 있으므로 확실하게 설정
