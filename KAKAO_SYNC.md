@@ -25,10 +25,11 @@ User → Kakao OAuth → Callback Handler
                       ↓
          Check if user exists in DB
                       ↓ (Found)
-         UPDATE users table:
-         - kakao_id (refreshed)
+         STRICT UPDATE (Overwrite):
+         - email (synced from Kakao)
          - nickname (synced from Kakao)
          - profile_img (synced from Kakao)
+         - kakao_id (refreshed)
          - updated_at (timestamp)
 ```
 
@@ -57,8 +58,9 @@ const { data: existingUser } = await supabase
   .single()
 
 if (existingUser) {
-  // Update existing user
+  // Update existing user (Strict Overwrite)
   await supabase.from('users').update({
+    email: data.user.email || null,
     profile_img: profileImageUrl || null,
     nickname: nickname || null,
     kakao_id: kakaoId || null,
@@ -68,10 +70,11 @@ if (existingUser) {
   // Insert new user
   await supabase.from('users').insert({
     id: data.user.id,
+    email: data.user.email || null,
     kakao_id: kakaoId || null,
     nickname: nickname || null,
     profile_img: profileImageUrl || null,
-    
+    real_name: '', // Empty initially
     ...
   })
 }
@@ -100,10 +103,11 @@ if (existingUser) {
 
 | 필드 | 최초 로그인 | 재로그인 | 사용자 수정 가능 |
 |------|------------|---------|----------------|
-| `email` | Kakao → DB | Kakao → DB (덮어쓰기) | ❌ (OAuth 연동) |
-| `profile_img` | Kakao → DB | Kakao → DB (덮어쓰기) | ❌ (Kakao 동기화) |
-| `nickname` | Kakao → DB | Kakao → DB (덮어쓰기) | ✅ (로그인 시 복원됨) |
-| `kakao_id` | Kakao → DB | Kakao → DB (갱신) | ❌ |
+| `email` | Kakao → DB | Kakao → DB (기존 값 덮어쓰기) | ❌ |
+| `profile_img` | Kakao → DB | Kakao → DB (기존 값 덮어쓰기) | ❌ |
+| `nickname` | Kakao → DB | Kakao → DB (기존 값 덮어쓰기) | ✅ (로그인 시 카카오 값으로 복원됨) |
+| `kakao_id` | Kakao → DB | Kakao → DB (최신화) | ❌ |
+| `full_name` | (미제공) | (미제공) | ✅ (직접 입력 후 유지됨) |
 
 ### ⚠️ 중요 참고사항
 
@@ -143,8 +147,16 @@ if (existingUser) {
 ```
 1. 설정 페이지에서 nickname을 "새닉네임"으로 변경
 2. 로그아웃 후 재로그인
-3. Kakao 닉네임으로 다시 덮어쓰기됨
-결론: Kakao 닉네임이 항상 우선
+3. 카카오 인증 정보(nickname)가 최우선이므로 다시 덮어쓰기됨
+결론: 카카오 제공 데이터가 항상 우선 (Source of Truth)
+```
+
+#### 시나리오 4: 실명(full_name) 수정 후 재로그인
+```
+1. 사용자가 회원 정보에서 실명을 직접 입력
+2. 로그아웃 후 재로그인
+3. 카카오 인증 정보에는 실명(full_name)이 포함되지 않음 (미제공)
+4. 결론: 카카오에서 보내지 않는 정보는 사용자 입력값이 그대로 보존됨
 ```
 
 ### 📊 DB 쿼리 패턴 검토
