@@ -106,7 +106,7 @@ export default async function RoundDetailPage({ params }: { params: Promise<{ id
 
                 <div className="relative z-10 animate-slide-up px-8 pb-12 pt-32">
 
-                    <h1 className="text-3xl font-black text-white tracking-tighter leading-tight mb-4 drop-shadow-2xl">{event.title}</h1>
+                    <h1 className="text-2xl font-black text-white tracking-tighter leading-tight mb-4 drop-shadow-2xl">{event.title}</h1>
                     <p className="text-white/60 text-[14px] font-medium leading-relaxed max-w-2xl whitespace-pre-wrap">
                         {event.description}
                     </p>

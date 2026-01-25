@@ -196,17 +196,17 @@ export default function RoundDetailContent({ event, participants, isHost, isJoin
                                 <button
                                     type="button"
                                     onClick={() => navigateToRoom(roomIndex + 1)}
-                                    className="relative z-10 cursor-pointer font-bold text-white/90 text-xl uppercase tracking-widest mb-6 hover:text-white transition-colors flex items-center gap-2 group/title"
+                                    className="relative z-10 cursor-pointer font-bold text-white/90 text-lg uppercase tracking-widest mb-4 hover:text-white transition-colors flex items-center gap-2 group/title"
                                 >
                                     {roomTitle}
                                     {roomIndex === 0 && (
-                                        <span className="ml-2 text-[11px] text-yellow-500 font-bold border border-yellow-500/30 px-2 py-0.5 rounded bg-yellow-500/10 animate-pulse align-middle">
-                                            첫조인회원 10포인트 시상
+                                        <span className="ml-2 text-[10px] text-yellow-500 font-bold border border-yellow-500/30 px-2 py-0.5 rounded bg-yellow-500/10 animate-pulse align-middle">
+                                            첫조인회원 10P
                                         </span>
                                     )}
                                     {roomIndex === 1 && (
-                                        <span className="ml-2 text-[11px] text-yellow-500 font-bold border border-yellow-500/30 px-2 py-0.5 rounded bg-yellow-500/10 animate-pulse align-middle">
-                                            첫조인회원 5포인트 시상
+                                        <span className="ml-2 text-[10px] text-yellow-500 font-bold border border-yellow-500/30 px-2 py-0.5 rounded bg-yellow-500/10 animate-pulse align-middle">
+                                            첫조인회원 5P
                                         </span>
                                     )}
                                 </button>
