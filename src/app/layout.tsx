@@ -1,15 +1,31 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import TopNav from '@/components/top-nav'
 import BottomNav from '@/components/bottom-nav'
 import NotificationListener from '@/components/notification-listener'
 import UnreadMessagePopup from '@/components/unread-message-popup'
 
-const inter = Inter({
-  subsets: ["latin"],
+const kakaoFont = localFont({
+  src: [
+    {
+      path: '../../public/fonts/카카오작은글씨/웹폰트/woff2/KakaoSmallSans-Light.woff2',
+      weight: '300',
+      style: 'normal',
+    },
+    {
+      path: '../../public/fonts/카카오작은글씨/웹폰트/woff2/KakaoSmallSans-Regular.woff2',
+      weight: '400',
+      style: 'normal',
+    },
+    {
+      path: '../../public/fonts/카카오작은글씨/웹폰트/woff2/KakaoSmallSans-Bold.woff2',
+      weight: '700',
+      style: 'normal',
+    },
+  ],
+  variable: '--font-kakao',
   display: 'swap',
-  variable: '--font-inter'
 });
 
 export const metadata: Metadata = {
@@ -25,8 +41,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko" className={`${inter.variable} overflow-x-hidden`} suppressHydrationWarning>
-      <body className={`${inter.className} bg-[var(--color-bg)] min-h-screen overflow-x-hidden`}>
+    <html lang="ko" className={`${kakaoFont.variable} overflow-x-hidden`} suppressHydrationWarning>
+      <body className={`${kakaoFont.className} bg-[var(--color-bg)] min-h-screen overflow-x-hidden`}>
         {/* Mobile Layout Container */}
         <div className="flex justify-center min-h-screen overflow-x-hidden">
           <main className="w-full max-w-[500px] bg-[var(--color-bg)] min-h-screen relative flex flex-col overflow-x-hidden">

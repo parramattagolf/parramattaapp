@@ -114,8 +114,7 @@ export default async function RoundDetailPage({ params }: { params: Promise<{ id
             </div>
 
             <main className="px-6 space-y-12">
-                {/* 0. Pre-reservation List (Now at the top) */}
-                <PreReservationList reservations={preReservations || []} />
+
 
                 {/* 1. Pre-reservation Encouragement Banner (Inline) */}
                 {userStatus === 'none' && (
@@ -145,6 +144,12 @@ export default async function RoundDetailPage({ params }: { params: Promise<{ id
 
                 {/* Participant Management (Client Side) */}
                 <div className="animate-fade-in [animation-delay:200ms]">
+                    
+                    {/* Pre-reservation List (Moved here) */}
+                    <div className="mb-8">
+                        <PreReservationList reservations={preReservations || []} />
+                    </div>
+
                     <RoundDetailContent
                         event={event}
                         participants={participants || []}

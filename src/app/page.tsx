@@ -51,7 +51,7 @@ function LoginContent() {
         className={`absolute inset-0 flex items-center justify-center transition-opacity duration-1000 ${showLogin ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
       >
         <h1 className="text-[#D50032] text-6xl md:text-8xl font-black tracking-tighter animate-netflix-intro">
-          PARRAMATTA
+          파라마타 골프
         </h1>
       </div>
 
@@ -60,11 +60,9 @@ function LoginContent() {
         className={`w-full max-w-sm px-6 transition-all duration-1000 transform ${showLogin ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}`}
       >
         <div className="text-center mb-12">
-          <div className="w-20 h-20 bg-[#002D56] rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg border border-white/10">
-            <span className="text-white text-4xl font-bold">P</span>
-          </div>
-          <h2 className="text-3xl font-bold text-white mb-2 tracking-tight">PARRAMATTA</h2>
-          <p className="text-gray-400 text-xs tracking-[0.3em] uppercase">Private Golf & Social</p>
+
+          <h2 className="text-3xl font-bold text-white mb-2 tracking-tight">PARRAMATTA GOLF</h2>
+          <p className="text-gray-400 text-xs tracking-[0.3em] uppercase">신뢰와 매너, 골프 커뮤니티</p>
         </div>
 
         <button
@@ -79,13 +77,13 @@ function LoginContent() {
               <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current">
                 <path d="M12 3C5.373 3 0 7.392 0 12.81c0 3.39 2.138 6.376 5.4 8.086l-1.373 5.09c-.068.254.19.467.42.34l5.968-3.957c.52.05 1.05.077 1.585.077 6.627 0 12-4.392 12-9.81C24 7.392 18.627 3 12 3" />
               </svg>
-              카카오톡으로 시작하기
+              카카오톡으로 1초만에 시작하기
             </>
           )}
         </button>
 
         <p className="text-xs text-gray-300 text-center mt-8">
-          © 2026 Parramatta Golf Club
+          © 2010 Henry's Parramatta
         </p>
       </div>
     </div>

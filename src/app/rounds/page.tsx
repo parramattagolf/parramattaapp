@@ -98,11 +98,11 @@ export default async function RoundsPage({ searchParams }: { searchParams: Promi
   })
 
   return (
-    <div className="min-h-screen bg-[#121212] pb-32 font-sans overflow-x-hidden pt-24">
-      <Suspense fallback={<div className="fixed top-[51px] left-1/2 -translate-x-1/2 w-full max-w-[500px] h-[61px] bg-[#121212]/95 border-b border-white/10 z-[89]" />}>
+    <div className="min-h-screen bg-[#121212] pb-32 font-sans overflow-x-hidden pt-[180px]">
+      <Suspense fallback={<div className="fixed top-[51px] left-1/2 -translate-x-1/2 w-full max-w-[500px] h-[120px] bg-[#121212] border-b border-white/10 z-[89]" />}>
         <RoundFilter themes={uniqueThemes} activeTheme={activeTheme} />
       </Suspense>
-      <main className="space-y-12 mt-12 px-0">
+      <main className="space-y-12 mt-0 px-0">
         {months.length > 0 ? (
           months.map(month => (
             <MonthSection key={month} month={month} events={groupedEventsWithCounts[month]} view={view} />

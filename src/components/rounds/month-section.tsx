@@ -190,7 +190,7 @@ export default function MonthSection({ month, events, view }: MonthSectionProps)
                                         {event.max_participants && event.max_participants > 0 && view !== 'past' && (
                                             <div className="mt-2">
                                                 <div className="flex items-center justify-between mb-1.5">
-                                                    <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">Recruitment</span>
+                                                    <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">참가현황</span>
                                                     <span className={`text-[11px] font-black ${
                                                         (event.participant_count || 0) >= event.max_participants ? 'text-emerald-400' : 'text-blue-400'
                                                     }`}>
@@ -257,19 +257,33 @@ export default function MonthSection({ month, events, view }: MonthSectionProps)
                                 const isToday = isSameDay(day, new Date())
 
                                 // Find relevant events that intersect with this day
+                                const dayStr = format(day, 'yyyy-MM-dd')
+                                
                                 const dayEvents = events.filter(e => {
-                                    const eventStart = startOfDay(new Date(e.start_date))
-                                    const eventEnd = startOfDay(e.end_date ? new Date(e.end_date) : new Date(e.start_date))
-                                    return isWithinInterval(day, { start: eventStart, end: eventEnd })
+                                    const eventStartStr = format(new Date(e.start_date), 'yyyy-MM-dd')
+                                    let eventEndStr = e.end_date ? format(new Date(e.end_date), 'yyyy-MM-dd') : eventStartStr
+                                    
+                                    // Handle invalid data where end_date < start_date
+                                    if (eventEndStr < eventStartStr) {
+                                        eventEndStr = eventStartStr
+                                    }
+                                    
+                                    return dayStr >= eventStartStr && dayStr <= eventEndStr
                                 })
 
                                 // Calculate the visual indicator for each event
                                 const indicators = dayEvents.map(e => {
-                                    const eventStart = startOfDay(new Date(e.start_date))
-                                    const eventEnd = startOfDay(e.end_date ? new Date(e.end_date) : new Date(e.start_date))
-                                    const isSingleDay = isSameDay(eventStart, eventEnd)
-                                    const isStartNode = isSameDay(day, eventStart)
-                                    const isEndNode = isSameDay(day, eventEnd)
+                                    const eventStartStr = format(new Date(e.start_date), 'yyyy-MM-dd')
+                                    let eventEndStr = e.end_date ? format(new Date(e.end_date), 'yyyy-MM-dd') : eventStartStr
+                                    
+                                    // Handle invalid data where end_date < start_date
+                                    if (eventEndStr < eventStartStr) {
+                                        eventEndStr = eventStartStr
+                                    }
+                                    
+                                    const isSingleDay = eventStartStr === eventEndStr
+                                    const isStartNode = dayStr === eventStartStr
+                                    const isEndNode = dayStr === eventEndStr
 
                                     return {
                                         id: e.id,

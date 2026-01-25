@@ -192,11 +192,11 @@ export default function RoundDetailContent({ event, participants, isHost, isJoin
                         const roomTitle = maxRooms === 1 ? '1번방 조인' : `${roomIndex + 1}번방 조인`
 
                         return (
-                            <div key={roomIndex}>
+                            <div key={roomIndex} className="bg-[#1c1c1e] p-5 rounded-[24px] border border-white/5 shadow-xl">
                                 <button
                                     type="button"
                                     onClick={() => navigateToRoom(roomIndex + 1)}
-                                    className="relative z-10 cursor-pointer font-bold text-white/60 text-lg uppercase tracking-widest mb-4 hover:text-white transition-colors flex items-center gap-2 group/title"
+                                    className="relative z-10 cursor-pointer font-bold text-white/90 text-xl uppercase tracking-widest mb-6 hover:text-white transition-colors flex items-center gap-2 group/title"
                                 >
                                     {roomTitle}
                                     {roomIndex === 0 && (
@@ -235,10 +235,10 @@ export default function RoundDetailContent({ event, participants, isHost, isJoin
                                                     navigateToRoom(roomIndex + 1);
                                                 }}
                                                 className={`aspect-square rounded-2xl border transition-all duration-500 flex flex-col items-center justify-center p-2 relative group overflow-hidden cursor-pointer ${slot
-                                                    ? 'border-white/10 bg-[#1c1c1e] shadow-2xl scale-100'
+                                                    ? 'border-white/10 bg-[#252527] shadow-lg scale-100'
                                                     : isHeld
                                                         ? 'border-dashed border-yellow-500/30 bg-yellow-500/5'
-                                                        : 'border-dashed border-white/5 bg-white/[0.01] hover:bg-white/[0.03]'
+                                                        : 'border-dashed border-white/5 bg-white/[0.03] hover:bg-white/[0.05]'
                                                     }`}
                                             >
                                                 {slot ? (

@@ -64,7 +64,7 @@ html {
 }
 
 body {
-  font-family: "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  font-family: var(--font-kakao), "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
   color: var(--color-text-primary);
   background: var(--color-bg);
   font-size: var(--font-size-base);
