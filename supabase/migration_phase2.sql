@@ -18,7 +18,7 @@ RETURNS TABLE (
     nickname TEXT,
     real_name TEXT,
     job TEXT,
-    avatar_url TEXT,
+    profile_img TEXT,
     manner_score FLOAT,
     distance INT,
     is_blocked BOOLEAN
@@ -62,7 +62,7 @@ BEGIN
         u.nickname,
         u.real_name,
         u.job,
-        COALESCE(u.avatar_url, '') as avatar_url,
+        COALESCE(u.profile_img, '') as profile_img,
         u.manner_score,
         sp.dist as distance,
         EXISTS (

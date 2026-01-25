@@ -36,21 +36,19 @@ BEGIN
         v_kakao_id := NULL;
     END;
 
-    INSERT INTO public.users (id, email, nickname, avatar_url, full_name, kakao_id)
+    INSERT INTO public.users (id, email, nickname, profile_img, kakao_id)
     VALUES (
         new.id,
         new.email,
-        COALESCE(new.raw_user_meta_data->>'nickname', new.raw_user_meta_data->>'full_name', '골퍼'),
+        new.raw_user_meta_data->>'nickname', -- 카카오 닉네임만 사용
         COALESCE(new.raw_user_meta_data->>'avatar_url', new.raw_user_meta_data->>'picture'),
-        new.raw_user_meta_data->>'full_name',
         v_kakao_id
     )
     ON CONFLICT (id) DO UPDATE SET
         email = EXCLUDED.email,
-        nickname = COALESCE(public.users.nickname, EXCLUDED.nickname),
-        avatar_url = COALESCE(public.users.avatar_url, EXCLUDED.avatar_url),
-        full_name = COALESCE(public.users.full_name, EXCLUDED.full_name),
-        kakao_id = COALESCE(public.users.kakao_id, EXCLUDED.kakao_id),
+        nickname = EXCLUDED.nickname,
+        profile_img = EXCLUDED.profile_img,
+        kakao_id = EXCLUDED.kakao_id,
         updated_at = now();
         
     RETURN new;
@@ -75,7 +73,7 @@ RETURNS TABLE (
     nickname TEXT,
     real_name TEXT,
     job TEXT,
-    avatar_url TEXT,
+    profile_img TEXT,
     manner_score FLOAT,
     best_dresser_score FLOAT,
     golf_experience TEXT,
@@ -118,7 +116,7 @@ BEGIN
         u.nickname,
         u.real_name,
         u.job,
-        COALESCE(u.avatar_url, '') as avatar_url,
+        COALESCE(u.profile_img, '') as profile_img,
         u.manner_score,
         u.best_dresser_score,
         u.golf_experience,

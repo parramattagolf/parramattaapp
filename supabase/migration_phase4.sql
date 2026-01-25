@@ -42,7 +42,7 @@ BEGIN
         e.location,
         e.status,
         u.nickname as host_nickname,
-        u.avatar_url as host_avatar,
+        u.profile_img as host_avatar,
         (SELECT count(*) FROM public.participants p WHERE p.event_id = e.id) as participant_count
     FROM public.events e
     JOIN public.users u ON e.host_id = u.id

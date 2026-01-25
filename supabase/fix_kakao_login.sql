@@ -30,22 +30,19 @@ BEGIN
         v_kakao_id := NULL;
     END;
 
-    INSERT INTO public.users (id, email, nickname, avatar_url, full_name, kakao_id)
+    INSERT INTO public.users (id, email, nickname, profile_img, kakao_id)
     VALUES (
         new.id,
         new.email,
-        COALESCE(new.raw_user_meta_data->>'nickname', new.raw_user_meta_data->>'full_name', '골퍼'),
+        new.raw_user_meta_data->>'nickname', -- 카카오 닉네임만 사용
         COALESCE(new.raw_user_meta_data->>'avatar_url', new.raw_user_meta_data->>'picture'),
-        new.raw_user_meta_data->>'full_name',
         v_kakao_id
     )
     ON CONFLICT (id) DO UPDATE SET
         email = EXCLUDED.email,
-        -- 기존 닉네임/아바타가 있으면 유지, 없으면 새 값으로 업데이트
-        nickname = COALESCE(public.users.nickname, EXCLUDED.nickname),
-        avatar_url = COALESCE(public.users.avatar_url, EXCLUDED.avatar_url),
-        full_name = COALESCE(public.users.full_name, EXCLUDED.full_name),
-        kakao_id = COALESCE(public.users.kakao_id, EXCLUDED.kakao_id),
+        nickname = EXCLUDED.nickname,
+        profile_img = EXCLUDED.profile_img,
+        kakao_id = EXCLUDED.kakao_id,
         updated_at = now();
         
     RETURN new;
