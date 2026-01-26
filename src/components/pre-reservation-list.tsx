@@ -1,6 +1,6 @@
 'use client'
 
-import { Sparkles } from 'lucide-react'
+import { Sparkles, HelpCircle } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { cancelPreReservation, preReserveEvent } from '@/actions/event-actions'
@@ -31,6 +31,16 @@ export default function PreReservationList({ reservations, eventId, isPreReserve
     // Show component if there are reservations OR if it's the personal status area
     if ((!reservations || reservations.length === 0) && !isPreReserved && userStatus !== 'none') return null
     if (!eventId) return null
+
+    const showHelp = () => {
+        alert(
+            "🚀 사전예약이란?\n\n" +
+            "정식 조인 기간 전에 미리 참여 의사를 밝히는 기능입니다.\n\n" +
+            "• 혜택: 조편성 시 우선 고려 대상이 됩니다.\n" +
+            "• 주의: 사전예약 후 취소 시 매너점수가 2점 차감됩니다.\n" +
+            "• 접수: 정식 접수가 시작되면 자동으로 참가 처리되거나 우선권이 주어집니다."
+        );
+    }
 
     const handleCancel = async () => {
         if (loading) return
@@ -80,7 +90,7 @@ export default function PreReservationList({ reservations, eventId, isPreReserve
 
     return (
         <div className="w-full mt-4 animate-fade-in">
-            <div className="mb-4 px-1">
+            <div className="mb-4 px-1 flex items-center gap-2">
                 {isPreReserved ? (
                     <button
                         onClick={handleCancel}
@@ -102,6 +112,14 @@ export default function PreReservationList({ reservations, eventId, isPreReserve
                         </button>
                     )
                 )}
+
+                <button 
+                    onClick={showHelp}
+                    className="w-8 h-8 flex items-center justify-center text-white/20 hover:text-white transition-colors"
+                    title="사전예약이란?"
+                >
+                    <HelpCircle size={16} />
+                </button>
             </div>
             <div className="grid grid-cols-8 gap-2">
                 {reservations.map((res) => (
