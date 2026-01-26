@@ -2,11 +2,6 @@ import { createClient } from '@/utils/supabase/server';
 import { NextResponse } from 'next/server';
 import webPush from 'web-push';
 
-webPush.setVapidDetails(
-  process.env.NEXT_PUBLIC_VAPID_SUBJECT || 'mailto:admin@example.com',
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-);
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -22,6 +17,17 @@ export async function POST(request: Request) {
 
   // Example: Check if user email is admin (replace with your logic)
   // if (user.email !== 'admin@parramattagolf.com') { ... }
+
+  try {
+    webPush.setVapidDetails(
+      process.env.NEXT_PUBLIC_VAPID_SUBJECT || 'mailto:admin@example.com',
+      process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
+      process.env.VAPID_PRIVATE_KEY!
+    );
+  } catch (error) {
+    console.error('VAPID keys not configured', error);
+    return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
+  }
 
   const { title, body, url, userId } = await request.json();
 
