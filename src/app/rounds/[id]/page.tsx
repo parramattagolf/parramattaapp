@@ -8,10 +8,19 @@ import RoundEntranceGuard from '@/components/rounds/round-entrance-guard'
 import RoundRealtimeListener from '@/components/rounds/round-realtime-listener'
 import RoundTabsContent from '@/components/rounds/round-tabs-content'
 
-export default async function RoundDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function RoundDetailPage({ params, searchParams }: { params: Promise<{ id: string }>, searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
     // In Next.js 15+, params is a Promise. 
     // Wait for params to resolve before using params.id
     const { id } = await params;
+    const { source, returnTo, fromTab } = await searchParams;
+
+    const isFromProfile = source === 'profile';
+    // If returning to profile, we need the member ID. If returnTo is provided, use it.
+    // Also restore tab state and scroll position
+    const backHref = isFromProfile && returnTo 
+        ? `/members/${returnTo}?activeTab=${fromTab || 'pre'}&scrollTo=tabs` 
+        : '/rounds';
+    const headerMode = isFromProfile ? 'close' : 'back';
 
 
     const supabase = await createClient()
@@ -79,7 +88,8 @@ export default async function RoundDetailPage({ params }: { params: Promise<{ id
                 {/* Dynamic Sticky Header */}
                 <PremiumSubHeader
                     title={event.title}
-                    backHref="/rounds"
+                    backHref={backHref}
+                    mode={headerMode}
                 />
 
                 {/* Content Padding for sticky header */}

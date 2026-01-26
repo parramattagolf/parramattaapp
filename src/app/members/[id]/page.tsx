@@ -426,7 +426,8 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
             {/* Reservation Tabs */}
             <MemberReservationTabs 
                 preReservations={preReservations} 
-                friendlyRounds={friendlyRounds} 
+                friendlyRounds={friendlyRounds}
+                currentMemberId={id}
             />
 
 

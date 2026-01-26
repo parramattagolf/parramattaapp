@@ -143,10 +143,10 @@ export default async function MembersPage() {
             />
 
             <div className="">
-                {combinedMembers.map((member) => {
+                {combinedMembers.map((member, index) => {
                     return (
                         <div key={member.id}>
-                            <MemberItem member={member} isParticipant={member.isParticipant} />
+                            <MemberItem member={member} isParticipant={member.isParticipant} priority={index < 4} />
                         </div>
                     );
                 })}
@@ -166,7 +166,7 @@ interface Member {
     percentile: number;
 }
 
-function MemberItem({ member, isParticipant }: { member: Member, isParticipant: boolean }) {
+function MemberItem({ member, isParticipant, priority = false }: { member: Member, isParticipant: boolean, priority?: boolean }) {
     return (
         <Link
             href={`/members/${member.id}`}
@@ -184,6 +184,7 @@ function MemberItem({ member, isParticipant }: { member: Member, isParticipant: 
                             fill 
                             className="object-cover" 
                             unoptimized 
+                            priority={priority}
                         />
                     </div>
                 ) : (

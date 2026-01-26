@@ -5,8 +5,9 @@ import { notFound } from 'next/navigation'
 import RoomDetailContent from '@/components/room-detail-content'
 import PremiumSubHeader from '@/components/premium-sub-header'
 
-export default async function RoomDetailPage({ params }: { params: Promise<{ id: string, roomNumber: string }> }) {
+export default async function RoomDetailPage({ params, searchParams }: { params: Promise<{ id: string, roomNumber: string }>, searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
     const { id, roomNumber } = await params
+    const { source, returnTo, fromTab } = await searchParams
     const roomIndex = parseInt(roomNumber) - 1
 
     const supabase = await createClient()
@@ -52,7 +53,7 @@ export default async function RoomDetailPage({ params }: { params: Promise<{ id:
                         <span className="ml-2">{event.title}</span>
                     </>
                 }
-                backHref={`/rounds/${id}?tab=brackets`}
+                backHref={`/rounds/${id}?tab=brackets${source ? `&source=${source}` : ''}${returnTo ? `&returnTo=${returnTo}` : ''}${fromTab ? `&fromTab=${fromTab}` : ''}`}
             />
 
             <main className="px-6 pt-24 space-y-8 animate-fade-in">

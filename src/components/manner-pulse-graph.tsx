@@ -11,8 +11,8 @@ interface HistoryItem {
 
 export default function MannerPulseGraph({ history }: { history: HistoryItem[] }) {
     const data = useMemo(() => {
-        // Ensure chronological order for the path
-        return [...history].reverse()
+        // Get recent 5 items (history is desc) and reverse to chronological
+        return [...history].slice(0, 5).reverse()
     }, [history])
 
     // Determine Y axis scale

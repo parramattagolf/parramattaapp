@@ -9,11 +9,7 @@ import PushNotificationManager from '@/components/push-notification-manager'
 
 const kakaoFont = localFont({
   src: [
-    {
-      path: '../../public/fonts/카카오작은글씨/웹폰트/woff2/KakaoSmallSans-Light.woff2',
-      weight: '300',
-      style: 'normal',
-    },
+
     {
       path: '../../public/fonts/카카오작은글씨/웹폰트/woff2/KakaoSmallSans-Regular.woff2',
       weight: '400',

@@ -61,6 +61,7 @@
 html {
   color-scheme: dark;
   background-color: var(--color-bg);
+  overflow-x: hidden;
 }
 
 body {
@@ -71,6 +72,7 @@ body {
   line-height: 1.5;
   letter-spacing: -0.02em;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
 /* Typography - Toss Style (Large, Bold Titles) */

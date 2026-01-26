@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { leaveEvent } from '@/actions/event-actions'
 import { createClient } from '@/utils/supabase/client'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import { Lock } from 'lucide-react'
 
@@ -32,6 +32,7 @@ export default function RoundDetailContent({ event, participants, isHost, isJoin
     const [heldSlots, setHeldSlots] = useState<HeldSlot[]>([])
     const [roomHosts, setRoomHosts] = useState<Record<number, string>>({}) // groupNo -> userId
     const router = useRouter()
+    const searchParams = useSearchParams()
     const supabase = createClient()
 
     // Fetch held slots
@@ -122,7 +123,19 @@ export default function RoundDetailContent({ event, participants, isHost, isJoin
 
     // Navigate to room detail page
     const navigateToRoom = (roomNumber: number) => {
-        router.push(`/rounds/${event.id}/rooms/${roomNumber}`)
+        const params = new URLSearchParams()
+        
+        // Persist context params
+        const source = searchParams.get('source')
+        const returnTo = searchParams.get('returnTo')
+        const fromTab = searchParams.get('fromTab')
+
+        if (source) params.set('source', source)
+        if (returnTo) params.set('returnTo', returnTo)
+        if (fromTab) params.set('fromTab', fromTab)
+
+        const queryString = params.toString() ? `?${params.toString()}` : ''
+        router.push(`/rounds/${event.id}/rooms/${roomNumber}${queryString}`)
     }
 
     return (

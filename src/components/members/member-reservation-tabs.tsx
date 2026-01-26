@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 
 interface ReservationEvent {
     id: string
@@ -26,10 +27,45 @@ interface FriendlyRoundData {
 interface MemberReservationTabsProps {
     preReservations: PreResData[]
     friendlyRounds: FriendlyRoundData[]
+    currentMemberId?: string
 }
 
-export default function MemberReservationTabs({ preReservations, friendlyRounds }: MemberReservationTabsProps) {
-    const [activeTab, setActiveTab] = useState<'pre' | 'confirmed'>('pre')
+export default function MemberReservationTabs({ preReservations, friendlyRounds, currentMemberId }: MemberReservationTabsProps) {
+    const searchParams = useSearchParams()
+    
+    // Initialize activeTab from URL or default to 'pre'
+    const initialTab = (searchParams.get('activeTab') as 'pre' | 'confirmed') || 'pre'
+    const [activeTab, setActiveTab] = useState<'pre' | 'confirmed'>(initialTab)
+    const [minHeight, setMinHeight] = useState<number>(0)
+    const containerRef = useRef<HTMLDivElement>(null)
+    const contentRef = useRef<HTMLDivElement>(null)
+
+    // Measure and maintain max height to prevent scroll jumps
+    useEffect(() => {
+        if (contentRef.current) {
+            const h = contentRef.current.offsetHeight
+            if (h > minHeight) {
+                setMinHeight(h)
+            }
+        }
+    }, [activeTab, preReservations, friendlyRounds, minHeight])
+
+    // Scroll to tabs if requested via URL (e.g. returning from detail page)
+    useEffect(() => {
+        if (searchParams.get('scrollTo') === 'tabs' && containerRef.current) {
+            // Small timeout to ensure layout is ready
+            setTimeout(() => {
+                containerRef.current?.scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'start' 
+                })
+            }, 100)
+        }
+    }, [searchParams])
+
+    const handleTabClick = (tabId: 'pre' | 'confirmed') => {
+        setActiveTab(tabId)
+    }
 
     const tabs = [
         { id: 'pre', label: '사전예약', count: preReservations.length },
@@ -37,13 +73,13 @@ export default function MemberReservationTabs({ preReservations, friendlyRounds 
     ]
 
     return (
-        <div className="mt-10">
-            {/* Tab Headers */}
-            <div className="px-gutter flex border-b border-white/5 mb-6">
+        <div className="mt-4 scroll-mt-[70px]" ref={containerRef}>
+            {/* Tab Headers - Sticky */}
+            <div className="sticky top-[64px] z-[50] bg-[#121212]/95 backdrop-blur-xl pt-2 px-gutter flex border-b border-white/5 mb-6 text-center">
                 {tabs.map((tab) => (
                     <button
                         key={tab.id}
-                        onClick={() => setActiveTab(tab.id as 'pre' | 'confirmed')}
+                        onClick={() => handleTabClick(tab.id as 'pre' | 'confirmed')}
                         className={`flex-1 pb-4 text-lg font-black transition-all relative flex items-center justify-center gap-2 ${
                             activeTab === tab.id 
                                 ? 'text-white' 
@@ -64,13 +100,13 @@ export default function MemberReservationTabs({ preReservations, friendlyRounds 
             </div>
 
             {/* Tab Content */}
-            <div className="px-gutter">
+            <div className="px-gutter transition-all duration-300" ref={contentRef} style={{ minHeight: minHeight ? `${minHeight}px` : 'auto' }}>
                 {activeTab === 'pre' ? (
                     <div className="space-y-3">
                         {preReservations.length > 0 ? (
                             preReservations.map((pre) => (
                                 <Link 
-                                    href={`/rounds/${pre.event.id}`}
+                                    href={`/rounds/${pre.event.id}?tab=brackets&source=profile&returnTo=${currentMemberId}&fromTab=pre`}
                                     key={pre.id}
                                     className="block bg-white/5 py-2.5 px-4 rounded-2xl border border-white/5 active:scale-[0.98] transition-all"
                                 >
@@ -109,7 +145,7 @@ export default function MemberReservationTabs({ preReservations, friendlyRounds 
                         {friendlyRounds.length > 0 ? (
                             friendlyRounds.map((round) => (
                                 <Link 
-                                    href={`/rounds/${round.event.id}`}
+                                    href={`/rounds/${round.event.id}?tab=brackets&source=profile&returnTo=${currentMemberId}&fromTab=confirmed`}
                                     key={round.id}
                                     className="block bg-white/5 py-2.5 px-4 rounded-2xl border border-white/5 active:scale-[0.98] transition-all"
                                 >

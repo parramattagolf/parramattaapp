@@ -139,6 +139,7 @@ export default async function MyPage() {
                                             fill
                                             className="object-cover"
                                             unoptimized
+                                            priority
                                         />
                                     </div>
                                 ) : (

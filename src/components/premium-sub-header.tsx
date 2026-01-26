@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, X } from 'lucide-react'
 
 interface PremiumSubHeaderProps {
     title: React.ReactNode;
@@ -9,9 +9,10 @@ interface PremiumSubHeaderProps {
     onBack?: () => void;
     rightElement?: React.ReactNode;
     titleClassName?: string;
+    mode?: 'back' | 'close';
 }
 
-export default function PremiumSubHeader({ title, backHref, onBack, rightElement, titleClassName }: PremiumSubHeaderProps) {
+export default function PremiumSubHeader({ title, backHref, onBack, rightElement, titleClassName, mode = 'back' }: PremiumSubHeaderProps) {
     return (
         <header
             className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[500px] z-[110] bg-[#121212]/90 backdrop-blur-2xl py-3"
@@ -23,14 +24,14 @@ export default function PremiumSubHeader({ title, backHref, onBack, rightElement
                             onClick={onBack}
                             className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-2xl transition-all active:scale-90 bg-white/5 border border-white/10 text-white hover:text-blue-400"
                         >
-                            <ArrowLeft size={18} strokeWidth={3} />
+                            {mode === 'close' ? <X size={20} strokeWidth={2.5} /> : <ArrowLeft size={18} strokeWidth={3} />}
                         </button>
                     ) : backHref ? (
                         <Link
                             href={backHref}
                             className="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-2xl transition-all active:scale-90 bg-white/5 border border-white/10 text-white hover:text-blue-400"
                         >
-                            <ArrowLeft size={18} strokeWidth={3} />
+                            {mode === 'close' ? <X size={20} strokeWidth={2.5} /> : <ArrowLeft size={18} strokeWidth={3} />}
                         </Link>
                     ) : null}
 
