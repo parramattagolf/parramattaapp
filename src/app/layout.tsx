@@ -28,6 +28,12 @@ const kakaoFont = localFont({
 export const metadata: Metadata = {
   title: "Parramatta Golf",
   description: "Premium Golf Community Platform",
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'Parramatta Golf',
+  },
 };
 
 import { Toaster } from 'sonner'

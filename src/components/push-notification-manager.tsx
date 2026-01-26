@@ -7,6 +7,7 @@ export default function PushNotificationManager() {
   useEffect(() => {
     async function setup() {
       await registerServiceWorker()
+      await subscribeUserToPush()
     }
     setup()
   }, [])

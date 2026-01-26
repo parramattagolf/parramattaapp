@@ -47,6 +47,7 @@ This document serves as the **single source of truth** for building the Parramat
 ---
 
 ### C. Sponsors
+
 **Table:** `public.sponsors`
 
 | DB Column | App Term (Admin UI) | Description / Notes |
@@ -61,6 +62,7 @@ This document serves as the **single source of truth** for building the Parramat
 ---
 
 ### D. My Page (Members/Users)
+
 **Table:** `public.users`
 
 | DB Column | App Term (Admin UI) | Description / Notes |
@@ -82,16 +84,19 @@ This document serves as the **single source of truth** for building the Parramat
 ## 2. Admin Web Structure & Features
 
 ### Key Philosophy
-- **Automation First**: Rely on DB triggers for strict rules (e.g., Nickname immutability, Auto-ban).
-- **Efficiency**: Use dense, LPGA-style dark tables for data management.
+
+-   **Automation First**: Rely on DB triggers for strict rules (e.g., Nickname immutability, Auto-ban).
+-   **Efficiency**: Use dense, LPGA-style dark tables for data management.
 
 ### Architecture
-- **Route**: `/src/app/(admin)`
-- **Auth**: Dedicated Admin Login via Kakao (ID whitelist or `is_admin` flag).
-- **Styling**: Dark Theme (Deep Navy #002D56 base).
-- **Components**: Use `shadcn/ui` based standard tables with search/filter.
+
+-   **Route**: `/src/app/(admin)`
+-   **Auth**: Dedicated Admin Login via Kakao (ID whitelist or `is_admin` flag).
+-   **Styling**: Dark Theme (Deep Navy #002D56 base).
+-   **Components**: Use `shadcn/ui` based standard tables with search/filter.
 
 ### Core Features
+
 1.  **Dashboard**:
     -   Overview of active Rounds, New Members, Pending Reports.
     -   Manner Score outliers (Potential bans).
@@ -106,10 +111,12 @@ This document serves as the **single source of truth** for building the Parramat
     -   Assign Sponsors to Events.
 
 ### Automation Rules (Implemented in DB)
+
 -   **Nickname Lock**: Updates to `nickname` column are rejected by DB trigger.
 -   **Auto-Ban**: If `manner_score` becomes 0, `is_banned` is set to `true` automatically.
 
 ### UI Guidelines
+
 -   **Images**: Use `next/image` with `unoptimized` for external storage URLs to avoid cost/limits.
 -   **Tables**:
     -   Columns: `DB Name (Display Name)` format.
