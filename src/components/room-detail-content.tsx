@@ -13,7 +13,6 @@ import InviteModal from "@/components/invite-modal";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import confetti from "canvas-confetti";
 import { Lock, Unlock, AlertCircle, Users } from "lucide-react";
 
 interface Participant {
@@ -217,16 +216,7 @@ export default function RoomDetailContent({
     setIsJoinConfirmOpen(false);
     try {
       const roomNumber = roomIndex + 1;
-      const result = await joinEvent(event.id, roomNumber);
-      if (result && result.pointsAwarded) {
-        alert(`축하합니다. ${result.pointsAwarded}포인트가 시상되었습니다`);
-        confetti({
-          particleCount: 150,
-          spread: 70,
-          origin: { y: 0.6 },
-          colors: ["#FFE400", "#FFBD00", "#E89400", "#FFCA6C", "#FDFFB8"],
-        });
-      }
+      await joinEvent(event.id, roomNumber);
       router.refresh();
     } catch (error) {
       console.error(error);
