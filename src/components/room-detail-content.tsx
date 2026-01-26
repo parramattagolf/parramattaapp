@@ -550,7 +550,7 @@ export default function RoomDetailContent({
                   ? "border-white/10 bg-[#1c1c1e] shadow-2xl scale-100"
                   : isHeld
                     ? "border-yellow-500/50 bg-yellow-500/5 shadow-[0_0_20px_rgba(234,179,8,0.1)] hover:bg-yellow-500/10"
-                  : "border-dashed border-white/20 bg-white/[0.03] hover:bg-white/[0.06]"
+                  : "border-blue-500/40 bg-blue-500/[0.03] hover:bg-blue-500/[0.08]"
               }`}
             >
               {slot ? (
