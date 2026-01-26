@@ -43,12 +43,16 @@ export default async function RoomDetailPage({ params }: { params: Promise<{ id:
     const roomHostId = await getRoomHost(id, parseInt(roomNumber))
 
     // Calculate room name
-    const roomTitle = `${roomNumber}번방 ${event.title}`
 
     return (
         <div className="min-h-screen bg-[#121212] font-sans pb-32">
             <PremiumSubHeader
-                title={roomTitle}
+                title={
+                    <>
+                        <span className="text-yellow-400 font-black">{roomNumber}번방</span>
+                        <span className="ml-2">{event.title}</span>
+                    </>
+                }
                 backHref={`/rounds/${id}`}
             />
 
