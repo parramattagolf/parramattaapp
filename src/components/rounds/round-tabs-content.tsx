@@ -82,16 +82,6 @@ export default function RoundTabsContent({
                     </div>
                 ) : (
                     <div className="animate-fade-in space-y-10">
-                        {/* 2. Host Benefits Banner / Invitation in Brackets Tab */}
-                        {userStatus === 'pre_reserved' && (
-                            <div className="animate-slide-up">
-                                <HostBenefitsBanner 
-                                    eventId={event.id} 
-                                    invitation={invitation} 
-                                    nickname={preReservedNickname}
-                                />
-                            </div>
-                        )}
 
                         {/* Participants and Rooms */}
                         <div className="space-y-12">
