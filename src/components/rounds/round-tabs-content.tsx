@@ -4,7 +4,6 @@ import { useState } from 'react'
 import RoundInfoCard from '@/components/round-info-card'
 import PreReservationList from '@/components/pre-reservation-list'
 import RoundDetailContent from '@/components/round-detail-content'
-import PreReservationBanner from '@/components/rounds/pre-reservation-banner'
 
 interface RoundTabsContentProps {
     event: any;
@@ -55,12 +54,6 @@ export default function RoundTabsContent({
             <div className="px-6 pt-8 pb-32">
                 {activeTab === 'schedule' ? (
                     <div className="animate-fade-in space-y-10">
-                        {/* 1. Pre-reservation Banner in Schedule Tab */}
-                        {userStatus === 'none' && (
-                            <div className="animate-slide-up">
-                                <PreReservationBanner eventId={event.id} />
-                            </div>
-                        )}
 
                         {/* Event Details Card */}
                         <div className="animate-slide-up [animation-delay:100ms]">
