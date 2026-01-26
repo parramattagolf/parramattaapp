@@ -314,58 +314,6 @@ export default function RoomDetailContent({
     }
   };
 
-  const TimeDisplay = ({
-    joinedAt,
-    onExpire,
-  }: {
-    joinedAt: string;
-    onExpire: () => void;
-  }) => {
-    const [left, setLeft] = useState("");
-    const [isExpired, setIsExpired] = useState(false);
-
-    useEffect(() => {
-      const checkExpiration = () => {
-        const deadline = new Date(
-          new Date(joinedAt).getTime() + 3 * 60 * 60 * 1000,
-        );
-        const now = new Date();
-        const diff = deadline.getTime() - now.getTime();
-
-        if (diff <= 0) {
-          setLeft("만료됨");
-          if (!isExpired) {
-            setIsExpired(true);
-            onExpire();
-          }
-          return true;
-        } else {
-          const h = Math.floor(diff / (1000 * 60 * 60));
-          const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-          const s = Math.floor((diff % (1000 * 60)) / 1000);
-          setLeft(`${h}:${m < 10 ? "0" + m : m}:${s < 10 ? "0" + s : s}`);
-          return false;
-        }
-      };
-
-      if (checkExpiration()) return;
-
-      const timer = setInterval(() => {
-        if (checkExpiration()) {
-          clearInterval(timer);
-        }
-      }, 1000);
-      return () => clearInterval(timer);
-    }, [joinedAt, isExpired, onExpire]);
-
-    return (
-      <span
-        className={`font-mono font-black text-[13px] ${isExpired ? "text-gray-500" : "text-red-500"}`}
-      >
-        {left}
-      </span>
-    );
-  };
 
   const HoldTimer = ({
     heldAt,
@@ -480,7 +428,7 @@ export default function RoomDetailContent({
               onClick={async () => {
                 if (
                   confirm(
-                    "정말 방을 나가시겠습니까?\n\n⚠️ 매너 -20, 포인트 -20이 차감됩니다.\n(다시 재신청은 가능합니다)",
+                    "정말 방을 나가시겠습니까?\n(다시 재신청은 가능합니다)",
                   )
                 ) {
                   try {
@@ -518,12 +466,6 @@ export default function RoomDetailContent({
           const isInvitedHere = isInvitedToSlot(heldSlot);
           const canJoinThisSlot = !isJoined && (!isHeld || isInvitedHere);
 
-          // Check if no one has joined this room yet (roomMembers check)
-          const roomNumber = roomIndex + 1;
-          const roomMembers = participants.filter(
-            (p) => (p.group_no || 1) === roomNumber,
-          );
-          const isRoomEmpty = roomMembers.length === 0;
 
           return (
             <div
@@ -574,23 +516,6 @@ export default function RoomDetailContent({
                       {slot.user?.nickname}
                     </div>
 
-                    {slot.payment_status !== "paid" && (
-                      <div className="mt-2 bg-red-500/20 px-3 py-1.5 rounded-xl inline-flex items-center gap-1.5 border border-red-500/30 shadow-[0_0_20px_rgba(239,68,68,0.15)]">
-                        <div className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></div>
-                        <TimeDisplay
-                          joinedAt={slot.joined_at}
-                          onExpire={async () => {
-                            try {
-                              const { expireParticipant } =
-                                await import("@/actions/event-actions");
-                              await expireParticipant(event.id, slot.user_id);
-                            } catch (e) {
-                              console.error("Failed to expire participant:", e);
-                            }
-                          }}
-                        />
-                      </div>
-                    )}
                   </div>
 
                   {isRoomHost && slot.user_id !== authUser?.id && (
@@ -765,9 +690,8 @@ export default function RoomDetailContent({
                 ⚠️ 주의사항
               </p>
               <ul className="text-[12px] text-white/60 space-y-1">
-                <li>• 조인 신청 후 3시간 내 결제해 주세요</li>
-                <li>• 3시간이내 방나가기 매너 -20, 포인트 -20</li>
-                <li>• 3시간초과 방치할 경우 매너 -30, 포인트 -30</li>
+                <li>• 신청 후 개인 사정으로 불참 시 꼭 알려주세요</li>
+                <li>• 무단 불참(노쇼) 시 서비스 이용이 제한될 수 있습니다</li>
               </ul>
             </div>
 

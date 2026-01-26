@@ -169,10 +169,6 @@ export async function leaveEvent(eventId: string) {
 
     if (!user) throw new Error('Unauthorized')
 
-    // Get event title for logging
-    const { data: event } = await supabase.from('events').select('title').eq('id', eventId).single()
-    const eventTitle = event?.title ? `'${event.title}' ` : ''
-
     // Find group_no for handleHostSuccession
     const { data: participant } = await supabase
         .from('participants')
@@ -201,43 +197,6 @@ export async function leaveEvent(eventId: string) {
         await handleHostSuccession(eventId, participant.group_no, user.id)
     }
 
-    // Atomically deduct 20 Manner Score and 20 Points
-    const { error: updateError } = await supabase.rpc('update_user_scores', {
-        target_user_id: user.id,
-        points_delta: -20,
-        manner_delta: -20
-    })
-
-    if (!updateError) {
-        const { data: u } = await supabase.from('users').select('manner_score, points').eq('id', user.id).single()
-        const newMannerScore = u?.manner_score ?? 80
-        const newPoints = u?.points ?? 0
-
-        // Log manner score deduction
-        try {
-            await supabase.from('manner_score_history').insert({
-                user_id: user.id,
-                amount: -20,
-                description: `${eventTitle}조인 취소 위약금`,
-                score_snapshot: newMannerScore
-            })
-        } catch (e) {
-            console.error('Failed to log manner score', e)
-        }
-
-        // Log points deduction
-        try {
-            await supabase.from('point_transactions').insert({
-                user_id: user.id,
-                amount: -20,
-                description: `${eventTitle}조인 취소 위약금`,
-                balance_snapshot: newPoints
-            })
-        } catch (e) {
-            console.error('Failed to log point transaction', e)
-        }
-    }
-
     // Check if any participants left in the event
     const { count: remainingCount } = await supabase
         .from('participants')
@@ -256,7 +215,7 @@ export async function leaveEvent(eventId: string) {
     }
 
     revalidatePath(`/rounds/${eventId}`)
-    return { success: true, message: '조인이 취소되었습니다. 매너 -20, 포인트 -20이 차감되었습니다. 다시 재신청은 가능합니다.' }
+    return { success: true, message: '조인이 취소되었습니다.' }
 }
 
 export async function inviteParticipant(eventId: string, targetUserId: string, roomNumber?: number) {
@@ -527,99 +486,6 @@ export async function cancelPreReservation(eventId: string) {
 }
 
 // Handle expired participants (3-hour timer expired)
-export async function expireParticipant(eventId: string, participantUserId: string) {
-    const supabase = await createClient()
-
-    // Get event and participant info
-    const { data: event } = await supabase.from('events').select('title').eq('id', eventId).single()
-    const eventTitle = event?.title || '라운딩'
-
-    // Release all held slots by this user
-    await supabase
-        .from('held_slots')
-        .delete()
-        .eq('event_id', eventId)
-        .eq('held_by', participantUserId)
-
-    // Find group_no for handleHostSuccession
-    const { data: participant } = await supabase
-        .from('participants')
-        .select('group_no')
-        .eq('event_id', eventId)
-        .eq('user_id', participantUserId)
-        .single()
-
-    // Delete participant and check if it was actually deleted (idempotency)
-    const { data: deletedRows, error } = await supabase
-        .from('participants')
-        .delete()
-        .eq('event_id', eventId)
-        .eq('user_id', participantUserId)
-        .select()
-
-    if (error || !deletedRows || deletedRows.length === 0) {
-        // If error or no rows deleted, it means another request already handled this expiry
-        return { success: false, message: '이미 처리되었거나 참가 정보를 찾을 수 없습니다.' }
-    }
-
-    // Host Succession
-    if (participant?.group_no) {
-        await handleHostSuccession(eventId, participant.group_no, participantUserId)
-    }
-
-    // Atomically deduct 30 Manner Score and 30 Points
-    const { error: updateError } = await supabase.rpc('update_user_scores', {
-        target_user_id: participantUserId,
-        points_delta: -30,
-        manner_delta: -30
-    })
-
-    if (!updateError) {
-        const { data: u } = await supabase.from('users').select('manner_score, points').eq('id', participantUserId).single()
-        const newMannerScore = u?.manner_score ?? 70
-        const newPoints = u?.points ?? 0
-
-        // Log manner score deduction
-        try {
-            await supabase.from('manner_score_history').insert({
-                user_id: participantUserId,
-                amount: -30,
-                description: `'${eventTitle}' 결제시간 초과 위약금`,
-                score_snapshot: newMannerScore
-            })
-        } catch (e) {
-            console.error('Failed to log manner score', e)
-        }
-
-        // Log points deduction
-        try {
-            await supabase.from('point_transactions').insert({
-                user_id: participantUserId,
-                amount: -30,
-                description: `'${eventTitle}' 결제시간 초과 위약금`,
-                balance_snapshot: newPoints
-            })
-        } catch (e) {
-            console.error('Failed to log point transaction', e)
-        }
-
-        // Send notification to user
-        try {
-            await supabase.from('notifications').insert({
-                receiver_id: participantUserId,
-                type: 'system',
-                title: '결제 시간 초과',
-                content: `'${eventTitle}' 라운딩의 결제 시간(3시간)이 만료되어 조인이 자동 취소되었습니다. 매너점수 30점, 포인트 30점이 차감되었습니다.`,
-                is_read: false
-            })
-        } catch (e) {
-            console.error('Failed to send notification', e)
-        }
-    }
-
-    revalidatePath(`/rounds/${eventId}`)
-    return { success: true }
-}
 
 // Get the room host (first person to join a room)
 export async function getRoomHost(eventId: string, groupNo: number) {

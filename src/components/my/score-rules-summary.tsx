@@ -6,14 +6,13 @@ export default function ScoreRulesSummary() {
     const earnRules = [
         { title: '프로필 필수정보 완성', score: '+100', points: '+100', desc: '실명, 성별, 연령, 지역 등 입력 시' },
         { title: '유튜브 채널 구독', score: '-', points: '+100', desc: '파라마타 골프 TV 구독 시 (1회)' },
-        { title: '사전예약 보너스', score: '-', points: '+1', desc: '조인방 개설 전 사전예약 참여 시' },
+        { title: '사전예약 리워드', score: '+1', points: '-', desc: '조인방 개설 전 사전예약 참여 시' },
         { title: '스폰서 배지 획득', score: '변동', points: '변동', desc: '특정 이벤트 및 미션 달성 시' },
     ]
 
     const lossRules = [
-        { title: '사전예약 취소', score: '-2', points: '-', desc: '사전예약 확정 후 본인 취소 시' },
-        { title: '3시간 내 중도 퇴장', score: '-20', points: '-20', desc: '조인 신청 후 3시간 이내 방 나가기' },
-        { title: '결제 시간 초과 (노쇼)', score: '-30', points: '-30', desc: '3시간 내 미결제로 자동 강퇴 시' },
+        { title: '조인 취소', score: '-10', points: '-', desc: '확정된 조인을 본인 취소 시' },
+        { title: '노쇼 (No-Show)', score: '-50', points: '-50', desc: '사전 연락 없이 불참 시' },
     ]
 
     return (

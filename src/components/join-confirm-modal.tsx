@@ -26,29 +26,8 @@ export default function JoinConfirmModal({ isOpen, onClose, onConfirm }: JoinCon
                     <div className="bg-white/5 rounded-2xl p-4 space-y-5">
                         <div className="space-y-2">
                             <p className="text-[13px] font-black text-white">
-                                조인방 신청은 실제 부킹을 의미합니다.
+                                신청 후 노쇼 발생 시 매너 점수가 크게 차감될 수 있습니다.
                             </p>
-                            <div className="text-[12px] text-red-400 leading-relaxed bg-red-500/5 p-2.5 rounded-xl border border-red-500/10">
-                                <span className="font-bold flex items-center gap-1.5 mb-1">
-                                    <span className="text-xs">⚠️</span> 주의
-                                </span>
-                                조인 후 <span className="text-red-200 font-bold">3시간 이내 취소 시</span> :<br />
-                                매너점수 10점 차감
-                            </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <p className="text-[13px] font-black text-white">
-                                조인 후 3시간 이내 결제하면 부킹이 완료됩니다.
-                            </p>
-                            <div className="text-[12px] text-red-400 leading-relaxed bg-red-500/5 p-2.5 rounded-xl border border-red-500/10">
-                                <span className="font-bold flex items-center gap-1.5 mb-1">
-                                    <span className="text-xs">⚠️</span> 주의
-                                </span>
-                                3시간 초과 <span className="text-red-200 font-bold">결제 미완료 시</span> :<br />
-                                - 매너점수 30점 차감 및 30포인트 차감<br />
-                                - 동일한 라운딩 조인 재신청이 불가합니다
-                            </div>
                         </div>
                     </div>
 

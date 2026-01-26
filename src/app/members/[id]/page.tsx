@@ -147,7 +147,6 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
     const preReservations = (preReservationData || []) as unknown as PreResData[]
 
     // Official section -> Showing Pre-reservations (Interest expressed)
-    const officialRounds = [] // True official events could go here too, but per user request, we focus on Pre-reservations
     
     // Join section -> Future rounds where user is a participant
     const friendlyRounds = futureRounds
@@ -446,7 +445,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
                                             {round.payment_status !== 'paid' && (
                                                 <div className="flex items-center gap-1.5">
                                                     <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
-                                                    <span className="text-[10px] text-red-400 font-black uppercase">결제 대기중 (3시간 내 미결제 시 취소)</span>
+                                                    <span className="text-[10px] text-red-400 font-black uppercase">결제 대기중</span>
                                                 </div>
                                             )}
                                         </div>
