@@ -13,18 +13,6 @@ export default function RoomInfoPopup({ isOpen, onClose }: RoomInfoPopupProps) {
 
     const slides = [
         {
-            icon: Crown,
-            iconColor: 'text-yellow-500',
-            bgGradient: 'from-yellow-500/20 to-orange-500/10',
-            title: '조인방 호스트가 되세요! 👑',
-            subtitle: '각 조인방에 가장 먼저 입장하면 호스트가 됩니다',
-            benefits: [
-                { icon: Shield, text: '빈 슬롯을 "홀드"하여 예약 가능' },
-                { icon: Users, text: '원치 않는 참가자 강퇴 권한' },
-                { icon: Gift, text: '친구 초대 시 홀드 슬롯 접근 부여' },
-            ]
-        },
-        {
             icon: Star,
             iconColor: 'text-blue-400',
             bgGradient: 'from-blue-500/20 to-purple-500/10',

@@ -4,7 +4,6 @@ import { notFound } from 'next/navigation'
 
 import RoomDetailContent from '@/components/room-detail-content'
 import PremiumSubHeader from '@/components/premium-sub-header'
-import BecomeHostBanner from '@/components/rounds/become-host-banner'
 
 export default async function RoomDetailPage({ params }: { params: Promise<{ id: string, roomNumber: string }> }) {
     const { id, roomNumber } = await params
@@ -57,10 +56,6 @@ export default async function RoomDetailPage({ params }: { params: Promise<{ id:
             />
 
             <main className="px-6 pt-24 space-y-8 animate-fade-in">
-                {/* 1. Host Encouragement Banner (If room is empty) */}
-                {!roomHostId && (
-                    <BecomeHostBanner />
-                )}
 
                 {/* Chat Section */}
 
