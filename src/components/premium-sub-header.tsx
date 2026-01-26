@@ -1,6 +1,5 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 
@@ -13,30 +12,9 @@ interface PremiumSubHeaderProps {
 }
 
 export default function PremiumSubHeader({ title, backHref, onBack, rightElement, titleClassName }: PremiumSubHeaderProps) {
-    const [isVisible, setIsVisible] = useState(true)
-    const [lastScrollY, setLastScrollY] = useState(0)
-
-    useEffect(() => {
-        const handleScroll = () => {
-            const currentScrollY = window.scrollY
-
-            // Intelligent Hide/Show Logic
-            if (currentScrollY > lastScrollY && currentScrollY > 80) {
-                setIsVisible(false)
-            } else {
-                setIsVisible(true)
-            }
-
-            setLastScrollY(currentScrollY)
-        }
-
-        window.addEventListener('scroll', handleScroll, { passive: true })
-        return () => window.removeEventListener('scroll', handleScroll)
-    }, [lastScrollY])
-
     return (
         <header
-            className={`fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[500px] z-[110] transition-all duration-500 ease-in-out bg-[#121212]/90 backdrop-blur-2xl py-3 ${isVisible ? 'translate-y-0' : '-translate-y-full'}`}
+            className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[500px] z-[110] transition-all duration-500 ease-in-out bg-[#121212]/90 backdrop-blur-2xl py-3"
         >
             <div className="px-gutter flex items-center justify-between">
                 <div className="flex items-center gap-4 min-w-0 flex-1">
