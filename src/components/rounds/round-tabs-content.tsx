@@ -11,11 +11,8 @@ interface RoundTabsContentProps {
     participants: any[];
     preReservations: any[];
     userStatus: 'none' | 'pre_reserved' | 'joined';
-    invitation: any;
     currentUser: any;
     isJoined: boolean;
-    isPreReserved: boolean;
-    preReservedNickname?: string;
 }
 
 export default function RoundTabsContent({
@@ -23,10 +20,8 @@ export default function RoundTabsContent({
     participants,
     preReservations,
     userStatus,
-    invitation,
     currentUser,
-    isJoined,
-    preReservedNickname
+    isJoined
 }: RoundTabsContentProps) {
     const [activeTab, setActiveTab] = useState<'schedule' | 'brackets'>('schedule')
 
@@ -89,6 +84,7 @@ export default function RoundTabsContent({
                                     reservations={preReservations || []} 
                                     eventId={event.id}
                                     isPreReserved={userStatus === 'pre_reserved'}
+                                    userStatus={userStatus}
                                 />
                             </div>
 

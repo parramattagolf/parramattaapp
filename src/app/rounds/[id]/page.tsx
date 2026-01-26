@@ -64,13 +64,6 @@ export default async function RoundDetailPage({ params }: { params: Promise<{ id
     const isPreReserved = !!currentUserPreReservation
     const isJoined = !!currentUserParticipant
 
-    // 4. Check for active invitation for this user in this event
-    const { data: invitation } = (user && userStatus === 'pre_reserved') ? await supabase
-        .from('held_slots')
-        .select('group_no')
-        .eq('event_id', id)
-        .eq('invited_user_id', user.id)
-        .maybeSingle() : { data: null }
 
     return (
         <>
@@ -102,11 +95,8 @@ export default async function RoundDetailPage({ params }: { params: Promise<{ id
                     participants={participants || []}
                     preReservations={preReservations || []}
                     userStatus={userStatus}
-                    invitation={invitation}
                     currentUser={user}
                     isJoined={isJoined}
-                    isPreReserved={isPreReserved}
-                    preReservedNickname={currentUserPreReservation?.user?.nickname}
                 />
             </div>
         </>
