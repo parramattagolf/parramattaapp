@@ -39,21 +39,25 @@ export async function GET(request: Request) {
     if (!error && data.user) {
       // Extract Kakao profile info from auth metadata
       const meta = data.user.user_metadata
-      const kakaoProfile = meta?.kakao_account?.profile
       const kakaoId = meta?.provider_id || meta?.sub
 
-      // Try to get profile image strictly from Kakao profile only
+      // Try to get profile image from multiple possible metadata paths
       const profileImageUrl = 
-          kakaoProfile?.profile_image_url || 
-          kakaoProfile?.thumbnail_image_url || 
+          meta?.kakao_account?.profile?.profile_image_url || 
+          meta?.kakao_account?.profile?.thumbnail_image_url || 
+          meta?.avatar_url || 
+          meta?.picture ||
+          meta?.properties?.profile_image ||
+          meta?.properties?.thumbnail_image ||
           null
 
       // 1. Try to get nickname from reliable paths
       const nicknameFromMeta = 
           meta?.full_name || 
           meta?.name || 
-          kakaoProfile?.nickname || 
+          meta?.kakao_account?.profile?.nickname || 
           meta?.nickname || 
+          meta?.properties?.nickname ||
           meta?.preferred_username || 
           null
 
@@ -69,9 +73,12 @@ export async function GET(request: Request) {
         // Only update nickname if we found a non-null one from metadata
         const updates: any = {
             email: data.user.email || null,
-            profile_img: profileImageUrl || null,
             kakao_id: kakaoId || null,
             updated_at: new Date().toISOString()
+        }
+
+        if (profileImageUrl) {
+            updates.profile_img = profileImageUrl
         }
 
         if (nicknameFromMeta) {
