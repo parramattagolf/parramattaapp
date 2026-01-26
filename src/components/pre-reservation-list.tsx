@@ -80,18 +80,14 @@ export default function PreReservationList({ reservations, eventId, isPreReserve
 
     return (
         <div className="w-full mt-4 animate-fade-in">
-            <div className="flex items-center justify-between mb-3 px-1">
-                <h3 className="text-blue-400 text-[10px] uppercase tracking-widest font-black flex items-center gap-1.5">
-                    <Sparkles size={10} className="text-blue-500 fill-blue-500/20" />
-                    사전예약
-                </h3>
-                
+            <div className="mb-4 px-1">
                 {isPreReserved ? (
                     <button
                         onClick={handleCancel}
                         disabled={loading}
-                        className="bg-red-500/10 hover:bg-red-500/20 text-red-500 text-[10px] font-black px-3 py-1.5 rounded-full border border-red-500/30 transition-all active:scale-95 disabled:opacity-50"
+                        className="bg-red-500/10 hover:bg-red-500/20 text-red-500 text-[11px] font-black px-4 py-2 rounded-full border border-red-500/30 transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2"
                     >
+                        <Sparkles size={10} className="text-red-500" />
                         {loading ? '처리 중...' : '사전예약취소'}
                     </button>
                 ) : (
@@ -99,8 +95,9 @@ export default function PreReservationList({ reservations, eventId, isPreReserve
                         <button
                             onClick={handleApply}
                             disabled={loading}
-                            className="bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-lg shadow-blue-600/20 transition-all active:scale-95 disabled:opacity-50"
+                            className="bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-black px-4 py-2 rounded-full shadow-lg shadow-blue-600/20 transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2"
                         >
+                            <Sparkles size={10} className="text-blue-200 fill-white" />
                             {loading ? '처리 중...' : '사전예약신청 🚀'}
                         </button>
                     )
