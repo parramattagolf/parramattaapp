@@ -7,7 +7,9 @@ interface Sponsor {
     description?: string;
 }
 
-export default async function SponsorsPage() {
+export default async function SponsorsPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
+    const params = await searchParams
+    const isTournaments = params.tab === 'tournaments'
     const supabase = await createClient()
 
     // 1. Fetch currently active sponsors from events
@@ -33,7 +35,7 @@ export default async function SponsorsPage() {
     const regularSponsors = allSponsors.filter(s => !activeSponsorIds.includes(s.id))
 
     return (
-        <div className="min-h-screen bg-[var(--color-bg)] pb-24 font-sans pt-14">
+        <div className={`min-h-screen bg-[var(--color-bg)] font-sans ${isTournaments ? 'pt-0 pb-0' : 'pt-14 pb-24'}`}>
             <SponsorContent 
                 prioritySponsors={prioritySponsors}
                 regularSponsors={regularSponsors}

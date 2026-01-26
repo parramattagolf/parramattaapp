@@ -13,7 +13,7 @@ import InviteModal from "@/components/invite-modal";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Lock, Unlock, AlertCircle, Users, HelpCircle } from "lucide-react";
+import { Lock, Unlock, AlertCircle, HelpCircle } from "lucide-react";
 
 interface Participant {
   id: string;

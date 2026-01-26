@@ -1,8 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
+import { X } from 'lucide-react'
+import Image from 'next/image'
 import SponsorVideoList from '@/components/sponsors/sponsor-video-list'
 
 interface Sponsor {
@@ -20,20 +22,8 @@ interface SponsorContentProps {
 export default function SponsorContent({ prioritySponsors, regularSponsors }: SponsorContentProps) {
     const searchParams = useSearchParams()
     
-    // Initialize state from URL param if present
-    const initialTab = searchParams.get('tab') === 'tournaments' ? 'tournaments' : 'sponsors'
-    const [activeTab, setActiveTab] = useState<'sponsors' | 'tournaments'>(initialTab)
+    const activeTab = searchParams.get('tab') === 'tournaments' ? 'tournaments' : 'sponsors'
     const [tournamentSubTab, setTournamentSubTab] = useState<'schedule' | 'groups'>('schedule')
-
-    // Handle URL changes (e.g. from the top nav link)
-    useEffect(() => {
-        const tab = searchParams.get('tab')
-        if (tab === 'tournaments') {
-            setActiveTab('tournaments')
-        } else if (tab === 'sponsors') {
-            setActiveTab('sponsors')
-        }
-    }, [searchParams])
 
     return (
         <div className="flex flex-col min-h-screen">
@@ -67,29 +57,38 @@ export default function SponsorContent({ prioritySponsors, regularSponsors }: Sp
                 ) : (
                     <div className="animate-fade-in animate-slide-up">
                         {/* Tournament Sub-Tabs (Schedule vs Groups) - Match Round Detail Style */}
-                        <div className="fixed top-[56px] left-1/2 -translate-x-1/2 w-full max-w-[500px] z-[80] bg-[#121212]/90 backdrop-blur-xl border-b border-white/5 flex">
-                            <button
-                                onClick={() => setTournamentSubTab('schedule')}
-                                className={`flex-1 py-4 text-[16px] font-black tracking-tight transition-all relative ${
-                                    tournamentSubTab === 'schedule' ? 'text-white' : 'text-white/30'
-                                }`}
+                        <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[500px] z-[80] bg-[#121212]/90 backdrop-blur-xl border-b border-white/5 flex items-center">
+                            <div className="flex-1 flex">
+                                <button
+                                    onClick={() => setTournamentSubTab('schedule')}
+                                    className={`flex-1 py-4 text-[16px] font-black tracking-tight transition-all relative ${
+                                        tournamentSubTab === 'schedule' ? 'text-white' : 'text-white/30'
+                                    }`}
+                                >
+                                    일정
+                                    {tournamentSubTab === 'schedule' && (
+                                        <div className="absolute bottom-0 left-0 w-full h-1 bg-yellow-500 rounded-t-full shadow-[0_0_10px_rgba(234,179,8,0.3)]"></div>
+                                    )}
+                                </button>
+                                <button
+                                    onClick={() => setTournamentSubTab('groups')}
+                                    className={`flex-1 py-4 text-[16px] font-black tracking-tight transition-all relative ${
+                                        tournamentSubTab === 'groups' ? 'text-white' : 'text-white/30'
+                                    }`}
+                                >
+                                    조편성
+                                    {tournamentSubTab === 'groups' && (
+                                        <div className="absolute bottom-0 left-0 w-full h-1 bg-yellow-500 rounded-t-full shadow-[0_0_10px_rgba(234,179,8,0.3)]"></div>
+                                    )}
+                                </button>
+                            </div>
+                            
+                            <Link 
+                                href="/sponsors"
+                                className="px-5 py-4 text-white/40 hover:text-white transition-colors active:scale-90"
                             >
-                                일정
-                                {tournamentSubTab === 'schedule' && (
-                                    <div className="absolute bottom-0 left-0 w-full h-1 bg-yellow-500 rounded-t-full shadow-[0_0_10px_rgba(234,179,8,0.3)]"></div>
-                                )}
-                            </button>
-                            <button
-                                onClick={() => setTournamentSubTab('groups')}
-                                className={`flex-1 py-4 text-[16px] font-black tracking-tight transition-all relative ${
-                                    tournamentSubTab === 'groups' ? 'text-white' : 'text-white/30'
-                                }`}
-                            >
-                                조편성
-                                {tournamentSubTab === 'groups' && (
-                                    <div className="absolute bottom-0 left-0 w-full h-1 bg-yellow-500 rounded-t-full shadow-[0_0_10px_rgba(234,179,8,0.3)]"></div>
-                                )}
-                            </button>
+                                <X size={24} strokeWidth={3} />
+                            </Link>
                         </div>
                         
                         {/* Spacer for fixed tabs */}
@@ -137,7 +136,14 @@ function SponsorItem({ sponsor, isActive }: { sponsor: Sponsor, isActive: boolea
         >
             <div className="w-14 h-14 rounded-2xl bg-[var(--color-gray-100)] overflow-hidden border border-[var(--color-divider)] shrink-0 flex items-center justify-center">
                 {sponsor.logo_url ? (
-                    <img src={sponsor.logo_url} alt="" className="w-full h-full object-contain p-2" referrerPolicy="no-referrer" />
+                    <Image 
+                        src={sponsor.logo_url} 
+                        alt="" 
+                        width={56} 
+                        height={56} 
+                        className="w-full h-full object-contain p-2" 
+                        unoptimized 
+                    />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center text-xl">🏆</div>
                 )}

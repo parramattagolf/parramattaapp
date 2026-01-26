@@ -6,6 +6,7 @@ import { getUserBadges } from '@/actions/sponsor-actions'
 import MemberDetailHeader from '@/components/members/member-detail-header'
 import MembershipBadge from '@/components/members/membership-badge'
 import MannerHistoryGraph from '@/components/manner-history-graph'
+import MannerPulseGraph from '@/components/manner-pulse-graph'
 
 interface EnrichedProfile {
     id: string;
@@ -25,6 +26,110 @@ interface Badge {
         name: string;
     } | null;
 }
+
+const MetricBar = ({ label, value, colorClass }: { label: string; value: number; colorClass: string }) => (
+    <div className="flex flex-col gap-2 py-1 px-1">
+        <div className="flex justify-between items-end bg-transparent px-0.5 mb-1">
+            <span className="text-[13px] font-black text-white/90 tracking-tight">{label}</span>
+        </div>
+        
+        <div className="h-[2px] w-full bg-white/5 rounded-full relative overflow-visible">
+            {/* Background track */}
+            <div className="absolute inset-0 bg-white/10 rounded-full" />
+            
+            {/* Average Indicator (Vertical Line - Fixed at Center) */}
+            <div 
+                className="absolute top-1/2 -translate-y-1/2 w-[1.5px] h-3 bg-white/20 z-0"
+                style={{ left: `50%` }}
+            />
+
+            {/* Path from Min to Value (Subtle Glow) */}
+            <div 
+                className={`absolute left-0 top-0 h-full rounded-full opacity-30 ${colorClass}`}
+                style={{ width: `${value}%` }}
+            />
+            
+            {/* Position Indicator (The Premium Dot) */}
+            <div 
+                className={`absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full border-[3.5px] border-[#121212] shadow-[0_0_15px_rgba(0,0,0,1)] transition-all duration-1000 ease-out z-10 ${colorClass}`}
+                style={{ left: `calc(${Math.max(0, Math.min(100, value))}% - 7px)` }}
+            >
+                <div className="absolute inset-0 rounded-full bg-white/30 scale-[0.3]" />
+            </div>
+        </div>
+
+        {/* Labels Underneath (Precisely Aligned) */}
+        <div className="relative w-full h-3 mt-1.5 opacity-30">
+            <span className="absolute left-0 top-0 text-[7px] font-black text-white tracking-widest uppercase">Min</span>
+            <div 
+                className="absolute top-0 -translate-x-1/2 flex flex-col items-center"
+                style={{ left: `50%` }}
+            >
+                <span className="text-[7px] font-black text-white tracking-widest uppercase">Average</span>
+            </div>
+            <span className="absolute right-0 top-0 text-[7px] font-black text-white tracking-widest uppercase">Max</span>
+        </div>
+    </div>
+);
+
+const getRelativePosition = (val: number | null, min: number, avg: number, max: number) => {
+    if (val === null) return 0;
+    
+    // Check if range is reversed (e.g. handicap)
+    const isReversed = min > max;
+    
+    if (isReversed) {
+        if (val >= avg) {
+            // Value is between Min(40) and Avg(20) -> e.g. 30
+            const range = min - avg;
+            if (range <= 0) return 50;
+            return Math.max(0, ((min - val) / range) * 50);
+        } else {
+            // Value is between Avg(20) and Max(0) -> e.g. 10
+            const range = avg - max;
+            if (range <= 0) return 100;
+            return Math.min(100, 50 + ((avg - val) / range) * 50);
+        }
+    } else {
+        if (val <= avg) {
+            const range = avg - min;
+            if (range <= 0) return 50;
+            return Math.max(0, ((val - min) / range) * 50);
+        } else {
+            const range = max - avg;
+            if (range <= 0) return 100;
+            return Math.min(100, 50 + ((val - avg) / range) * 50);
+        }
+    }
+};
+
+const getExperienceValue = (exp: string | null) => {
+    if (!exp) return 0;
+    if (exp.includes('1년')) return 1;
+    if (exp.includes('3년')) return 3;
+    if (exp.includes('5년')) return 5;
+    if (exp.includes('10년')) return 10;
+    return 2;
+};
+
+const getAgeValue = (age: string | null) => {
+    if (!age) return 0;
+    if (age.includes('20')) return 25;
+    if (age.includes('30')) return 35;
+    if (age.includes('40')) return 45;
+    if (age.includes('50')) return 55;
+    if (age.includes('60')) return 65;
+    return 40;
+};
+
+const getHandicapValue = (h: number | null) => {
+    if (h === null) return 20; // Default to average
+    return h;
+};
+
+const getMannerValue = (s: number | null) => s ?? 100;
+const getPointValue = (p: number | null) => p ?? 0;
+const getCountValue = (count: number | null) => count ?? 0;
 
 export default async function MemberDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -57,6 +162,66 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
         .eq('user_id', id)
         .order('created_at', { ascending: false })
         .limit(10)
+
+    // Calculate Global Averages for Stats Bar
+    const { data: globalUsers } = await supabase
+        .from('users')
+        .select('manner_score, points, handicap, host_count, invite_count, age_range, golf_experience')
+
+    const stats = {
+        manner: { min: 0, avg: 100, max: 300 },
+        points: { min: 0, avg: 500, max: 5000 },
+        handicap: { min: 40, avg: 20, max: 0 }, // Reversed: 0 is Max skill
+        host: { min: 0, avg: 5, max: 50 },
+        invite: { min: 0, avg: 3, max: 30 },
+        experience: { min: 1, avg: 5, max: 15 },
+        age: { min: 20, avg: 40, max: 70 },
+        preRes: { min: 0, avg: 2, max: 20 },
+        join: { min: 0, avg: 8, max: 80 }
+    }
+
+    if (globalUsers && globalUsers.length > 0) {
+        const getAvg = (arr: number[]) => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0
+        const getValid = (arr: (number | null)[]) => arr.filter(v => v !== null) as number[]
+
+        const manners = getValid(globalUsers.map(u => u.manner_score))
+        const pts = getValid(globalUsers.map(u => u.points))
+        const hcp = getValid(globalUsers.map(u => u.handicap))
+        const hosts = getValid(globalUsers.map(u => u.host_count))
+        const invites = getValid(globalUsers.map(u => u.invite_count))
+        const exps = getValid(globalUsers.map(u => getExperienceValue(u.golf_experience)))
+        const ages = getValid(globalUsers.map(u => getAgeValue(u.age_range)))
+        
+        if (manners.length) {
+            stats.manner.avg = getAvg(manners)
+            stats.manner.max = Math.max(...manners, 300)
+        }
+        if (pts.length) {
+            stats.points.avg = getAvg(pts)
+            stats.points.max = Math.max(...pts, 5000)
+        }
+        if (hcp.length) {
+            stats.handicap.avg = getAvg(hcp)
+            stats.handicap.min = Math.max(...hcp, 40) // Worst
+            stats.handicap.max = Math.min(...hcp, 0)  // Best
+        }
+        if (hosts.length) {
+            stats.host.avg = getAvg(hosts)
+            stats.host.max = Math.max(...hosts, 50)
+        }
+        if (invites.length) {
+            stats.invite.avg = getAvg(invites)
+            stats.invite.max = Math.max(...invites, 30)
+        }
+        if (exps.length) {
+            stats.experience.avg = getAvg(exps)
+            stats.experience.max = Math.max(...exps, 15)
+        }
+        if (ages.length) {
+            stats.age.avg = getAvg(ages)
+            stats.age.max = Math.max(...ages, 70)
+        }
+    }
 
     // Get recent rounds
     // Get rounds (future and past)
@@ -247,22 +412,9 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
                         </div>
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs mt-1.5">
-                        <div className="flex items-center text-[var(--color-text-secondary)]">
-                            <span className="w-8 text-[var(--color-text-desc)] text-[10px]">구력</span>
-                            <span className="font-bold text-emerald-400">{profile.golf_experience || '-'}</span>
-                        </div>
-                        <div className="flex items-center text-[var(--color-text-secondary)]">
-                            <span className="w-8 text-[var(--color-text-desc)] text-[10px]">핸디</span>
-                            <span className="font-bold text-white">{profile.handicap !== null ? profile.handicap : '-'}</span>
-                        </div>
-                        <div className="flex items-center text-[var(--color-text-secondary)]">
-                            <span className="w-8 text-[var(--color-text-desc)] text-[10px]">나이</span>
-                            <span className="font-bold text-blue-300">{profile.age_range || '-'}</span>
-                        </div>
-                        <div className="flex items-center text-[var(--color-text-secondary)]">
-                            <span className="w-8 text-[var(--color-text-desc)] text-[10px]">성별</span>
-                            <span className="font-bold text-pink-300">{profile.gender === 'male' ? '남성' : profile.gender === 'female' ? '여성' : '-'}</span>
+                    <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1.5">
+                        <div className="bg-white/5 border border-white/5 px-2 py-0.5 rounded text-[10px] text-white/40 font-medium">
+                            Status Profile
                         </div>
                     </div>
                 </div>
@@ -293,22 +445,57 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
                 </div>
             </div>
 
-            {/* Quick Stats */}
-            <div className="px-gutter mt-10">
-                <div className="bg-[var(--color-gray-100)] rounded-xl py-4 px-2 border border-[var(--color-divider)] grid grid-cols-3 divide-x divide-[var(--color-divider)]">
-                    <div className="text-center">
-                        <div className="text-[10px] text-[var(--color-text-desc)] font-bold mb-1">핸디캡</div>
-                        <div className="text-sm font-black text-white">{profile.handicap !== null ? profile.handicap : '-'}</div>
-                    </div>
-                    <div className="text-center">
-                        <div className="text-[10px] text-[var(--color-text-desc)] font-bold mb-1">방개설</div>
-                        <div className="text-sm font-black text-white">{profile.host_count || 0}회</div>
-                    </div>
-                    <div className="text-center">
-                        <div className="text-[10px] text-[var(--color-text-desc)] font-bold mb-1">초대</div>
-                        <div className="text-sm font-black text-white">{profile.invite_count || 0}회</div>
-                    </div>
+            {/* Member Stats - Normalized Relative Bars (Average is exactly in the center) */}
+            <div className="px-gutter mt-10 space-y-10">
+                <div className="space-y-2">
+                    <MannerPulseGraph history={mannerHistory || []} />
+                    <MetricBar 
+                        label="구력" 
+                        value={getRelativePosition(getExperienceValue(profile.golf_experience), stats.experience.min, stats.experience.avg, stats.experience.max)} 
+                        colorClass="bg-blue-400 shadow-[0_0_10px_rgba(96,165,250,0.5)]"
+                    />
                 </div>
+                <MetricBar 
+                    label="핸디" 
+                    value={getRelativePosition(getHandicapValue(profile.handicap), stats.handicap.min, stats.handicap.avg, stats.handicap.max)} 
+                    colorClass="bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.5)]"
+                />
+                <MetricBar 
+                    label="나이" 
+                    value={getRelativePosition(getAgeValue(profile.age_range), stats.age.min, stats.age.avg, stats.age.max)} 
+                    colorClass="bg-purple-400 shadow-[0_0_10px_rgba(192,132,252,0.5)]"
+                />
+                <MetricBar 
+                    label="매너점수" 
+                    value={getRelativePosition(getMannerValue(profile.manner_score), stats.manner.min, stats.manner.avg, stats.manner.max)} 
+                    colorClass="bg-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.5)]"
+                />
+                <MetricBar 
+                    label="포인트" 
+                    value={getRelativePosition(getPointValue(profile.points), stats.points.min, stats.points.avg, stats.points.max)} 
+                    colorClass="bg-pink-400 shadow-[0_0_10px_rgba(244,114,182,0.5)]"
+                />
+                
+                <MetricBar 
+                    label="방장" 
+                    value={getRelativePosition(getCountValue(profile.host_count), stats.host.min, stats.host.avg, stats.host.max)} 
+                    colorClass="bg-red-400 shadow-[0_0_10px_rgba(248,113,113,0.5)]"
+                />
+                <MetricBar 
+                    label="초대" 
+                    value={getRelativePosition(getCountValue(profile.invite_count), stats.invite.min, stats.invite.avg, stats.invite.max)} 
+                    colorClass="bg-orange-400 shadow-[0_0_10px_rgba(251,146,60,0.5)]"
+                />
+                <MetricBar 
+                    label="사전예약" 
+                    value={getRelativePosition(getCountValue(preReservations.length), stats.preRes.min, stats.preRes.avg, stats.preRes.max)} 
+                    colorClass="bg-indigo-400 shadow-[0_0_10px_rgba(129,140,248,0.5)]"
+                />
+                <MetricBar 
+                    label="조인참가" 
+                    value={getRelativePosition(getCountValue(friendlyRounds.length), stats.join.min, stats.join.avg, stats.join.max)} 
+                    colorClass="bg-teal-400 shadow-[0_0_10px_rgba(45,212,191,0.5)]"
+                />
             </div>
 
             {/* Participation Rate Graph (24-Week Activity) */}

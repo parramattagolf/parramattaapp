@@ -3,13 +3,15 @@
 import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { Bell, LogOut } from 'lucide-react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import { RealtimeChannel } from '@supabase/supabase-js'
 
 function TopNavContent() {
   const pathname = usePathname()
+  const searchParams = useSearchParams()
   const [isVisible, setIsVisible] = useState(true)
+  const isTournamentsTab = pathname === '/sponsors' && searchParams.get('tab') === 'tournaments'
   const [lastScrollY, setLastScrollY] = useState(0)
   const [nickname, setNickname] = useState<string | null>(null)
   const [unreadCount, setUnreadCount] = useState(0)
@@ -106,7 +108,10 @@ function TopNavContent() {
     pathname.startsWith('/notifications')
 
   // Root page or Detail pages (which have their own headers)
-  if (pathname === '/' || (isDetailPage && pathname !== '/rounds' && pathname !== '/members' && pathname !== '/sponsors')) {
+  if (pathname === '/' || isTournamentsTab || (isDetailPage && pathname !== '/rounds' && pathname !== '/members' && pathname !== '/sponsors')) {
+    // If it's the tournaments tab, hide immediately
+    if (isTournamentsTab) return null;
+    
     // Note: pathname in Next.js 15+ usually matches the actual URL, not the pattern.
     // So if it's /rounds/123, it's a detail page.
     if (pathname !== '/rounds' && pathname !== '/members' && pathname !== '/sponsors') {

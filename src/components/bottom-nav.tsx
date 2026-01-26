@@ -1,11 +1,11 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { Flag, Users, Trophy, User } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 
-export default function BottomNav() {
+function BottomNavContent() {
   const pathname = usePathname()
   const [activePath, setActivePath] = useState(pathname)
 
@@ -20,7 +20,10 @@ export default function BottomNav() {
     { href: '/my', icon: User, label: 'MY', activeColor: 'text-red-500' }
   ]
 
-  if (pathname === '/') return null
+  const searchParams = useSearchParams()
+  const isTournamentsTab = pathname === '/sponsors' && searchParams.get('tab') === 'tournaments'
+
+  if (pathname === '/' || isTournamentsTab) return null
 
   return (
     <nav className="bottom-nav border-none border-t-0 shadow-none">
@@ -54,5 +57,13 @@ export default function BottomNav() {
         })}
       </div>
     </nav>
+  )
+}
+
+export default function BottomNav() {
+  return (
+    <Suspense fallback={null}>
+      <BottomNavContent />
+    </Suspense>
   )
 }
