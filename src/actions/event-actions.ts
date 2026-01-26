@@ -601,16 +601,17 @@ export async function expireParticipant(eventId: string, participantUserId: stri
         .eq('user_id', participantUserId)
         .single()
 
-    // Delete participant
-    const { error } = await supabase
+    // Delete participant and check if it was actually deleted (idempotency)
+    const { data: deletedRows, error } = await supabase
         .from('participants')
         .delete()
         .eq('event_id', eventId)
         .eq('user_id', participantUserId)
+        .select()
 
-    if (error) {
-        console.error('Failed to expire participant:', error)
-        return { success: false }
+    if (error || !deletedRows || deletedRows.length === 0) {
+        // If error or no rows deleted, it means another request already handled this expiry
+        return { success: false, message: '이미 처리되었거나 참가 정보를 찾을 수 없습니다.' }
     }
 
     // Host Succession
