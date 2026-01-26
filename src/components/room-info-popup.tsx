@@ -24,18 +24,6 @@ export default function RoomInfoPopup({ isOpen, onClose }: RoomInfoPopupProps) {
                 { icon: CheckCircle, text: '조인 경쟁에서 유리한 위치 선점' },
             ]
         },
-        {
-            icon: Gift,
-            iconColor: 'text-emerald-400',
-            bgGradient: 'from-emerald-500/20 to-teal-500/10',
-            title: '첫 조인 포인트 시상! 🎉',
-            subtitle: '빠른 참여에는 보상이 따릅니다',
-            benefits: [
-                { icon: Crown, text: '1번방 첫 조인: 10포인트 시상' },
-                { icon: Star, text: '2번방 첫 조인: 5포인트 시상' },
-                { icon: CheckCircle, text: '활발한 참여로 매너점수 UP' },
-            ]
-        }
     ]
 
     if (!isOpen) return null

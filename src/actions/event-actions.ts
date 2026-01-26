@@ -56,29 +56,6 @@ export async function createEvent(formData: FormData) {
         payment_status: 'pending' // Host is treated as a regular participant (subject to payment/penalties)
     })
 
-    // Award 10 points to Host (Founder/First Participant)
-    const pointsAwarded = 10
-    
-    // Atomically update user scores
-    const { error: updateError } = await supabase.rpc('update_user_scores', {
-        target_user_id: user.id,
-        points_delta: pointsAwarded
-    })
-
-    if (!updateError) {
-        const { data: u } = await supabase.from('users').select('points').eq('id', user.id).single()
-        const newBalance = u?.points || pointsAwarded
-        try {
-            await supabase.from('point_transactions').insert({
-                user_id: user.id,
-                amount: pointsAwarded,
-                description: `'${title}' 방 개설 및 첫 참여 시상 (1번 조인방)`,
-                balance_snapshot: newBalance
-            })
-        } catch (e) {
-            console.error("Failed to log point transaction", e)
-        }
-    }
 
     revalidatePath('/rounds')
     redirect(`/rounds/${data.id}`)
@@ -147,15 +124,8 @@ export async function joinEvent(eventId: string, groupNo: number = 1) {
 
     if (error) throw new Error('Failed to join')
 
-    // Award points logic
-    // specific to group opening
-    let pointsAwarded = 0
-    // We already checked groupCount before insert (it was the count BEFORE I joined).
-    // So if groupCount was 0, I am the first.
-    if (groupCount === 0) {
-        if (groupNo === 1) pointsAwarded = 10
-        else if (groupNo === 2) pointsAwarded = 5
 
+    if (groupCount === 0) {
         // User becomes room host! Increment host_count
         try {
             const { data: userData } = await supabase.from('users').select('host_count').eq('id', user.id).single()
@@ -176,28 +146,6 @@ export async function joinEvent(eventId: string, groupNo: number = 1) {
         }
     }
 
-    if (pointsAwarded > 0) {
-        const { error: updateError } = await supabase.rpc('update_user_scores', {
-            target_user_id: user.id,
-            points_delta: pointsAwarded
-        })
-
-        if (!updateError) {
-            const { data: u } = await supabase.from('users').select('points').eq('id', user.id).single()
-            const newBalance = u?.points || pointsAwarded
-            // Insert Transaction Log
-            try {
-                await supabase.from('point_transactions').insert({
-                    user_id: user.id,
-                    amount: pointsAwarded,
-                    description: `'${event?.title}' ${groupNo}번 조인방 첫 참여 시상`,
-                    balance_snapshot: newBalance
-                })
-            } catch (e) {
-                console.error("Failed to log point transaction", e)
-            }
-        }
-    }
 
     // If user was pre-reserved, remove from pre_reservations
     await supabase.from('pre_reservations')
@@ -212,7 +160,7 @@ export async function joinEvent(eventId: string, groupNo: number = 1) {
     }
 
     revalidatePath(`/rounds/${eventId}`)
-    return { success: true, pointsAwarded }
+    return { success: true }
 }
 
 export async function leaveEvent(eventId: string) {
