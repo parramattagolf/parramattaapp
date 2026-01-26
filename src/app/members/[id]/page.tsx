@@ -5,8 +5,8 @@ import Link from 'next/link'
 import { getUserBadges } from '@/actions/sponsor-actions'
 import MemberDetailHeader from '@/components/members/member-detail-header'
 import MembershipBadge from '@/components/members/membership-badge'
-import MannerHistoryGraph from '@/components/manner-history-graph'
 import MannerPulseGraph from '@/components/manner-pulse-graph'
+import ProfileImageWithGlow from '@/components/members/profile-image-with-glow'
 
 interface EnrichedProfile {
     id: string;
@@ -379,7 +379,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
                 isPending={isPending} 
             />
 
-            <div className="pt-24" />
+            <div className="pt-16" />
 
             {isBlocked && (
                 <div className="mx-gutter mb-6 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-center">
@@ -387,63 +387,22 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
                 </div>
             )}
 
-            {/* Profile Header */}
+            {/* Profile Header - Optimized & Premium */}
             <div className="px-gutter flex items-center justify-between">
-                <div className="relative">
-                    <div className="w-24 h-24 rounded-full bg-[var(--color-gray-100)] overflow-hidden border border-[var(--color-divider)]">
-                        {profile.profile_img ? (
-                            <img src={profile.profile_img} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                        ) : (
-                            <div className="w-full h-full flex items-center justify-center text-3xl">👤</div>
-                        )}
-                    </div>
-                    {distInfo && (
-                        <div className={`absolute -bottom-1 left-1/2 -translate-x-1/2 bg-[var(--color-gray-200)] text-[var(--color-text-primary)] text-[10px] font-bold px-2 py-0.5 rounded-full border border-[var(--color-divider)] whitespace-nowrap`}>
-                            {distInfo.emoji} {distInfo.label}
-                        </div>
+                <ProfileImageWithGlow 
+                    profileImg={profile.profile_img} 
+                    distInfo={distInfo} 
+                />
+
+                <div className="flex-shrink-0">
+                    {profile.membership_level && (
+                        <MembershipBadge 
+                            level={profile.membership_level} 
+                        />
                     )}
                 </div>
-
-                <div className="flex-1 ml-4 mr-2 flex flex-col justify-center gap-1">
-                    <div className="flex items-center gap-2 mb-0.5">
-                        <div className="bg-blue-600/10 text-blue-400 text-[9px] font-black px-2.5 py-1 rounded-full border border-blue-500/20 shadow-sm tracking-tight flex items-center gap-1.5">
-                            <span className="w-1 h-1 bg-blue-500 rounded-full animate-pulse"></span>
-                            실명은 모든 회원이 비공개입니다
-                        </div>
-                    </div>
-                    
-                    <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1.5">
-                        <div className="bg-white/5 border border-white/5 px-2 py-0.5 rounded text-[10px] text-white/40 font-medium">
-                            Status Profile
-                        </div>
-                    </div>
-                </div>
-
-                {profile.membership_level && (
-                    <MembershipBadge 
-                        level={profile.membership_level} 
-                    />
-                )}
             </div>
 
-            {/* Score Cards */}
-            <div className="px-gutter mt-8 grid grid-cols-2 gap-3">
-                <div className="bg-[var(--color-gray-100)] p-4 rounded-xl border border-[var(--color-divider)]">
-                    <div className="text-[11px] text-[var(--color-text-desc)] mb-1 font-bold uppercase tracking-widest">Manner</div>
-                    <div className={`text-2xl font-black ${profile.manner_score < 0 ? 'text-red-500' : 'text-emerald-500'}`}>
-                        {profile.manner_score?.toLocaleString() || 0}
-                    </div>
-                    <div className="mt-2 h-1 bg-[var(--color-divider)] rounded-full overflow-hidden">
-                        <div
-                            className={`h-full rounded-full ${profile.manner_score < 0 ? 'bg-red-500' : 'bg-emerald-500'}`}
-                            style={{ width: `${Math.max(0, Math.min(100, profile.manner_score || 0))}%` }}
-                        />
-                    </div>
-                </div>
-                <div className="bg-[var(--color-gray-100)] p-4 rounded-xl border border-[var(--color-divider)] relative overflow-hidden h-32">
-                    <MannerHistoryGraph history={mannerHistory || []} />
-                </div>
-            </div>
 
             {/* Member Stats - Normalized Relative Bars (Average is exactly in the center) */}
             <div className="px-gutter mt-10 space-y-10">

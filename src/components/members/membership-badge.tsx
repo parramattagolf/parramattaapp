@@ -14,20 +14,21 @@ export default function MembershipBadge({ level, className }: MembershipBadgePro
     // Handle case-insensitive level check
     const normalizedLevel = level.toLowerCase()
 
-    // Order: Highest to Lowest for the stack (Black is top)
-    const levels = ['black', 'blue', 'white', 'yellow', 'red']
+    // Order: Highest to Lowest for the stack (VIP is top)
+    const levels = ['vip', 'black', 'blue', 'white', 'yellow', 'red']
     
     const levelStyles: Record<string, { active: string; label: string }> = {
         'red': { active: 'bg-red-500 text-white', label: 'RED' },
         'yellow': { active: 'bg-yellow-500 text-black', label: 'YELLOW' },
         'white': { active: 'bg-white text-black', label: 'WHITE' },
         'blue': { active: 'bg-blue-500 text-white', label: 'BLUE' },
-        'black': { active: 'bg-black text-white border border-white/30', label: 'BLACK' }
+        'black': { active: 'bg-black text-white border border-white/30', label: 'BLACK' },
+        'vip': { active: 'bg-gradient-to-r from-[#FFD700] via-[#FFFACD] to-[#FFD700] text-black border border-amber-200/50 shadow-[0_0_15px_rgba(255,215,0,0.3)]', label: 'VIP' }
     }
 
     return (
         <>
-            <div className={`flex flex-col gap-1 items-center ${className || ''}`}>
+            <div className={`flex flex-col gap-1.5 items-end ${className || ''}`}>
                 {levels.map((l) => {
                     const isActive = normalizedLevel === l
                     const style = levelStyles[l]
@@ -40,10 +41,10 @@ export default function MembershipBadge({ level, className }: MembershipBadgePro
                                 setIsOpen(true)
                             }}
                             className={`
-                                text-[9px] font-black w-14 py-1 rounded-full uppercase tracking-tighter transition-all duration-300 text-center
+                                text-[10px] font-black w-20 py-1.5 rounded-full uppercase tracking-widest transition-all duration-300 text-center
                                 ${isActive 
-                                    ? `${style.active} shadow-[0_0_10px_rgba(255,255,255,0.1)] scale-110 z-10` 
-                                    : 'bg-white/5 text-white/20 hover:bg-white/10'
+                                    ? `${style.active} shadow-[0_0_15px_rgba(255,255,255,0.15)] scale-105 z-10 opacity-100` 
+                                    : 'bg-white/5 text-white/30 hover:bg-white/10 opacity-60'
                                 }
                             `}
                         >
@@ -111,7 +112,13 @@ export default function MembershipBadge({ level, className }: MembershipBadgePro
                                 current={normalizedLevel === 'black'} 
                                 color="bg-black border border-white/20 text-white" 
                                 name="BLACK" 
-                                desc="커뮤니티 운영진 및 VIP 회원입니다." 
+                                desc="커뮤니티 운영진 및 우수 활동 회원입니다." 
+                            />
+                            <LevelItem 
+                                current={normalizedLevel === 'vip'} 
+                                color="bg-gradient-to-r from-amber-400 to-yellow-200 text-black" 
+                                name="VIP" 
+                                desc="커뮤니티 후원자 및 최상위 VIP 회원입니다." 
                             />
                         </div>
 

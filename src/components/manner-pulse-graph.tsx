@@ -55,9 +55,9 @@ export default function MannerPulseGraph({ history }: { history: HistoryItem[] }
     const pulseColor = isTrendingUp ? '#10b981' : '#f43f5e'; // emerald-500 or rose-500
 
     return (
-        <div className="w-full h-12 relative overflow-hidden bg-white/[0.02] rounded-lg border border-white/5">
+        <div className="w-full h-24 relative overflow-hidden bg-white/[0.02] rounded-lg border border-white/5">
             {/* Label */}
-            <div className="absolute top-1 left-2 text-[8px] font-black text-white/20 uppercase tracking-[0.2em] z-10">
+            <div className="absolute top-2 left-3 text-[10px] font-black text-white/20 uppercase tracking-[0.2em] z-10">
                 Manner Pulse
             </div>
 
@@ -86,7 +86,7 @@ export default function MannerPulseGraph({ history }: { history: HistoryItem[] }
                     d={dPath}
                     fill="none"
                     stroke={pulseColor}
-                    strokeWidth="2"
+                    strokeWidth="3"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeOpacity="0.2"
@@ -97,7 +97,7 @@ export default function MannerPulseGraph({ history }: { history: HistoryItem[] }
                     d={dPath}
                     fill="none"
                     stroke={pulseColor}
-                    strokeWidth="2"
+                    strokeWidth="3"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     filter="url(#pulseGlow)"
@@ -109,8 +109,8 @@ export default function MannerPulseGraph({ history }: { history: HistoryItem[] }
                     d={dPath}
                     fill="none"
                     stroke="white"
-                    strokeWidth="3"
-                    strokeOpacity="0.6"
+                    strokeWidth="4"
+                    strokeOpacity="0.7"
                     strokeDasharray="100 900"
                     strokeDashoffset="1000"
                     className="ekg-trace"
