@@ -5,7 +5,6 @@ import RoundInfoCard from '@/components/round-info-card'
 import PreReservationList from '@/components/pre-reservation-list'
 import RoundDetailContent from '@/components/round-detail-content'
 import PreReservationBanner from '@/components/rounds/pre-reservation-banner'
-import HostBenefitsBanner from '@/components/rounds/host-benefits-banner'
 
 interface RoundTabsContentProps {
     event: any;
@@ -86,7 +85,11 @@ export default function RoundTabsContent({
                         {/* Participants and Rooms */}
                         <div className="space-y-12">
                             <div className="animate-slide-up [animation-delay:100ms]">
-                                <PreReservationList reservations={preReservations || []} />
+                                <PreReservationList 
+                                    reservations={preReservations || []} 
+                                    eventId={event.id}
+                                    isPreReserved={userStatus === 'pre_reserved'}
+                                />
                             </div>
 
                             <div className="animate-slide-up [animation-delay:200ms]">
