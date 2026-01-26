@@ -156,14 +156,6 @@ function TopNavContent() {
       </div>
 
       <div className="flex items-center gap-2">
-        {pathname === '/rounds' && (
-          <Link
-            href="/rounds/new"
-            className="text-[13px] font-bold text-blue-500 hover:text-blue-400 transition-colors uppercase tracking-tight active:scale-95 mr-2"
-          >
-            라운드등록
-          </Link>
-        )}
 
         {pathname === '/members' && (
           <Link
@@ -172,19 +164,15 @@ function TopNavContent() {
           >
             인맥찾기
           </Link>
-        )}
-
-        {pathname === '/sponsors' && (
-          <Link
-            href="/sponsors/new"
-            className="text-[13px] font-bold text-blue-500 hover:text-blue-400 transition-colors uppercase tracking-tight active:scale-95 mr-2"
+        )}        {pathname === '/sponsors' && (
+          <Link 
+            href="/sponsors?tab=tournaments"
+            className="flex items-center gap-1.5 mr-2 px-3 py-1.5 bg-amber-400/10 border border-amber-400/20 rounded-full shadow-[0_0_15px_rgba(251,191,36,0.1)] active:scale-95 transition-all cursor-pointer"
           >
-            스폰서등록
+            <span className="text-[16px]">🏆</span>
+            <span className="text-[12px] font-black text-amber-400 tracking-tighter">메이져대회</span>
           </Link>
         )}
-
-
-
         {pathname === '/my' && (
           <button
             onClick={async () => {
