@@ -2,7 +2,6 @@ import { createClient } from '@/utils/supabase/server'
 import { notFound } from 'next/navigation'
 import PremiumSubHeader from '@/components/premium-sub-header'
 
-import PreReservationButton from '@/components/pre-reservation-button'
 
 import RoundEntranceGuard from '@/components/rounds/round-entrance-guard'
 import RoundRealtimeListener from '@/components/rounds/round-realtime-listener'
@@ -61,7 +60,6 @@ export default async function RoundDetailPage({ params }: { params: Promise<{ id
         userStatus = 'pre_reserved'
     }
 
-    const isPreReserved = !!currentUserPreReservation
     const isJoined = !!currentUserParticipant
 
 
@@ -81,9 +79,6 @@ export default async function RoundDetailPage({ params }: { params: Promise<{ id
                 <PremiumSubHeader
                     title={event.title}
                     backHref="/rounds"
-                    rightElement={
-                        isPreReserved ? <PreReservationButton eventId={event.id} isReserved={isPreReserved} /> : null
-                    }
                 />
 
                 {/* Content Padding for sticky header */}
