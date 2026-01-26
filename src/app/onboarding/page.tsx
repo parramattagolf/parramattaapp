@@ -25,7 +25,7 @@ export default function OnboardingPage() {
       if (!user) router.push('/login')
     }
     checkUser()
-  }, [])
+  }, [router, supabase])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

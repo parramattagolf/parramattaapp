@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { getFriends, getPreReservationsForInvite } from '@/actions/user-actions'
 
 interface InvitableUser {
@@ -28,7 +29,7 @@ export default function InviteModal({
     useEffect(() => {
         let isMounted = true
         if (isOpen && eventId) {
-            setLoading(true)
+            setTimeout(() => setLoading(true), 0)
             Promise.all([
                 getFriends(),
                 getPreReservationsForInvite(eventId)
@@ -145,7 +146,7 @@ function UserRow({
         >
             <div className="w-12 h-12 bg-[var(--color-gray-100)] rounded-2xl overflow-hidden flex-shrink-0 border border-[var(--color-divider)]">
                 {user.profile_img ? (
-                    <img src={user.profile_img} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                    <Image src={user.profile_img} alt="" width={48} height={48} className="w-full h-full object-cover" unoptimized referrerPolicy="no-referrer" />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center text-2xl">👤</div>
                 )}

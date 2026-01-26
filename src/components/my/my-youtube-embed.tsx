@@ -139,7 +139,7 @@ export default function MyYoutubeEmbed({ nickname }: MyYoutubeEmbedProps) {
                             src={`https://www.youtube.com/embed/${videoId}?rel=0`}
                             title="YouTube video player" 
                             frameBorder="0" 
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-degree; web-share" 
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
                             referrerPolicy="strict-origin-when-cross-origin" 
                             allowFullScreen
                         ></iframe>

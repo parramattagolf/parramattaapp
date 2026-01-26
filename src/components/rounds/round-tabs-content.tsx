@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useEffect } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import RoundInfoCard from '@/components/round-info-card'
 import PreReservationList from '@/components/pre-reservation-list'
 import RoundDetailContent from '@/components/round-detail-content'
@@ -26,29 +26,27 @@ export default function RoundTabsContent({
     currentUser,
     isJoined
 }: RoundTabsContentProps) {
+    const router = useRouter()
     const searchParams = useSearchParams()
-    const initialTab = searchParams.get('tab') === 'brackets' ? 'brackets' : 'schedule'
-    const [activeTab, setActiveTab] = useState<'schedule' | 'brackets'>(initialTab)
-
-    // Sync tab with URL param if changes (optional, but good for direct links)
-    useEffect(() => {
-        const tab = searchParams.get('tab')
-        if (tab === 'brackets' || tab === 'schedule') {
-            setActiveTab(tab)
-        }
-    }, [searchParams])
+    const activeTab = searchParams.get('tab') === 'brackets' ? 'brackets' : 'schedule'
 
     // Scroll to top when tab changes
     useEffect(() => {
         window.scrollTo({ top: 0, behavior: 'auto' });
     }, [activeTab]);
 
+    const handleTabChange = (tab: 'schedule' | 'brackets') => {
+        const newParams = new URLSearchParams(searchParams.toString())
+        newParams.set('tab', tab)
+        router.replace(`?${newParams.toString()}`, { scroll: false })
+    }
+
     return (
         <div className="space-y-0">
             {/* Fixed Tabs Header - Locked to PremiumSubHeader at top-0 + 64px height */}
             <div className="fixed top-[64px] left-1/2 -translate-x-1/2 w-full max-w-[500px] z-[110] bg-[#121212]/95 backdrop-blur-xl border-b border-white/5 flex px-6">
                 <button 
-                    onClick={() => setActiveTab('schedule')}
+                    onClick={() => handleTabChange('schedule')}
                     className={`flex-1 py-4 text-[16px] font-black tracking-tight transition-all relative ${activeTab === 'schedule' ? 'text-white' : 'text-white/30'}`}
                 >
                     일정
@@ -57,7 +55,7 @@ export default function RoundTabsContent({
                     )}
                 </button>
                 <button 
-                    onClick={() => setActiveTab('brackets')}
+                    onClick={() => handleTabChange('brackets')}
                     className={`flex-1 py-4 text-[16px] font-black tracking-tight transition-all relative ${activeTab === 'brackets' ? 'text-white' : 'text-white/30'}`}
                 >
                     조편성

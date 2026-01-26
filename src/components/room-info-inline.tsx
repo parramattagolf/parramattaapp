@@ -1,6 +1,6 @@
 'use client'
 
-import { Crown, Shield, Gift, Users, Star, CheckCircle } from 'lucide-react'
+import { Star, CheckCircle } from 'lucide-react'
 
 export default function RoomInfoInline() {
     const slides = [

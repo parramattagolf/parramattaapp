@@ -155,8 +155,30 @@ export async function joinEvent(eventId: string, groupNo: number = 1) {
 
     // Send payment pending notification
     if (event) {
-        const { notifyPaymentPending } = await import('@/actions/notification-actions')
+        const { notifyPaymentPending, sendPushToUser } = await import('@/actions/notification-actions')
         await notifyPaymentPending(user.id, event.title)
+
+        // Notify existing room members
+        const { data: roomMembers } = await supabase
+            .from('participants')
+            .select('user_id')
+            .eq('event_id', eventId)
+            .eq('group_no', groupNo)
+            .neq('user_id', user.id) // Exclude self
+
+        if (roomMembers && roomMembers.length > 0) {
+            const inviteUrl = `/rounds/${eventId}/rooms/${groupNo}`
+            
+            // Parallel sending
+            await Promise.all(roomMembers.map(member => 
+                sendPushToUser(
+                    member.user_id, 
+                    '동반자 조인 알림 ⛳', 
+                    `'${event.title}' ${groupNo}번방에 새로운 동반자가 참여했습니다!`, 
+                    inviteUrl
+                )
+            ))
+        }
     }
 
     revalidatePath(`/rounds/${eventId}`)

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Crown, Shield, Gift, Users, X, Star, CheckCircle } from 'lucide-react'
+import { X, Star, CheckCircle } from 'lucide-react'
 
 interface RoomInfoPopupProps {
     isOpen: boolean

@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import { createClient } from '@/utils/supabase/client'
 import PremiumSubHeader from '@/components/premium-sub-header'
 import Link from 'next/link'
-import { User, Shield, Star, Users } from 'lucide-react'
+import Image from 'next/image'
+import { Shield, Star, Users } from 'lucide-react'
 
 export default function NetworkPage() {
     const supabase = createClient()
@@ -54,7 +55,7 @@ export default function NetworkPage() {
         }
 
         fetchNetwork()
-    }, [])
+    }, [supabase])
 
     const filteredList = network
         .filter(member => member.distance === activeTab)
@@ -122,7 +123,7 @@ export default function NetworkPage() {
                             >
                                 <div className="w-14 h-14 rounded-full bg-white/5 overflow-hidden border border-white/10 shrink-0">
                                     {member.profile_img ? (
-                                        <img src={member.profile_img} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                        <Image src={member.profile_img} alt="" width={56} height={56} className="w-full h-full object-cover" unoptimized referrerPolicy="no-referrer" />
                                     ) : (
                                         <div className="w-full h-full flex items-center justify-center text-2xl bg-gradient-to-br from-white/10 to-white/5">👤</div>
                                     )}

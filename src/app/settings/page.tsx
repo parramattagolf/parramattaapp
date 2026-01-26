@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import PremiumSubHeader from '@/components/premium-sub-header'
+import Image from 'next/image'
 import { Save, User, Briefcase, GraduationCap, Trophy, Hash, MapPin, Activity, Check, Lock, Gift } from 'lucide-react'
 
 // Reusable Input Component for consistent styling
@@ -144,7 +145,7 @@ export default function SettingsPage() {
         }
 
         fetchProfile()
-    }, [])
+    }, [router, supabase])
 
     const handleSave = async () => {
         setSaving(true)
@@ -222,7 +223,7 @@ export default function SettingsPage() {
                 <div className="flex flex-col items-center justify-center py-6">
                     <div className="w-24 h-24 rounded-[32px] bg-[#1c1c1e] border-2 border-white/10 overflow-hidden shadow-2xl relative group">
                         {profile.profile_img ? (
-                            <img src={profile.profile_img} alt="Profile" className="w-full h-full object-cover" />
+                            <Image src={profile.profile_img} alt="Profile" width={96} height={96} className="w-full h-full object-cover" unoptimized />
                         ) : (
                             <div className="w-full h-full flex items-center justify-center text-4xl">👤</div>
                         )}

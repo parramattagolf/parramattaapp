@@ -1,19 +1,19 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 
 interface MyWarningPopupProps {
     mannerScore: number
 }
 
 export default function MyWarningPopup({ mannerScore }: MyWarningPopupProps) {
-    const [showWarning, setShowWarning] = useState(false)
-    const router = useRouter()
+    const [showWarning, setShowWarning] = useState(mannerScore < 0)
 
     useEffect(() => {
         if (mannerScore < 0) {
-            setShowWarning(true)
+            // Use setTimeout to avoid synchronous state update warning during effect
+            const timer = setTimeout(() => setShowWarning(true), 0)
+            return () => clearTimeout(timer)
         }
     }, [mannerScore])
 

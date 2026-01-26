@@ -1,7 +1,8 @@
-/* eslint-disable @next/next/no-img-element */
+
 import { createClient } from '@/utils/supabase/server'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { getUserBadges } from '@/actions/sponsor-actions'
 import MemberDetailHeader from '@/components/members/member-detail-header'
 import MembershipBadge from '@/components/members/membership-badge'
@@ -447,7 +448,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
                             >
                                 <div className="w-10 h-10 mx-auto bg-[var(--color-bg)] rounded-full flex items-center justify-center overflow-hidden mb-2">
                                     {badge.sponsor?.logo_url ? (
-                                        <img src={badge.sponsor.logo_url} alt="" className="w-6 h-6 object-contain" />
+                                        <Image src={badge.sponsor.logo_url} alt="" width={24} height={24} className="w-6 h-6 object-contain" unoptimized />
                                     ) : (
                                         <span className="text-lg">🏆</span>
                                     )}
