@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import RoundInfoCard from '@/components/round-info-card'
 import PreReservationList from '@/components/pre-reservation-list'
 import RoundDetailContent from '@/components/round-detail-content'
@@ -23,6 +23,11 @@ export default function RoundTabsContent({
     isJoined
 }: RoundTabsContentProps) {
     const [activeTab, setActiveTab] = useState<'schedule' | 'brackets'>('schedule')
+
+    // Scroll to top when tab changes
+    useEffect(() => {
+        window.scrollTo({ top: 0, behavior: 'instant' as any });
+    }, [activeTab]);
 
     return (
         <div className="space-y-0">
