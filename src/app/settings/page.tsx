@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import PremiumSubHeader from '@/components/premium-sub-header'
 import Image from 'next/image'
-import { Save, User, Briefcase, GraduationCap, Trophy, Hash, MapPin, Activity, Check, Lock, Gift } from 'lucide-react'
+import { Save, User, Briefcase, GraduationCap, Trophy, Hash, MapPin, Activity, Check, Lock, Gift, Bell } from 'lucide-react'
 
 // Reusable Input Component for consistent styling
 function SettingsInput({ 
@@ -17,9 +17,9 @@ function SettingsInput({
     isTextArea = false,
     readOnly = false
 }: {
-    icon: any,
+    icon: React.ElementType,
     value: string | number,
-    onChange: (e: any) => void,
+    onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void,
     placeholder: string,
     type?: string,
     isTextArea?: boolean,
@@ -152,7 +152,16 @@ export default function SettingsPage() {
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return
 
-        const updates: any = {
+        const updates: {
+            real_name: string;
+            job: string;
+            mbti: string;
+            golf_experience: string;
+            gender: string;
+            age_range: string;
+            district: string;
+            handicap?: number | null;
+        } = {
             real_name: profile.real_name,
             job: profile.job,
             mbti: profile.mbti,
@@ -565,6 +574,42 @@ export default function SettingsPage() {
                                 )}
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                {/* App Settings */}
+                <div className="space-y-4">
+                    <label className="text-[11px] font-black text-blue-500 uppercase tracking-[0.2em] px-1 flex items-center gap-2">
+                        앱 설정 (SETTINGS)
+                        <span className="w-full h-px bg-white/5 block"></span>
+                    </label>
+
+                    <div className="bg-[#1c1c1e] border border-white/5 rounded-2xl p-5 flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-400">
+                                <Bell size={20} />
+                            </div>
+                            <div>
+                                <h3 className="text-sm font-bold text-white">푸시 알림</h3>
+                                <p className="text-[11px] text-white/40 mt-0.5">라운딩 조인 및 주요 알림 수신</p>
+                            </div>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer">
+                            <input 
+                                type="checkbox" 
+                                className="sr-only peer"
+                                checked={Notification.permission === 'granted'}
+                                onChange={async (e) => {
+                                    if (e.target.checked) {
+                                        const { subscribeUserToPush } = await import('@/lib/push-notifications')
+                                        await subscribeUserToPush()
+                                        // Force re-render to update toggle state
+                                        window.location.reload() 
+                                    }
+                                }}
+                            />
+                            <div className="w-11 h-6 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        </label>
                     </div>
                 </div>
 

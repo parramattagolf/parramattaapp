@@ -7,7 +7,10 @@ export default function PushNotificationManager() {
   useEffect(() => {
     async function setup() {
       await registerServiceWorker()
-      await subscribeUserToPush()
+      // Only subscribe if already granted. Otherwise wait for user gesture in Settings.
+      if (Notification.permission === 'granted') {
+        await subscribeUserToPush()
+      }
     }
     setup()
   }, [])
