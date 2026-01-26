@@ -27,8 +27,8 @@ export default function RoundTabsContent({
 
     return (
         <div className="space-y-0">
-            {/* Sticky Tabs Header - Adjusted for PremiumSubHeader compatibility */}
-            <div className="sticky top-[64px] z-40 bg-[#121212]/95 backdrop-blur-xl border-b border-white/5 flex px-6">
+            {/* Fixed Tabs Header - Locked to PremiumSubHeader at top-0 + 64px height */}
+            <div className="fixed top-[64px] left-1/2 -translate-x-1/2 w-full max-w-[500px] z-[110] bg-[#121212]/95 backdrop-blur-xl border-b border-white/5 flex px-6">
                 <button 
                     onClick={() => setActiveTab('schedule')}
                     className={`flex-1 py-4 text-[16px] font-black tracking-tight transition-all relative ${activeTab === 'schedule' ? 'text-white' : 'text-white/30'}`}
@@ -48,6 +48,9 @@ export default function RoundTabsContent({
                     )}
                 </button>
             </div>
+
+            {/* Spacer for Fixed TabsHeader (Header 64px + Tabs ~56px) */}
+            <div className="h-[56px]"></div>
 
             <div className="px-6 pt-8 pb-32">
                 {activeTab === 'schedule' ? (

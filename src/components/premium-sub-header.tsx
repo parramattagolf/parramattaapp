@@ -14,7 +14,7 @@ interface PremiumSubHeaderProps {
 export default function PremiumSubHeader({ title, backHref, onBack, rightElement, titleClassName }: PremiumSubHeaderProps) {
     return (
         <header
-            className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[500px] z-[110] transition-all duration-500 ease-in-out bg-[#121212]/90 backdrop-blur-2xl py-3"
+            className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-[500px] z-[110] bg-[#121212]/90 backdrop-blur-2xl py-3"
         >
             <div className="px-gutter flex items-center justify-between">
                 <div className="flex items-center gap-4 min-w-0 flex-1">
