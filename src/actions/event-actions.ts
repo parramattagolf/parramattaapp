@@ -502,17 +502,15 @@ export async function preReserveEvent(eventId: string) {
         throw new Error('Failed to pre-reserve')
     }
 
-    // Atomically award 1 Manner Score and 1 Point
+    // Atomically award 1 Manner Score
     const { error: updateError } = await supabase.rpc('update_user_scores', {
         target_user_id: user.id,
-        manner_delta: 1,
-        points_delta: 1
+        manner_delta: 1
     })
 
     if (!updateError) {
-        const { data: u } = await supabase.from('users').select('manner_score, points').eq('id', user.id).single()
+        const { data: u } = await supabase.from('users').select('manner_score').eq('id', user.id).single()
         const newScore = u?.manner_score ?? 101
-        const newPoints = u?.points ?? 1
         
         const { data: event } = await supabase.from('events').select('title').eq('id', eventId).single()
         const eventTitle = event?.title ? `'${event.title}' ` : ''
@@ -524,20 +522,13 @@ export async function preReserveEvent(eventId: string) {
                 description: `${eventTitle}사전예약 감사 보너스`,
                 score_snapshot: newScore
             })
-
-            await supabase.from('point_transactions').insert({
-                user_id: user.id,
-                amount: 1,
-                description: `${eventTitle}사전예약 감사 보너스`,
-                balance_snapshot: newPoints
-            })
         } catch (e) {
-            console.error('Failed to log scores/points', e)
+            console.error('Failed to log manner score', e)
         }
     }
 
     revalidatePath(`/rounds/${eventId}`)
-    return { success: true, message: '사전예약이 완료되었습니다. (매너점수 +1, 포인트 +1)' }
+    return { success: true, message: '사전예약이 완료되었습니다. (매너점수 +1점)' }
 }
 
 export async function cancelPreReservation(eventId: string) {
