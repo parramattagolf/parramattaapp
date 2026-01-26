@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import { createClient } from '@/utils/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
@@ -105,7 +106,7 @@ export default async function MyPage() {
     // Get network stats
     const { data: friends } = await supabase.rpc('get_member_list_with_distance', { viewer_id: user.id })
     const networkStats = {
-        total: friends?.filter((f: any) => f.distance && f.distance < 999).length || 0,
+        total: (friends as { distance: number | null }[] | null)?.filter((f) => f.distance && f.distance < 999).length || 0,
     }
 
     // Get rounds
@@ -132,12 +133,15 @@ export default async function MyPage() {
                             <div className="w-24 h-24 rounded-[32px] bg-[#1c1c1e] overflow-hidden border-2 border-white/5 flex-shrink-0 shadow-2xl relative group transition-transform hover:scale-105 duration-500">
                                 <div className="absolute inset-0 bg-gradient-to-tr from-black/40 via-transparent to-white/10 opacity-60"></div>
                                 {displayAvatar ? (
-                                    <img
-                                        src={displayAvatar}
-                                        alt="프로필 사진"
-                                        className="w-full h-full object-cover"
-                                        referrerPolicy="no-referrer"
-                                    />
+                                    <div className="relative w-full h-full">
+                                        <Image
+                                            src={displayAvatar}
+                                            alt="프로필 사진"
+                                            fill
+                                            className="object-cover"
+                                            unoptimized
+                                        />
+                                    </div>
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center text-3xl">
                                         👤
@@ -148,7 +152,7 @@ export default async function MyPage() {
                             <div className="flex flex-col items-center mt-2">
                                 <div className="flex items-center gap-1.5">
                                     <div className="text-[16px] font-bold text-white/90 tracking-tight truncate max-w-[150px]">
-                                        {realName || displayName}
+                                        {realName || '정보없음'}
                                     </div>
                                     <Link
                                         href="/settings"
@@ -227,19 +231,22 @@ export default async function MyPage() {
                 <div className="px-gutter mt-10">
                     <h2 className="text-base font-bold text-[var(--color-text-primary)] mb-4">보유 배지</h2>
                     <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
-                        {badges.map((badge: any) => (
+                        {(badges as { id: string, sponsor?: { name: string, logo_url: string | null } | null }[]).map((badge) => (
                             <div
                                 key={badge.id}
                                 className="bg-[var(--color-gray-100)] rounded-xl border border-[var(--color-divider)] flex-shrink-0 w-20 p-3 text-center"
                             >
                                 <div className="w-10 h-10 mx-auto bg-[var(--color-bg)] rounded-full flex items-center justify-center mb-2 overflow-hidden">
                                     {badge.sponsor?.logo_url ? (
-                                        <img
-                                            src={badge.sponsor.logo_url}
-                                            alt=""
-                                            className="w-6 h-6 object-contain"
-                                            referrerPolicy="no-referrer"
-                                        />
+                                        <div className="relative w-6 h-6">
+                                            <Image
+                                                src={badge.sponsor.logo_url}
+                                                alt=""
+                                                fill
+                                                className="object-contain"
+                                                unoptimized
+                                            />
+                                        </div>
                                     ) : (
                                         <span className="text-lg">🏅</span>
                                     )}

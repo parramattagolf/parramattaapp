@@ -4,9 +4,11 @@ import React, { useState } from 'react'
 import RoundCalendarSpotlight from './round-calendar-spotlight'
 import { X } from 'lucide-react'
 
+import { RoundingEvent, RoundingParticipant } from '@/types/rounding'
+
 interface RoundInfoCardProps {
-    event: any;
-    participants: any[];
+    event: RoundingEvent;
+    participants: RoundingParticipant[];
 }
 
 export default function RoundInfoCard({ event, participants }: RoundInfoCardProps) {

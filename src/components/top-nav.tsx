@@ -3,13 +3,12 @@
 import { useState, useEffect, Suspense } from 'react'
 import Link from 'next/link'
 import { Bell, LogOut } from 'lucide-react'
-import { usePathname, useSearchParams } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
+import { RealtimeChannel } from '@supabase/supabase-js'
 
 function TopNavContent() {
   const pathname = usePathname()
-  const searchParams = useSearchParams()
-  const view = searchParams.get('view')
   const [isVisible, setIsVisible] = useState(true)
   const [lastScrollY, setLastScrollY] = useState(0)
   const [nickname, setNickname] = useState<string | null>(null)
@@ -23,7 +22,7 @@ function TopNavContent() {
 
   useEffect(() => {
     const supabase = createClient()
-    let channel: any
+    let channel: RealtimeChannel | null = null
 
     const fetchProfileAndNotifications = async () => {
       const { data: { user } } = await supabase.auth.getUser()

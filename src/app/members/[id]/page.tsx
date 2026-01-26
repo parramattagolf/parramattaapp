@@ -12,16 +12,7 @@ interface EnrichedProfile {
     distance: number;
 }
 
-interface RecentRound {
-    id: string;
-    joined_at: string;
-    event: {
-        id: string;
-        title: string;
-        start_date: string;
-        course_name: string;
-    };
-}
+
 
 interface Badge {
     id: string;
@@ -87,7 +78,6 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
         .order('event(start_date)', { ascending: false }) // Get all, sort by date implicitly (or filter later)
 
     // Type definition for the query result
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     type RoundData = {
         id: string
         joined_at: string
@@ -110,9 +100,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
         .filter(r => r.event && new Date(r.event.start_date) > new Date())
         .sort((a, b) => new Date(a.event.start_date).getTime() - new Date(b.event.start_date).getTime())
         
-    const pastRounds = allRounds
-        .filter(r => r.event && new Date(r.event.start_date) <= new Date())
-        .sort((a, b) => new Date(b.event.start_date).getTime() - new Date(a.event.start_date).getTime())
+
 
     // 3. Get Pre-reservations (Interest / Interest expressed)
     const { data: preReservationData } = await supabase

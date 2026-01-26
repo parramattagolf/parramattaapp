@@ -13,7 +13,7 @@ import InviteModal from "@/components/invite-modal";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Lock, Unlock, AlertCircle, Users } from "lucide-react";
+import { Lock, Unlock, AlertCircle, Users, HelpCircle } from "lucide-react";
 
 interface Participant {
   id: string;
@@ -315,56 +315,70 @@ export default function RoomDetailContent({
   };
 
 
-  const HoldTimer = ({
-    heldAt,
-    onExpire,
-  }: {
-    heldAt: string;
-    onExpire: () => void;
-  }) => {
-    const [left, setLeft] = useState("");
+
+  const EventTimer = ({ targetDate, label, infoText, showSeconds = false }: { targetDate: Date; label: string; infoText?: string; showSeconds?: boolean }) => {
+    const [timeLeft, setTimeLeft] = useState("");
     const [isExpired, setIsExpired] = useState(false);
+    const [showInfo, setShowInfo] = useState(false);
 
     useEffect(() => {
-      const checkExpiration = () => {
-        const deadline = new Date(
-          new Date(heldAt).getTime() + 6 * 60 * 60 * 1000,
-        );
+      const calculateTimeLeft = () => {
         const now = new Date();
-        const diff = deadline.getTime() - now.getTime();
+        const difference = targetDate.getTime() - now.getTime();
 
-        if (diff <= 0) {
-          setLeft("만료됨");
-          if (!isExpired) {
-            setIsExpired(true);
-            onExpire();
-          }
-          return true;
+        if (difference <= 0) {
+          setIsExpired(true);
+          setTimeLeft(`${label} 마감`);
+          return;
+        }
+
+        const days = Math.floor(difference / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((difference / (1000 * 60 * 60)) % 24);
+        const minutes = Math.floor((difference / 1000 / 60) % 60);
+        const seconds = Math.floor((difference / 1000) % 60);
+
+        const d = String(days).padStart(2, '0');
+        const h = String(hours).padStart(2, '0');
+        const m = String(minutes).padStart(2, '0');
+        const s = String(seconds).padStart(2, '0');
+
+        if (showSeconds) {
+          setTimeLeft(`${d}일 ${h}시간 ${m}분 ${s}초`);
         } else {
-          const h = Math.floor(diff / (1000 * 60 * 60));
-          const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-          const s = Math.floor((diff % (1000 * 60)) / 1000);
-          setLeft(`${h}:${m < 10 ? "0" + m : m}:${s < 10 ? "0" + s : s}`);
-          return false;
+          setTimeLeft(`${d}일 ${h}시간 ${m}분`);
         }
       };
 
-      if (checkExpiration()) return;
+      calculateTimeLeft();
+      const timer = setInterval(calculateTimeLeft, 1000); // Update every second
 
-      const timer = setInterval(() => {
-        if (checkExpiration()) {
-          clearInterval(timer);
-        }
-      }, 1000);
       return () => clearInterval(timer);
-    }, [heldAt, isExpired, onExpire]);
+    }, [targetDate, label, showSeconds]);
 
     return (
-      <div className="mt-2 bg-yellow-500/10 px-3 py-1.5 rounded-xl inline-flex items-center gap-1.5 border border-yellow-500/20 shadow-[0_0_15px_rgba(234,179,8,0.1)]">
-         <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(234,179,8,0.6)]"></div>
-         <span className="font-mono font-black text-[13px] text-yellow-500 tracking-tight">
-           {left}
-         </span>
+      <div className="w-full">
+        <div 
+          className={`w-full py-2 flex items-center justify-between ${isExpired ? 'text-red-500' : 'text-blue-100'} cursor-pointer`}
+          onClick={() => infoText && setShowInfo(!showInfo)}
+        >
+           <div className="flex items-center gap-3">
+              <div className={`w-2 h-2 rounded-full ${isExpired ? 'bg-red-500' : 'bg-blue-400 animate-pulse'}`} />
+              <div className="flex items-center gap-1.5">
+                <span className="text-[14px] font-bold text-white/50">{label}</span>
+                {infoText && <HelpCircle size={14} className="text-white/30" />}
+              </div>
+           </div>
+           <span className={`text-[15px] font-black tracking-widest tabular-nums ${isExpired ? 'text-red-400' : 'text-blue-300'}`}>
+              {timeLeft}
+           </span>
+        </div>
+        {showInfo && infoText && (
+          <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 mb-2 text-center animate-in fade-in slide-in-from-top-1 duration-200">
+            <p className="text-[13px] text-blue-300 font-bold tracking-tight">
+              {infoText}
+            </p>
+          </div>
+        )}
       </div>
     );
   };
@@ -385,28 +399,6 @@ export default function RoomDetailContent({
     <div>
 
 
-      {/* Held Slot Guidance for Holder */}
-      {heldSlots.some(s => s.group_no === roomIndex + 1 && s.held_by === authUser?.id) && (
-        <div className="mb-8 animate-pulse-gentle">
-          <div className="relative overflow-hidden bg-gradient-to-r from-blue-600/20 to-indigo-600/10 backdrop-blur-md border border-blue-400/30 rounded-[28px] p-5 flex items-center gap-4 shadow-[0_10px_40px_rgba(37,99,235,0.15)] group">
-            {/* Animated Light Beam Effect */}
-            <div className="absolute top-0 -left-[100%] w-[50%] h-full bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-[-25deg] animate-shimmer"></div>
-            
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shrink-0 shadow-[0_5px_15px_rgba(37,99,235,0.4)] border border-white/10">
-              <Users size={22} className="text-white drop-shadow-sm" />
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <p className="text-[15px] text-white font-black tracking-tighter leading-none">홀드 슬롯 예약 중 🔐</p>
-                <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-ping"></div>
-              </div>
-              <p className="text-[12px] text-blue-300/80 font-bold mt-1.5 leading-snug tracking-tight">
-                지금 <span className="text-white underline underline-offset-4 decoration-blue-500/50">&apos;초대하기&apos;</span>로 친구를 조인시켜보세요!
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Action Buttons for joined users */}
       <div className="flex items-center mb-6 gap-2 w-full">
@@ -482,7 +474,7 @@ export default function RoomDetailContent({
                   ? "border-white/10 bg-[#1c1c1e] shadow-2xl scale-100"
                   : isHeld
                     ? "border-yellow-500/50 bg-yellow-500/5 shadow-[0_0_20px_rgba(234,179,8,0.1)] hover:bg-yellow-500/10"
-                  : "border-blue-500/40 bg-blue-500/[0.03] hover:bg-blue-500/[0.08]"
+                  : "border-green-500/40 bg-green-500/[0.03] hover:bg-green-500/[0.08]"
               }`}
             >
               {slot ? (
@@ -493,7 +485,7 @@ export default function RoomDetailContent({
                       방장
                     </div>
                   )}
-                  <div className="w-16 h-16 bg-[#2c2c2e] rounded-[22px] mb-4 overflow-hidden border border-white/10 shadow-inner translate-y-0 group-hover:-translate-y-1 transition-transform active:scale-90 relative z-10">
+                  <div className={`w-16 h-16 rounded-[22px] mb-4 overflow-hidden border shadow-inner translate-y-0 group-hover:-translate-y-1 transition-transform active:scale-90 relative z-10 ${slot.payment_status === 'paid' ? 'border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.4)] ring-2 ring-emerald-500/20 bg-[#2c2c2e]' : 'border-white/10 bg-[#2c2c2e]'}`}>
                     {slot.user?.profile_img ? (
                       <div className="relative w-full h-full">
                         <Image
@@ -511,10 +503,21 @@ export default function RoomDetailContent({
                     )}
 
                   </div>
-                  <div className="text-center w-full px-2 relative z-10">
+                  <div className="text-center w-full px-2 relative z-10 space-y-1.5">
                     <div className="font-black text-[15px] text-white truncate tracking-tighter leading-none">
                       {slot.user?.nickname}
                     </div>
+                    
+                    {slot.payment_status === 'paid' ? (
+                       <div className="inline-flex items-center gap-1 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+                          <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                          <span className="text-[10px] font-bold text-emerald-400 tracking-tight">결제완료</span>
+                       </div>
+                    ) : (
+                       <div className="text-[11px] font-bold text-red-400/80 tracking-tight">
+                          미결제
+                       </div>
+                    )}
 
                   </div>
 
@@ -547,19 +550,6 @@ export default function RoomDetailContent({
                     Reserved
                   </span>
                   
-                  {/* Hold Timer */}
-                  <HoldTimer 
-                    heldAt={heldSlot.created_at} 
-                    onExpire={async () => {
-                      try {
-                        await releaseSlot(event.id, roomIndex + 1, i);
-                        await fetchHeldSlots();
-                        router.refresh();
-                      } catch (e) {
-                        console.error("Hold expiry cleanup failed", e);
-                      }
-                    }} 
-                  />
 
                   {isInvitedHere && (
                     <span className="text-[10px] text-blue-400 font-bold mt-2 bg-blue-500/10 px-2 py-0.5 rounded-full animate-pulse border border-blue-500/20">
@@ -584,8 +574,8 @@ export default function RoomDetailContent({
                       조인하기
                     </span>
                     {(isJoined || userData?.is_admin) && !isHeld && (
-                      <span className="text-[9px] text-yellow-500/50 mt-1 flex items-center gap-1 font-bold">
-                        <Lock size={10} /> 홀드 가능
+                      <span className="text-[11px] text-yellow-500/50 mt-1 flex items-center gap-1 font-bold">
+                        <Lock size={12} /> 홀드 가능
                       </span>
                     )}
                   </div>
@@ -596,52 +586,24 @@ export default function RoomDetailContent({
         })}
       </div>
 
-      {/* Hold Slots Explanation - Hide if user already held a slot */}
-      {!heldSlots.some(s => s.group_no === roomIndex + 1 && s.held_by === authUser?.id) && (
-        <div className="mt-10 bg-[#1c1c1e] border border-white/5 rounded-[32px] overflow-hidden shadow-2xl group">
-          <div className="bg-yellow-500/10 px-6 py-4 border-b border-yellow-500/10 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-yellow-400 rounded-lg flex items-center justify-center shadow-lg transform group-hover:rotate-12 transition-transform">
-                <Lock size={16} className="text-black font-bold" />
-              </div>
-            <h4 className="text-[14px] font-black text-white tracking-tighter">슬롯 홀드 가이드 🔐</h4>
-          </div>
-        </div>
-
-          <div className="p-6 space-y-6">
-            <div className="grid grid-cols-1 gap-4">
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-yellow-500"></div>
-                  <p className="text-[13px] font-black text-white/90">참가자라면 누구나 선점 가능!</p>
-                </div>
-                <p className="pl-3.5 text-[12px] text-white/40 leading-relaxed font-medium">
-                  빈 슬롯을 <span className="text-yellow-500 font-black">6시간 동안</span> 홀드(잠금)할 수 있습니다.
-                </p>
-              </div>
-
-              <div className="space-y-2 border-t border-white/5 pt-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-                  <p className="text-[13px] font-black text-white/90">반드시 초대하기 기능을 이용하세요!</p>
-                </div>
-                <p className="pl-3.5 text-[12px] text-white/40 leading-relaxed font-medium">
-                  홀드 후에는 <span className="text-blue-400 font-black underline underline-offset-4">&apos;초대하기&apos;</span>를 통해 친구를 방으로 불러와야 합니다.
-                </p>
-              </div>
-
-              <div className="space-y-2 border-t border-white/5 pt-4 bg-red-500/[0.02] -mx-6 px-6 pb-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-red-500"></div>
-                  <p className="text-[13px] font-black text-red-400">재홀드 불가 주의!</p>
-                </div>
-                <p className="pl-3.5 text-[12px] text-red-400/60 leading-relaxed font-bold">
-                  홀드가 해제되거나 만료된 후 <span className="border-b border-red-500/30">동일 사용자는 다시 홀드할 수 없으니</span> 신중하게 사용해 주세요.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* Deadlines Timer */}
+      {event.start_date && (
+         <div className="mt-8 space-y-1">
+            <EventTimer 
+               label="매너예약" 
+               targetDate={new Date(new Date(event.start_date).getTime() - 14 * 24 * 60 * 60 * 1000)} 
+               infoText="마감 전 예약 시 매너점수 10점 적립!"
+            />
+            <EventTimer 
+               label="임박예약" 
+               targetDate={new Date(new Date(event.start_date).getTime() - 10 * 24 * 60 * 60 * 1000)} 
+            />
+            <EventTimer 
+               label="결제 마감까지" 
+               targetDate={new Date(new Date(event.start_date).getTime() - 7 * 24 * 60 * 60 * 1000)} 
+               showSeconds={true}
+            />
+         </div>
       )}
 
       {/* Invite Modal */}
@@ -762,14 +724,7 @@ export default function RoomDetailContent({
                       초대할 분을 위해 슬롯을 선점하시겠습니까?
                     </p>
                     <p className="text-white/40 text-sm font-medium">
-                      선점된 슬롯은 <span className="text-yellow-500/80 font-black">6시간</span> 동안 유지됩니다.
-                    </p>
-                  </div>
-
-                  <div className="mt-5 bg-red-500/10 py-3 px-4 rounded-2xl border border-red-500/20 flex items-center justify-center gap-2">
-                    <AlertCircle size={14} className="text-red-400 shrink-0" />
-                    <p className="text-[12px] text-red-400 font-black tracking-tight">
-                      6시간 초과 시 재홀드 불가!
+                      선점된 슬롯은 친구가 들어올 때까지 유지됩니다.
                     </p>
                   </div>
                 </div>

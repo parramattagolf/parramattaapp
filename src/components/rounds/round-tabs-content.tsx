@@ -1,16 +1,20 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import RoundInfoCard from '@/components/round-info-card'
 import PreReservationList from '@/components/pre-reservation-list'
 import RoundDetailContent from '@/components/round-detail-content'
 
+import { RoundingEvent, RoundingParticipant, RoundingPreReservation, UserStatus } from '@/types/rounding'
+import { User } from '@supabase/supabase-js'
+
 interface RoundTabsContentProps {
-    event: any;
-    participants: any[];
-    preReservations: any[];
-    userStatus: 'none' | 'pre_reserved' | 'joined';
-    currentUser: any;
+    event: RoundingEvent;
+    participants: RoundingParticipant[];
+    preReservations: RoundingPreReservation[];
+    userStatus: UserStatus;
+    currentUser: User | null; 
     isJoined: boolean;
 }
 
@@ -22,11 +26,21 @@ export default function RoundTabsContent({
     currentUser,
     isJoined
 }: RoundTabsContentProps) {
-    const [activeTab, setActiveTab] = useState<'schedule' | 'brackets'>('schedule')
+    const searchParams = useSearchParams()
+    const initialTab = searchParams.get('tab') === 'brackets' ? 'brackets' : 'schedule'
+    const [activeTab, setActiveTab] = useState<'schedule' | 'brackets'>(initialTab)
+
+    // Sync tab with URL param if changes (optional, but good for direct links)
+    useEffect(() => {
+        const tab = searchParams.get('tab')
+        if (tab === 'brackets' || tab === 'schedule') {
+            setActiveTab(tab)
+        }
+    }, [searchParams])
 
     // Scroll to top when tab changes
     useEffect(() => {
-        window.scrollTo({ top: 0, behavior: 'instant' as any });
+        window.scrollTo({ top: 0, behavior: 'auto' });
     }, [activeTab]);
 
     return (
@@ -39,7 +53,7 @@ export default function RoundTabsContent({
                 >
                     일정
                     {activeTab === 'schedule' && (
-                        <div className="absolute bottom-0 left-0 w-full h-1 bg-blue-500 rounded-t-full"></div>
+                        <div className="absolute bottom-0 left-0 w-full h-1 bg-emerald-500 rounded-t-full"></div>
                     )}
                 </button>
                 <button 
@@ -48,7 +62,7 @@ export default function RoundTabsContent({
                 >
                     조편성
                     {activeTab === 'brackets' && (
-                        <div className="absolute bottom-0 left-0 w-full h-1 bg-blue-500 rounded-t-full"></div>
+                        <div className="absolute bottom-0 left-0 w-full h-1 bg-emerald-500 rounded-t-full"></div>
                     )}
                 </button>
             </div>

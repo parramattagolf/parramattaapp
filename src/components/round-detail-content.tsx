@@ -7,20 +7,7 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Lock } from 'lucide-react'
 
-interface Participant {
-    id: string;
-    user_id: string;
-    event_id: string;
-    joined_at: string;
-    payment_status: string;
-    group_no?: number;
-    user: {
-        id: string;
-        nickname: string;
-        profile_img: string;
-        job?: string;
-    }
-}
+import { RoundingEvent, RoundingParticipant } from '@/types/rounding'
 
 interface User {
     id: string;
@@ -29,12 +16,6 @@ interface User {
         full_name?: string;
         avatar_url?: string;
     }
-}
-
-interface Event {
-    id: string;
-    host_id: string;
-    max_participants: number;
 }
 
 interface HeldSlot {
@@ -46,8 +27,8 @@ interface HeldSlot {
     invited_user_id: string | null;
 }
 
-export default function RoundDetailContent({ event, participants, isHost, isJoined }: { event: Event, participants: Participant[], currentUser: User | null, isHost: boolean, isJoined: boolean }) {
-    const [slots, setSlots] = useState<(Participant | null)[]>([])
+export default function RoundDetailContent({ event, participants, isHost, isJoined }: { event: RoundingEvent, participants: RoundingParticipant[], currentUser: User | null, isHost: boolean, isJoined: boolean }) {
+    const [slots, setSlots] = useState<(RoundingParticipant | null)[]>([])
     const [heldSlots, setHeldSlots] = useState<HeldSlot[]>([])
     const [roomHosts, setRoomHosts] = useState<Record<number, string>>({}) // groupNo -> userId
     const router = useRouter()
@@ -103,7 +84,7 @@ export default function RoundDetailContent({ event, participants, isHost, isJoin
 
     useEffect(() => {
         const max = event.max_participants || 4
-        const filledSlots: (Participant | null)[] = []
+        const filledSlots: (RoundingParticipant | null)[] = []
         const maxRooms = Math.ceil(max / 4)
 
         for (let r = 1; r <= maxRooms; r++) {
@@ -179,7 +160,7 @@ export default function RoundDetailContent({ event, participants, isHost, isJoin
                                         <button
                                             type="button"
                                             onClick={() => navigateToRoom(roomIndex + 1)}
-                                            className="absolute -top-2.5 left-0 z-20 bg-yellow-500 text-black text-[9px] font-black px-2 py-0.5 rounded-[6px] shadow-[0_4px_10px_rgba(234,179,8,0.2)] active:scale-95 transition-all"
+                                            className="absolute -top-2.5 right-0 z-20 bg-green-500 text-white text-[9px] font-black px-2 py-0.5 rounded-[6px] shadow-[0_4px_10px_rgba(34,197,94,0.4)] active:scale-95 transition-all"
                                         >
                                             {roomIndex + 1}번방
                                         </button>

@@ -1,33 +1,20 @@
 'use client'
 
-import { Sparkles, HelpCircle } from 'lucide-react'
+import { HelpCircle } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { cancelPreReservation, preReserveEvent } from '@/actions/event-actions'
-import { useRouter } from 'next/navigation'
-import { useState } from 'react'
-import confetti from 'canvas-confetti'
+import PreReservationButton from '@/components/pre-reservation-button'
 
-interface PreReservation {
-    id: string;
-    user: {
-        id: string;
-        nickname: string;
-        profile_img: string | null;
-    }
-}
+import { RoundingPreReservation, UserStatus } from '@/types/rounding'
 
 interface PreReservationListProps {
-    reservations: PreReservation[];
+    reservations: RoundingPreReservation[];
     eventId?: string;
     isPreReserved?: boolean;
-    userStatus?: 'none' | 'pre_reserved' | 'joined';
+    userStatus?: UserStatus;
 }
 
 export default function PreReservationList({ reservations, eventId, isPreReserved, userStatus }: PreReservationListProps) {
-    const router = useRouter()
-    const [loading, setLoading] = useState(false)
-
     // Show component if there are reservations OR if it's the personal status area
     if ((!reservations || reservations.length === 0) && !isPreReserved && userStatus !== 'none') return null
     if (!eventId) return null
@@ -42,75 +29,13 @@ export default function PreReservationList({ reservations, eventId, isPreReserve
         );
     }
 
-    const handleCancel = async () => {
-        if (loading) return
-        if (!confirm('사전예약을 취소하시겠습니까?')) return
 
-        setLoading(true)
-        try {
-            const result = await cancelPreReservation(eventId)
-            if (result.success) {
-                alert(result.message)
-                router.refresh()
-            } else {
-                alert(result.message)
-            }
-        } catch (e) {
-            console.error(e)
-            alert('오류가 발생했습니다.')
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    const handleApply = async () => {
-        if (loading) return
-        setLoading(true)
-        try {
-            const result = await preReserveEvent(eventId)
-            if (result.success) {
-                alert(result.message)
-                confetti({
-                    particleCount: 150,
-                    spread: 70,
-                    origin: { y: 0.6 },
-                    colors: ['#3b82f6', '#60a5fa', '#93c5fd']
-                })
-                router.refresh()
-            } else {
-                alert(result.message)
-            }
-        } catch (e) {
-            console.error(e)
-            alert('오류가 발생했습니다.')
-        } finally {
-            setLoading(false)
-        }
-    }
 
     return (
         <div className="w-full mt-4 animate-fade-in">
             <div className="mb-4 px-1 flex items-center gap-2">
-                {isPreReserved ? (
-                    <button
-                        onClick={handleCancel}
-                        disabled={loading}
-                        className="bg-red-500/10 hover:bg-red-500/20 text-red-500 text-[11px] font-black px-4 py-2 rounded-full border border-red-500/30 transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2"
-                    >
-                        <Sparkles size={10} className="text-red-500" />
-                        {loading ? '처리 중...' : '사전예약취소'}
-                    </button>
-                ) : (
-                    userStatus === 'none' && (
-                        <button
-                            onClick={handleApply}
-                            disabled={loading}
-                            className="bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-black px-4 py-2 rounded-full shadow-lg shadow-blue-600/20 transition-all active:scale-95 disabled:opacity-50 flex items-center gap-2"
-                        >
-                            <Sparkles size={10} className="text-blue-200 fill-white" />
-                            {loading ? '처리 중...' : '사전예약신청 🚀'}
-                        </button>
-                    )
+                {userStatus !== 'joined' && (
+                     <PreReservationButton eventId={eventId} isReserved={!!isPreReserved} />
                 )}
 
                 <button 

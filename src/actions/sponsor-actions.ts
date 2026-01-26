@@ -126,7 +126,7 @@ export async function inputEventScore(
 export async function getEventLeaderboard(eventId: string, sponsorFilter?: string) {
     const supabase = await createClient()
 
-    let query = supabase
+    const query = supabase
         .from('event_scores')
         .select(`
             *,
@@ -144,11 +144,20 @@ export async function getEventLeaderboard(eventId: string, sponsorFilter?: strin
 
     // Filter by sponsor if specified
     if (sponsorFilter) {
-        return scores.filter((s: any) =>
-            s.user?.badges?.some((b: any) =>
+        interface ScoreRecord {
+            user?: {
+                badges?: {
+                    sponsor?: {
+                        name: string;
+                    };
+                }[];
+            };
+        }
+        return (scores as unknown as ScoreRecord[]).filter((s) => {
+            return s.user?.badges?.some((b) =>
                 b.sponsor?.name?.toLowerCase().includes(sponsorFilter.toLowerCase())
             )
-        )
+        })
     }
 
     return scores

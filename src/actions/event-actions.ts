@@ -423,14 +423,24 @@ export async function preReserveEvent(eventId: string) {
         const eventTitle = event?.title ? `'${event.title}' ` : ''
 
         try {
+            // 1. Log History
             await supabase.from('manner_score_history').insert({
                 user_id: user.id,
                 amount: 1,
                 description: `${eventTitle}사전예약 감사 보너스`,
                 score_snapshot: newScore
             })
+
+            // 2. Internal Notification
+            await supabase.from('notifications').insert({
+                user_id: user.id,
+                type: 'system',
+                title: '매너점수 1점을 획득했습니다! 🏅',
+                content: `${eventTitle}사전예약에 참여해주셔서 감사합니다.`,
+                is_read: false
+            })
         } catch (e) {
-            console.error('Failed to log manner score', e)
+            console.error('Failed to log manner score or notify', e)
         }
     }
 
@@ -470,14 +480,24 @@ export async function cancelPreReservation(eventId: string) {
         const eventTitle = event?.title ? `'${event.title}' ` : ''
 
         try {
+            // 1. Log History
             await supabase.from('manner_score_history').insert({
                 user_id: user.id,
                 amount: -1,
                 description: `${eventTitle}사전예약 취소 (보너스 회수)`,
                 score_snapshot: newScore
             })
+
+            // 2. Internal Notification
+            await supabase.from('notifications').insert({
+                user_id: user.id,
+                type: 'system',
+                title: '매너점수 1점이 회수되었습니다. ⚠️',
+                content: `${eventTitle}사전예약 취소로 인해 지급되었던 보너스 점수가 차감되었습니다.`,
+                is_read: false
+            })
         } catch (e) {
-            console.error('Failed to log manner score', e)
+            console.error('Failed to log manner score or notify', e)
         }
     }
 

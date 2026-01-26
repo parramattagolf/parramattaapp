@@ -142,11 +142,11 @@ export async function sendExpiringReminders() {
     const users = await getUsersWithExpiringPayment()
 
     const results = await Promise.all(
-        users.map(async (u: any) => {
+        users.map(async (u) => {
             return sendTemplateNotification(
                 u.user_id,
                 'payment_reminder_1h',
-                { event_title: u.events?.title || '라운딩' }
+                { event_title: (u.events as unknown as { title: string }[])?.[0]?.title || '라운딩' }
             )
         })
     )
@@ -173,4 +173,59 @@ export async function checkUnreadNotifications() {
     }
 
     return { count: count || 0 }
+}
+
+// Send Web Push Notification
+import webPush from 'web-push'
+
+export async function sendPushToUser(userId: string, title: string, body: string, url: string = '/') {
+    const supabase = await createClient()
+
+    try {
+        // Init VAPID
+        if (process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
+            webPush.setVapidDetails(
+                process.env.NEXT_PUBLIC_VAPID_SUBJECT || 'mailto:admin@example.com',
+                process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
+                process.env.VAPID_PRIVATE_KEY
+            )
+        } else {
+            console.warn('VAPID keys not found, skipping push.')
+            return
+        }
+
+        // Get subscriptions
+        const { data: subscriptions } = await supabase
+            .from('push_subscriptions')
+            .select('*')
+            .eq('user_id', userId)
+
+        if (!subscriptions || subscriptions.length === 0) return
+
+        // Send to all user devices
+        const notifications = subscriptions.map((sub) => {
+            const pushSubscription = {
+                endpoint: sub.endpoint,
+                keys: {
+                    p256dh: sub.p256dh,
+                    auth: sub.auth,
+                },
+            }
+
+            const payload = JSON.stringify({ title, body, url })
+
+            return webPush.sendNotification(pushSubscription, payload).catch(async (err) => {
+                if (err.statusCode === 404 || err.statusCode === 410) {
+                     // Cleanup invalid subscription
+                     await supabase.from('push_subscriptions').delete().eq('endpoint', sub.endpoint)
+                } else {
+                    console.error('Push send error:', err)
+                }
+            })
+        })
+
+        await Promise.all(notifications)
+    } catch (e) {
+        console.error('Failed to send push notification:', e)
+    }
 }

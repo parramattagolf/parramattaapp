@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import { createClient } from '@/utils/supabase/server'
 import Link from 'next/link'
 import { Flag } from 'lucide-react'
@@ -57,22 +58,30 @@ export default async function MembersPage() {
         max_depth: 10 
     })
 
-    const networkMap = new Map()
+    const networkMap = new Map<string, number>()
     if (networkData) {
-        networkData.forEach((n: any) => {
+        (networkData as { id: string, distance: number }[]).forEach((n) => {
             if (n.id !== user.id) { // Exclude self if returned
                  networkMap.set(n.id, n.distance)
             }
         })
     }
 
-    let allMembers: any[] = usersData || []
+    interface BaseUser {
+        id: string;
+        nickname: string;
+        profile_img: string | null;
+        gender: string | null;
+        manner_score: number | null;
+    }
 
-    // Attach distance
-    allMembers = allMembers.map(m => ({
-        ...m,
-        distance: networkMap.get(m.id)
-    })).filter(m => m.id !== user.id) // Filter out self from the list
+    // Attach distance and filter self
+    let allMembers = (usersData || [] as unknown as BaseUser[])
+        .filter(m => m.id !== user.id)
+        .map(m => ({
+            ...m,
+            distance: networkMap.get(m.id)
+        }))
 
     // Calculate Percentiles
     // Sort by manner_score desc to find rank
@@ -134,7 +143,7 @@ export default async function MembersPage() {
             />
 
             <div className="">
-                {combinedMembers.map((member: any, index: number) => {
+                {combinedMembers.map((member) => {
                     return (
                         <div key={member.id}>
                             <MemberItem member={member} isParticipant={member.isParticipant} />
@@ -146,7 +155,18 @@ export default async function MembersPage() {
     )
 }
 
-function MemberItem({ member, isParticipant }: { member: any, isParticipant: boolean }) {
+interface Member {
+    id: string;
+    nickname: string;
+    profile_img: string | null;
+    gender: string | null;
+    distance?: number;
+    isParticipant: boolean;
+    isPreBooked: boolean;
+    percentile: number;
+}
+
+function MemberItem({ member, isParticipant }: { member: Member, isParticipant: boolean }) {
     return (
         <Link
             href={`/members/${member.id}`}
@@ -157,7 +177,15 @@ function MemberItem({ member, isParticipant }: { member: any, isParticipant: boo
                     'border border-[var(--color-divider)]'
                 }`}>
                 {member.profile_img ? (
-                    <img src={member.profile_img} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                    <div className="relative w-full h-full">
+                        <Image 
+                            src={member.profile_img} 
+                            alt={member.nickname} 
+                            fill 
+                            className="object-cover" 
+                            unoptimized 
+                        />
+                    </div>
                 ) : (
                     <div className="w-full h-full flex items-center justify-center text-xl">👤</div>
                 )}

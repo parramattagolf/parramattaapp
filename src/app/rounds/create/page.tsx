@@ -1,12 +1,13 @@
 'use client'
 
 import { createEvent } from '@/actions/event-actions'
+import Link from 'next/link'
 
 export default function CreateRoundPage() {
   return (
     <div className="min-h-screen bg-white">
       <header className="p-4 border-b border-gray-100 flex items-center gap-3">
-         <a href="/rounds" className="text-gray-600">←</a>
+         <Link href="/rounds" className="text-gray-600">←</Link>
          <h1 className="text-lg font-bold">라운딩 만들기</h1>
       </header>
 

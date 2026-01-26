@@ -48,11 +48,11 @@ export default async function RoomDetailPage({ params }: { params: Promise<{ id:
             <PremiumSubHeader
                 title={
                     <>
-                        <span className="text-yellow-400 font-black">{roomNumber}번방</span>
+                        <span className="text-green-500 font-black">{roomNumber}번방</span>
                         <span className="ml-2">{event.title}</span>
                     </>
                 }
-                backHref={`/rounds/${id}`}
+                backHref={`/rounds/${id}?tab=brackets`}
             />
 
             <main className="px-6 pt-24 space-y-8 animate-fade-in">

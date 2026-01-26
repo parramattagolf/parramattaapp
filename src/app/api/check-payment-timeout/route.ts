@@ -2,7 +2,7 @@ import { createClient } from '@/utils/supabase/server'
 import { NextResponse } from 'next/server'
 
 // This would typically be protected or run via cron
-export async function GET(request: Request) {
+export async function GET() {
     const supabase = await createClient()
 
     // 1. Find participants who joined > 3 hours ago AND have payment_status 'pending'
@@ -46,10 +46,13 @@ export async function GET(request: Request) {
 
         // B. Penalties
         const userId = target.user_id
-        // @ts-ignore
-        const currentPoints = target.user?.points || 0
-        // @ts-ignore
-        const currentManner = target.user?.manner_score || 100
+        
+        type UserWithStats = { points: number; manner_score: number }
+        const stats = (target as unknown as { user: UserWithStats | UserWithStats[] | null }).user
+        const resolvedStats = Array.isArray(stats) ? stats[0] : stats
+
+        const currentPoints = resolvedStats?.points || 0
+        const currentManner = resolvedStats?.manner_score || 100
 
         const newPoints = currentPoints - 20
         const newManner = currentManner - 30

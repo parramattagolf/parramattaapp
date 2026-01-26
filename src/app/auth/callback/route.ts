@@ -25,7 +25,7 @@ export async function GET(request: Request) {
           getAll() {
             return cookieStore.getAll()
           },
-          setAll(cookiesToSet: any[]) {
+          setAll(cookiesToSet) {
             cookiesToSet.forEach(({ name, value, options }) =>
               cookieStore.set(name, value, options)
             )
@@ -71,7 +71,14 @@ export async function GET(request: Request) {
       if (profile) {
         // User exists - update profile_img, nickname, and email
         // Only update nickname if we found a non-null one from metadata
-        const updates: any = {
+        const updates: {
+            email: string | null;
+            kakao_id: string | null;
+            updated_at: string;
+            profile_img?: string;
+            nickname?: string;
+            membership_level?: string;
+        } = {
             email: data.user.email || null,
             kakao_id: kakaoId || null,
             updated_at: new Date().toISOString()

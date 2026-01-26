@@ -11,7 +11,7 @@ export default function PreReservationButton({ eventId, isReserved }: { eventId:
 
     const handleClick = async () => {
         if (isReserved) {
-            if (!confirm('사전예약을 취소하시겠습니까?\n\n취소 시 매너점수 2점이 차감됩니다. 😢')) return
+            if (!confirm('사전예약을 취소하시겠습니까?\n\n취소 시 보너스로 받은 매너점수 1점이 회수됩니다. 😢')) return
 
             setLoading(true)
             try {

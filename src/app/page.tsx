@@ -59,31 +59,30 @@ function LoginContent() {
       <div
         className={`w-full max-w-sm px-6 transition-all duration-1000 transform ${showLogin ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none'}`}
       >
-        <div className="text-center mb-12">
-
-          <h2 className="text-3xl font-bold text-white mb-2 tracking-tight">파라마타 골프</h2>
-          <p className="text-gray-400 text-xs tracking-[0.3em] uppercase">신뢰와 매너, 골프 커뮤니티</p>
+        <div className="text-center mb-16">
+          <h2 className="text-4xl font-black text-white mb-3 tracking-tighter">파라마타 골프</h2>
+          <p className="text-white/50 text-[11px] font-bold tracking-[0.4em] uppercase">신뢰와 매너, 골프 커뮤니티</p>
         </div>
 
         <button
           onClick={handleKakaoLogin}
           disabled={loading}
-          className="w-full bg-[#FEE500] hover:bg-[#FDD835] text-[#000000] font-bold py-4 px-6 rounded-xl transition-all transform hover:scale-[1.02] active:scale-95 shadow-md flex items-center justify-center gap-3"
+          className="w-full bg-[#FEE500] hover:bg-[#FDD835] text-[#1a1a1a] font-black py-5 px-6 rounded-2xl transition-all transform hover:scale-[1.02] active:scale-95 shadow-xl flex items-center justify-center gap-3"
         >
           {loading ? (
-            <span>연결 중...</span>
+            <span className="text-lg">연결 중...</span>
           ) : (
             <>
-              <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current">
+              <svg viewBox="0 0 24 24" className="w-7 h-7 fill-current">
                 <path d="M12 3C5.373 3 0 7.392 0 12.81c0 3.39 2.138 6.376 5.4 8.086l-1.373 5.09c-.068.254.19.467.42.34l5.968-3.957c.52.05 1.05.077 1.585.077 6.627 0 12-4.392 12-9.81C24 7.392 18.627 3 12 3" />
               </svg>
-              카카오톡으로 3초만에 시작하기
+              <span className="text-[17px] tracking-tight mt-0.5">카카오톡으로 3초만에 시작하기</span>
             </>
           )}
         </button>
 
         <p className="text-xs text-gray-300 text-center mt-8">
-          © 2010 Henry's Parramatta
+          © 2010 Henry&apos;s Parramatta
         </p>
       </div>
     </div>
