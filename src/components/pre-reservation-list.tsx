@@ -38,7 +38,7 @@ export default function PreReservationList({ reservations, eventId, isPreReserve
             "사전예약은 아직 참여를 확정하진 않았지만, 참가를 희망하는 의사를 미리 밝히는 기능입니다.\n\n" +
             "• 매너점수 1점 시상\n" +
             "• 기존 참여자로부터 초대를 받을 수 있어요\n" +
-            "• 사전예약 취소해도 패널티가 없어요"
+            "• 취소 시 시상받은 1점은 다시 회수됩니다"
         );
     }
 

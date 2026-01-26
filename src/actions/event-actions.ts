@@ -549,9 +549,33 @@ export async function cancelPreReservation(eventId: string) {
         throw new Error('Failed to cancel pre-reservation')
     }
 
+    // Atomically reclaim the 1 Manner Score reward
+    const { error: updateError } = await supabase.rpc('update_user_scores', {
+        target_user_id: user.id,
+        manner_delta: -1
+    })
+
+    if (!updateError) {
+        const { data: u } = await supabase.from('users').select('manner_score').eq('id', user.id).single()
+        const newScore = u?.manner_score ?? 100
+        
+        const { data: event } = await supabase.from('events').select('title').eq('id', eventId).single()
+        const eventTitle = event?.title ? `'${event.title}' ` : ''
+
+        try {
+            await supabase.from('manner_score_history').insert({
+                user_id: user.id,
+                amount: -1,
+                description: `${eventTitle}사전예약 취소 (보너스 회수)`,
+                score_snapshot: newScore
+            })
+        } catch (e) {
+            console.error('Failed to log manner score', e)
+        }
+    }
 
     revalidatePath(`/rounds/${eventId}`)
-    return { success: true, message: '사전예약이 취소되었습니다.' }
+    return { success: true, message: '사전예약이 취소되었습니다. (참여보너스 1점 회수)' }
 }
 
 // Handle expired participants (3-hour timer expired)
