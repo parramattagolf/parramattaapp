@@ -48,24 +48,15 @@ export async function GET(request: Request) {
           kakaoProfile?.thumbnail_image_url || 
           null
 
-      // Try to get nickname from reliable Kakao paths
-      let nickname = 
+      // 1. Try to get nickname from reliable paths
+      const nicknameFromMeta = 
+          meta?.full_name || 
+          meta?.name || 
           kakaoProfile?.nickname || 
           meta?.nickname || 
-          meta?.properties?.nickname || 
+          meta?.preferred_username || 
           null
 
-      // Fallback to email username if nickname is missing -> REMOVED to prevent overwriting with email
-      // if (!nickname && (data.user.email || meta?.email)) {
-      //    const email = data.user.email || meta?.email
-      //    nickname = email.split('@')[0]
-      // }
-
-      // If still no nickname, generate a random one
-      if (!nickname) {
-          nickname = `Member_${Math.floor(Math.random() * 100000)}`
-      }
-      
       // Check if user exists in our users table
       const { data: profile } = await supabase
         .from('users')
@@ -75,13 +66,16 @@ export async function GET(request: Request) {
       
       if (profile) {
         // User exists - update profile_img, nickname, and email
-        // Also ensure membership_level is set if missing
+        // Only update nickname if we found a non-null one from metadata
         const updates: any = {
             email: data.user.email || null,
             profile_img: profileImageUrl || null,
-            nickname: nickname || null,
             kakao_id: kakaoId || null,
             updated_at: new Date().toISOString()
+        }
+
+        if (nicknameFromMeta) {
+            updates.nickname = nicknameFromMeta
         }
 
         if (!profile.membership_level) {
@@ -94,13 +88,16 @@ export async function GET(request: Request) {
           .eq('id', data.user.id)
       } else {
         // New user - insert with minimal data
+        // For new users, we need a nickname. If meta doesn't have it, generate one.
+        const finalNickname = nicknameFromMeta || `Member_${Math.floor(Math.random() * 100000)}`
+        
         await supabase
           .from('users')
           .insert({
             id: data.user.id,
             email: data.user.email || null,
             kakao_id: kakaoId || null,
-            nickname: nickname || null,
+            nickname: finalNickname,
             profile_img: profileImageUrl || null,
             real_name: '', // Empty initially
             membership_level: 'red',
