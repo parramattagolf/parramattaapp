@@ -189,26 +189,17 @@ export default function RoundDetailContent({ event, participants, isHost, isJoin
 
                     return sortedRoomIndices.map((roomIndex) => {
                         const roomSlots = slots.slice(roomIndex * 4, (roomIndex + 1) * 4)
-                        const roomTitle = maxRooms === 1 ? '1번방 조인' : `${roomIndex + 1}번방 조인`
 
                         return (
                             <div key={roomIndex} className="bg-[#1c1c1e] p-5 rounded-[24px] border border-white/5 shadow-xl">
                                 <button
                                     type="button"
                                     onClick={() => navigateToRoom(roomIndex + 1)}
-                                    className="relative z-10 cursor-pointer font-bold text-white/90 text-lg uppercase tracking-widest mb-4 hover:text-white transition-colors flex items-center gap-2 group/title"
+                                    className="relative z-10 cursor-pointer mb-5 flex items-center group/title"
                                 >
-                                    {roomTitle}
-                                    {roomIndex === 0 && (
-                                        <span className="ml-2 text-[10px] text-yellow-500 font-bold border border-yellow-500/30 px-2 py-0.5 rounded bg-yellow-500/10 animate-pulse align-middle">
-                                            첫조인회원 10P
-                                        </span>
-                                    )}
-                                    {roomIndex === 1 && (
-                                        <span className="ml-2 text-[10px] text-yellow-500 font-bold border border-yellow-500/30 px-2 py-0.5 rounded bg-yellow-500/10 animate-pulse align-middle">
-                                            첫조인회원 5P
-                                        </span>
-                                    )}
+                                    <div className="bg-yellow-500/10 text-yellow-500 text-[11px] font-black px-3 py-1.5 rounded-[10px] border border-yellow-500/20 tracking-tighter hover:bg-yellow-500/20 transition-all shadow-sm">
+                                        {roomIndex + 1}번방
+                                    </div>
                                 </button>
 
                                 <div className="grid grid-cols-4 gap-2">
