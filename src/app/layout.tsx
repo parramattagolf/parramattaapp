@@ -5,6 +5,7 @@ import TopNav from '@/components/top-nav'
 import BottomNav from '@/components/bottom-nav'
 import NotificationListener from '@/components/notification-listener'
 import UnreadMessagePopup from '@/components/unread-message-popup'
+import PushNotificationManager from '@/components/push-notification-manager'
 
 const kakaoFont = localFont({
   src: [
@@ -49,6 +50,7 @@ export default function RootLayout({
             {/* Top Navigation */}
             <TopNav />
             <NotificationListener />
+            <PushNotificationManager />
             <UnreadMessagePopup />
             <Toaster position="top-center" theme="dark" richColors />
 

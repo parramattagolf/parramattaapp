@@ -93,7 +93,7 @@ export default function MonthSection({ month, events, view }: MonthSectionProps)
         <section>
             <div className="px-6 mb-5 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <span className={`h-[3px] w-5 rounded-full shadow-[0_0_10px_rgba(234,179,8,0.5)] ${view === 'past' ? 'bg-white/20' : 'bg-yellow-500'}`}></span>
+                    <span className={`h-[3px] w-5 rounded-full shadow-[0_0_10px_rgba(4,120,87,0.5)] ${view === 'past' ? 'bg-white/20' : 'bg-emerald-700'}`}></span>
                     <h2 className={`text-sm font-bold tracking-normal uppercase ${view === 'past' ? 'text-white/30' : 'text-white/60'}`}>{month}</h2>
                 </div>
                 <button
@@ -119,10 +119,8 @@ export default function MonthSection({ month, events, view }: MonthSectionProps)
                                 let borderClass = 'border-white/10'
                                 
                                 if (view !== 'past') {
-                                    if (hasParticipants) {
+                                    if (hasParticipants || hasPreReservations) {
                                         borderClass = 'border-emerald-500'
-                                    } else if (hasPreReservations) {
-                                        borderClass = 'border-blue-500'
                                     }
                                 }
                                 
@@ -145,7 +143,7 @@ export default function MonthSection({ month, events, view }: MonthSectionProps)
                                             const diff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
                                             const label = diff <= 0 ? '당일' : `${diff}박 ${diff + 1}일`
                                             const colorClass = diff <= 0 
-                                                ? 'text-blue-400 bg-blue-400/10' 
+                                                ? 'text-emerald-400 bg-emerald-400/10' 
                                                 : 'text-purple-400 bg-purple-400/10'
                                             
                                             const isFull = event.max_participants && (event.participant_count || 0) >= event.max_participants
@@ -192,7 +190,7 @@ export default function MonthSection({ month, events, view }: MonthSectionProps)
                                                 <div className="flex items-center justify-between mb-1.5">
                                                     <span className="text-[10px] font-bold text-white/30 uppercase tracking-widest">참가현황</span>
                                                     <span className={`text-[11px] font-black ${
-                                                        (event.participant_count || 0) >= event.max_participants ? 'text-emerald-400' : 'text-blue-400'
+                                                        (event.participant_count || 0) >= event.max_participants ? 'text-emerald-400' : 'text-purple-400'
                                                     }`}>
                                                         {Math.round(((event.participant_count || 0) / event.max_participants) * 100)}%
                                                     </span>
@@ -200,7 +198,7 @@ export default function MonthSection({ month, events, view }: MonthSectionProps)
                                                 <div className="h-1 bg-white/5 rounded-full overflow-hidden">
                                                     <div 
                                                         className={`h-full rounded-full transition-all duration-1000 ${
-                                                            (event.participant_count || 0) >= event.max_participants ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]'
+                                                            (event.participant_count || 0) >= event.max_participants ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.5)]'
                                                         }`}
                                                         style={{ width: `${Math.min(100, Math.round(((event.participant_count || 0) / event.max_participants) * 100))}%` }}
                                                     />

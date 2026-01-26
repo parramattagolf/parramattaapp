@@ -40,7 +40,7 @@ export default function SponsorContent({ prioritySponsors, regularSponsors }: Sp
 
             <div className="flex-1">
                 {activeTab === 'sponsors' ? (
-                    <div className="animate-fade-in animate-slide-up pt-4">
+                    <div className="animate-fade-in animate-slide-up pt-10">
                         {/* Priority Section (Active Sponsors) */}
                         {prioritySponsors.length > 0 && (
                             <div className="mt-4">
@@ -154,7 +154,7 @@ function SponsorItem({ sponsor, isActive }: { sponsor: Sponsor, isActive: boolea
                 </div>
             </div>
             <div className="flex flex-col items-end gap-1">
-                <div className="text-[10px] font-black text-blue-500 bg-blue-500/10 px-2 py-0.5 rounded-md uppercase tracking-widest">
+                <div className="text-[10px] font-black text-amber-400 bg-amber-400/10 border border-amber-400/20 px-2 py-0.5 rounded-md uppercase tracking-widest shadow-[0_0_10px_rgba(251,191,36,0.15)]">
                     Official
                 </div>
             </div>
