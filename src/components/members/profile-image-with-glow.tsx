@@ -13,18 +13,18 @@ interface ProfileImageWithGlowProps {
 export default function ProfileImageWithGlow({ profileImg, distInfo }: ProfileImageWithGlowProps) {
     return (
         <div className="relative">
-            <div className="relative w-56 h-56 rounded-full bg-[#121212] overflow-hidden border border-white/10 shadow-xl">
+            <div className="relative w-64 h-64 rounded-full bg-[#121212] overflow-hidden border border-white/10 shadow-xl">
                 {profileImg ? (
                     <Image 
                         src={profileImg} 
                         alt="Profile" 
-                        width={224} 
-                        height={224} 
+                        width={256} 
+                        height={256} 
                         className="w-full h-full object-cover" 
                         unoptimized
                     />
                 ) : (
-                    <div className="w-full h-full flex items-center justify-center text-6xl">👤</div>
+                    <div className="w-full h-full flex items-center justify-center text-7xl">👤</div>
                 )}
             </div>
             

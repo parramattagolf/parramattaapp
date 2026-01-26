@@ -32,7 +32,7 @@ export default function MyYoutubeEmbed({ nickname }: MyYoutubeEmbedProps) {
                 }
 
                 // 2. Fetch Video
-                const playlistId = 'PLpf6bXUHPOxAL93x95ugCLwzXqQlpgRpd'
+                const playlistId = 'UU0MeKM-YQZ7Kh1o1UMjUObg'
                 const data = await fetchYoutubePlaylist(playlistId)
 
                 if (data && data.items && data.items.length > 0) {
@@ -77,7 +77,7 @@ export default function MyYoutubeEmbed({ nickname }: MyYoutubeEmbedProps) {
         }
 
         fetchInitialData()
-    }, [nickname])
+    }, [nickname, supabase])
 
     const handleSubscribeAndReward = async () => {
         if (rewardReceived) return;
@@ -100,22 +100,20 @@ export default function MyYoutubeEmbed({ nickname }: MyYoutubeEmbedProps) {
                     target="_blank" 
                     rel="noopener noreferrer"
                     onClick={handleSubscribeAndReward}
-                    className={`w-full flex items-center justify-between p-5 rounded-[28px] group active:scale-[0.98] transition-all duration-300 shadow-[0_10px_40px_rgba(255,0,0,0.1)] border ${
+                    className={`w-full flex items-center justify-between p-5 rounded-[28px] group active:scale-[0.98] transition-all duration-300 border ${
                         rewardReceived 
                             ? 'bg-white/5 border-white/10 opacity-60' 
-                            : 'bg-[#FF0000]/10 border-[#FF0000]/30'
+                            : 'bg-[#FF0000]/5 border-[#FF0000]/20'
                     }`}
                 >
                     <div className="flex items-center gap-4">
-                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shadow-[0_5px_15px_rgba(255,0,0,0.4)] transition-transform group-hover:scale-110 ${
-                            rewardReceived ? 'bg-white/20' : 'bg-[#FF0000]'
-                        }`}>
+                        <div className="w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 bg-[#FF0000]">
                             <svg viewBox="0 0 24 24" className="w-6 h-6 fill-white" xmlns="http://www.w3.org/2000/svg">
                                 <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
                             </svg>
                         </div>
                         <div className="flex flex-col">
-                            <span className="text-[15px] font-black text-white tracking-tighter leading-none">파라마타 골프 TV 📺</span>
+                            <span className="text-[15px] font-black text-white tracking-tighter leading-none">파라마타 골프 TV</span>
                             {rewardReceived ? (
                                 <span className="text-[11px] text-emerald-400 font-bold mt-1.5 uppercase tracking-wider">포인트 리워드 지급 완료 ✓</span>
                             ) : (
@@ -129,7 +127,7 @@ export default function MyYoutubeEmbed({ nickname }: MyYoutubeEmbedProps) {
                 </a>
             </div>
 
-            <div className="rounded-[24px] overflow-hidden border border-white/10 shadow-xl bg-[#1c1c1e]">
+            <div className="rounded-[24px] overflow-hidden border border-white/10 bg-[#1c1c1e]">
                 <div className="aspect-video w-full">
                     {loading ? (
                         <div className="w-full h-full flex items-center justify-center bg-[#2c2c2e]">

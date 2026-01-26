@@ -7,7 +7,6 @@ import { Bell, Settings } from 'lucide-react'
 import MyScoreDashboard from '@/components/my/my-score-dashboard'
 import MyYoutubeEmbed from '@/components/my/my-youtube-embed'
 import MembershipBadge from '@/components/members/membership-badge'
-import ScoreRulesSummary from '@/components/my/score-rules-summary'
 import MyWarningPopup from '@/components/my/my-warning-popup'
 
 // ============================================
@@ -161,6 +160,17 @@ export default async function MyPage() {
                                         <Settings size={12} />
                                     </Link>
                                 </div>
+                                {/* Stacked Info below name */}
+                                <div className="flex flex-col items-center mt-1 gap-0.5">
+                                    {gender && (
+                                        <span className="text-[11px] text-white/40 font-medium">
+                                            {gender === 'male' ? '남성' : gender === 'female' ? '여성' : gender}
+                                        </span>
+                                    )}
+                                    {ageRange && (
+                                        <span className="text-[11px] text-white/40 font-medium">{ageRange}</span>
+                                    )}
+                                </div>
                             </div>
                         </div>
 
@@ -193,14 +203,8 @@ export default async function MyPage() {
                                     {district && (
                                         <span className="text-[10px] text-white/60 bg-white/5 px-1.5 py-0.5 rounded-[5px] border border-white/5 whitespace-nowrap">{district}</span>
                                     )}
-                                    {ageRange && (
-                                        <span className="text-[10px] text-white/60 bg-white/5 px-1.5 py-0.5 rounded-[5px] border border-white/5 whitespace-nowrap">{ageRange}</span>
-                                    )}
                                     {mbti && (
                                         <span className="text-[10px] text-white/60 bg-white/5 px-1.5 py-0.5 rounded-[5px] border border-white/5 whitespace-nowrap">{mbti}</span>
-                                    )}
-                                    {gender && (
-                                         <span className="text-[10px] text-white/60 bg-white/5 px-1.5 py-0.5 rounded-[5px] border border-white/5 whitespace-nowrap">{gender === 'male' ? '남성' : gender === 'female' ? '여성' : gender}</span>
                                     )}
                                 </div>
                             </div>
@@ -316,9 +320,6 @@ export default async function MyPage() {
 
             {/* Member Video Recommended for User */}
             <MyYoutubeEmbed nickname={displayName} />
-
-            {/* Score & Points Policy Summary */}
-            <ScoreRulesSummary />
         </div>
     )
 }

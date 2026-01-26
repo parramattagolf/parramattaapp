@@ -117,8 +117,8 @@ export default function MannerPulseGraph({ history }: { history: HistoryItem[] }
                 />
             </svg>
 
-            {/* Animation CSS */}
-            <style jsx>{`
+            {/* Animation CSS (Using standard style tag for App Router compatibility) */}
+            <style>{`
                 .ekg-line {
                     animation: pulse-glow 2s ease-in-out infinite;
                 }
