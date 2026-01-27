@@ -55,7 +55,7 @@ export default function MembersListContainer({ members, sponsors }: { members: M
     return (
         <>
             {/* Sort Tabs - Top Fixed (Below Header) */}
-            <div className="fixed top-14 left-0 right-0 z-40 bg-[#121212]/95 backdrop-blur-md border-b border-white/5">
+            <div className="fixed top-14 left-1/2 -translate-x-1/2 w-full max-w-[500px] z-40 bg-[#121212]/95 backdrop-blur-md border-b border-white/5">
                 <div className="flex">
                     <button 
                         onClick={() => handleSortChange('manner')}
