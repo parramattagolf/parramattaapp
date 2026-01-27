@@ -298,7 +298,7 @@ export default async function MyPage() {
                     </div>
                 </Link>
 
-                <Link href="/members" className="flex items-center justify-between p-4 bg-[var(--color-gray-100)] rounded-xl border border-[var(--color-divider)] active:bg-[var(--color-surface-hover)]">
+                <Link href="/my/network" className="flex items-center justify-between p-4 bg-[var(--color-gray-100)] rounded-xl border border-[var(--color-divider)] active:bg-[var(--color-surface-hover)]">
                     <div className="flex items-center gap-3">
                         <span className="text-lg">👥</span>
                         <span className="text-[14px] font-bold text-[var(--color-text-primary)]">나의 인맥</span>
