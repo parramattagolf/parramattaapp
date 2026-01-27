@@ -81,6 +81,15 @@ This document serves as the **single source of truth** for building the Parramat
 
 ---
 
+### E. Invitation & Hold Logic
+
+- **Held Slots**: Strictly reserved for the `invited_user_id`. Cannot be joined by random users.
+- **1st Degree Invite (Friends)**: Force-joins the target user directly into `participants`.
+- **2nd Degree+ Invite**: Creates a `held_slots` record and sends a notification.
+- **UI Visibility**: Action buttons (`Invite`, `Move`, `Leave`) are always visible. Guarded by client-side alerts for non-participants.
+
+---
+
 ## 2. Admin Web Structure & Features
 
 ### Key Philosophy
