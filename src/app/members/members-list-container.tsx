@@ -187,9 +187,6 @@ function MemberItem({ member, isParticipant, priority = false, sortBy }: { membe
 
                      {(sortBy === 'business' || member.hasBusinessInfo) && member.hasBusinessInfo && (
                         <div className="flex items-center gap-1">
-                            <span className="text-[10px] font-black text-amber-500 bg-amber-500/10 px-1.5 py-0.5 rounded flex items-center gap-1">
-                                🏅 Business
-                            </span>
                             {/* Show JOB if available and not in business tab */}
                             {member.job && sortBy !== 'business' && (
                                 <span className="text-[10px] font-medium text-white/70 bg-white/5 px-1.5 py-0.5 rounded">
