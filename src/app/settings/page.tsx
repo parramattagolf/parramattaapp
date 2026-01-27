@@ -165,12 +165,14 @@ export default function SettingsPage() {
             gender: string;
             age_range: string;
             district: string;
+            updated_at: string;
             handicap?: number | null;
         } = {
             real_name: profile.real_name,
             job: profile.job,
             mbti: profile.mbti,
             golf_experience: profile.golf_experience,
+            gender: profile.gender,
             age_range: profile.age_range,
             district: profile.district,
             updated_at: new Date().toISOString()
