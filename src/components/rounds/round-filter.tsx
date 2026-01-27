@@ -60,7 +60,7 @@ export default function RoundFilter({ themes = [], activeTheme = 'all' }: { them
                 key={theme}
                 data-active={isActive}
                 onClick={() => handleThemeChange(theme)}
-                className={`px-4 py-2 rounded-full text-[14px] font-bold tracking-tight transition-all duration-200 active:scale-95 border ${
+                className={`px-3 py-1.5 rounded-full text-[14px] font-bold tracking-tight transition-all duration-200 active:scale-95 border ${
                   isActive
                     ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-900/40 border-emerald-500'
                     : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white/70 border-white/5'

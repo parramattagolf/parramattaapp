@@ -63,7 +63,7 @@ export default function MembersListContainer({ members, sponsors }: { members: M
                             sortBy === 'manner' ? 'text-white' : 'text-white/40'
                         }`}
                     >
-                        매너
+                        매너포인트
                         {sortBy === 'manner' && (
                             <div className="absolute bottom-0 left-0 w-full h-[2px] bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
                         )}

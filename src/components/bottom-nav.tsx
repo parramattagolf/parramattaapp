@@ -1,13 +1,15 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useSearchParams } from 'next/navigation'
+import { usePathname, useSearchParams, useRouter } from 'next/navigation'
 import { Flag, Users, Trophy, User } from 'lucide-react'
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, Suspense, useTransition } from 'react'
 
 function BottomNavContent() {
   const pathname = usePathname()
+  const router = useRouter()
   const [activePath, setActivePath] = useState(pathname)
+  const [isPending, startTransition] = useTransition()
 
   useEffect(() => {
     setActivePath(pathname)
@@ -25,6 +27,16 @@ function BottomNavContent() {
 
   if (pathname === '/' || isTournamentsTab) return null
 
+  const handleNavClick = (e: React.MouseEvent, href: string) => {
+    e.preventDefault()
+    // Immediate visual feedback
+    setActivePath(href)
+    // Non-blocking navigation
+    startTransition(() => {
+      router.push(href)
+    })
+  }
+
   return (
     <nav className="bottom-nav border-none border-t-0 shadow-none">
       <div className="flex w-full h-full justify-around items-center">
@@ -36,12 +48,13 @@ function BottomNavContent() {
             <Link
               key={item.href}
               href={item.href}
-              onClick={() => setActivePath(item.href)}
-              className={`bottom-nav-item transition-all duration-100 ${
+              prefetch={true}
+              onClick={(e) => handleNavClick(e, item.href)}
+              className={`bottom-nav-item transition-all duration-75 ${
                 isActive 
                   ? `${item.activeColor} opacity-100 scale-110` 
                   : 'text-gray-500 opacity-40'
-              }`}
+              } ${isPending && activePath === item.href ? 'animate-pulse' : ''}`}
               aria-label={item.label}
             >
               <div className="flex flex-col items-center justify-center gap-1">
@@ -49,7 +62,7 @@ function BottomNavContent() {
                   size={24}
                   strokeWidth={isActive ? 2.5 : 2}
                   fill={isActive ? "currentColor" : "none"}
-                  className="transition-transform duration-200"
+                  className="transition-transform duration-100"
                 />
               </div>
             </Link>

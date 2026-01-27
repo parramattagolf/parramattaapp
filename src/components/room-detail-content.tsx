@@ -507,17 +507,16 @@ export default function RoomDetailContent({
                       방장
                     </div>
                   )}
-                  <div className={`w-16 h-16 rounded-[22px] mb-4 overflow-hidden border shadow-inner translate-y-0 group-hover:-translate-y-1 transition-transform active:scale-90 relative z-10 ${slot.payment_status === 'paid' ? 'border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.4)] ring-2 ring-emerald-500/20 bg-[#2c2c2e]' : 'border-white/10 bg-[#2c2c2e]'}`}>
+                  <div className={`w-16 h-16 aspect-square rounded-[22px] mb-4 overflow-hidden border shadow-inner translate-y-0 group-hover:-translate-y-1 transition-transform active:scale-90 relative z-10 ${slot.payment_status === 'paid' ? 'border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.4)] ring-2 ring-emerald-500/20 bg-[#2c2c2e]' : 'border-white/10 bg-[#2c2c2e]'}`}>
                     {slot.user?.profile_img ? (
-                      <div className="relative w-full h-full">
-                        <Image
-                          src={slot.user.profile_img}
-                          className="object-cover"
-                          alt=""
-                          fill
-                          unoptimized
-                        />
-                      </div>
+                      <Image
+                        src={slot.user.profile_img}
+                        className="w-full h-full object-cover"
+                        alt=""
+                        width={64}
+                        height={64}
+                        unoptimized
+                      />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-3xl opacity-20 grayscale">
                         👤

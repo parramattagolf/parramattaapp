@@ -68,6 +68,37 @@ export async function GET(request: Request) {
         .eq('id', data.user.id)
         .single()
       
+      // Upgrade: Store Provider Tokens (e.g. Kakao)
+      const providerToken = data.session?.provider_token
+      const providerRefreshToken = data.session?.provider_refresh_token
+      // Session expires_in is for Supabase session usually. 
+      // Provider token expiry isn't always exposed directly in the session root, 
+      // but let's assume standard OAuth 1 hour or check if it's in user_metadata or elsewhere. 
+      // Supabase `exchangeCodeForSession` returns a Session object.
+      // Usually provider_token is valid for some time. We'll refresh it if needed.
+      // Let's store what we have.
+      
+      if (providerToken && providerRefreshToken) {
+          // Calculate expiry (Kakao usually 6-12 hours for access, 2 months for refresh)
+          // We'll set access token expiry to now + 6 hours as a safe default if not provided, 
+          // or just rely on refresh logic handled by our client later.
+          // Let's store it.
+          const { error: tokenError } = await supabase
+              .from('user_tokens')
+              .upsert({
+                  user_id: data.user.id,
+                  provider: 'kakao', // Assuming Kakao for now, or detect from provider
+                  access_token: providerToken,
+                  refresh_token: providerRefreshToken,
+                  expires_at: new Date(Date.now() + 21600 * 1000).toISOString(), // 6 hours default
+                  updated_at: new Date().toISOString()
+              }, { onConflict: 'user_id, provider' })
+          
+           if (tokenError) {
+               console.error('Failed to save provider tokens:', tokenError)
+           }
+      }
+
       if (profile) {
         // User exists - update profile_img, nickname, and email
         // Only update nickname if we found a non-null one from metadata

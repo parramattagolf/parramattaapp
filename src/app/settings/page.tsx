@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import PremiumSubHeader from '@/components/premium-sub-header'
@@ -87,7 +87,7 @@ function SettingsInput({
 
 export default function SettingsPage() {
     const router = useRouter()
-    const supabase = createClient()
+    const supabase = useMemo(() => createClient(), [])
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [showGiftModal, setShowGiftModal] = useState(false)
@@ -107,45 +107,60 @@ export default function SettingsPage() {
         handicap: '' // store as string in input
     })
 
+    const [isGenderFixed, setIsGenderFixed] = useState(false)
+
     useEffect(() => {
         const fetchProfile = async () => {
-            const { data: { user } } = await supabase.auth.getUser()
-            if (!user) {
-                router.push('/login')
-                return
-            }
+            try {
+                const { data: { user } } = await supabase.auth.getUser()
+                if (!user) {
+                    router.push('/login')
+                    return
+                }
 
-            const { data } = await supabase
-                .from('users')
-                .select('*')
-                .eq('id', user.id)
-                .single()
+                const { data, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('id', user.id)
+                    .single()
+                
+                if (error) {
+                    console.error('Error fetching user profile:', error)
+                }
 
-            if (data) {
-                setProfile({
-                    nickname: data.nickname || '',
-                    real_name: data.real_name || '',
-                    email: data.email || '',
-                    job: data.job || '',
-                    mbti: data.mbti || '',
-                    golf_experience: data.golf_experience || '',
-                    profile_img: data.profile_img || '',
-                    gender: data.gender || '',
-                    age_range: data.age_range || '',
-                    district: data.district || '',
-                    onboarding_reward_received: data.onboarding_reward_received || false,
-                    handicap: data.handicap !== null ? data.handicap.toString() : ''
-                })
-            }
-            setLoading(false)
-
-            // Check for reward notice from URL
-            const params = new URLSearchParams(window.location.search)
-            if (params.get('gift_notice') === 'true' && (!data || !data.onboarding_reward_received)) {
-                setShowGiftModal(true)
-            }
-            if (params.get('missing_info') === 'true') {
-                setIsFromRedirect(true)
+                if (data) {
+                    setProfile({
+                        nickname: data.nickname || '',
+                        real_name: data.real_name || '',
+                        email: data.email || '',
+                        job: data.job || '',
+                        mbti: data.mbti || '',
+                        golf_experience: data.golf_experience || '',
+                        profile_img: data.profile_img || '',
+                        gender: data.gender || '',
+                        age_range: data.age_range || '',
+                        district: data.district || '',
+                        onboarding_reward_received: data.onboarding_reward_received || false,
+                        handicap: data.handicap !== null ? data.handicap.toString() : ''
+                    })
+                    
+                    // If gender is already set, lock it
+                    if (data.gender) {
+                        setIsGenderFixed(true)
+                    }
+                
+                    const params = new URLSearchParams(window.location.search)
+                    if (params.get('gift_notice') === 'true' && (!data || !data.onboarding_reward_received)) {
+                        setShowGiftModal(true)
+                    }
+                    if (params.get('missing_info') === 'true') {
+                        setIsFromRedirect(true)
+                    }
+                }
+            } catch (err) {
+                console.error('Unexpected error in settings page:', err)
+            } finally {
+                setLoading(false)
             }
         }
 
@@ -196,7 +211,6 @@ export default function SettingsPage() {
         if (error) {
             alert('저장 중 오류가 발생했습니다: ' + error.message)
         } else {
-            // Check if profile is newly completed for the first time
             const isComplete = profile.real_name && 
                 profile.gender && 
                 profile.age_range && 
@@ -207,7 +221,6 @@ export default function SettingsPage() {
                 profile.handicap !== '';
 
             if (isComplete && !profile.onboarding_reward_received) {
-                // Award 100 points, 100 manner points and upgrade to yellow if red
                 const { data: userData } = await supabase.from('users').select('membership_level, points, manner_score').eq('id', user.id).single()
                 
                 const updates: any = {
@@ -266,7 +279,6 @@ export default function SettingsPage() {
                         </div>
                     </div>
                 )}
-                {/* Profile Image Preview */}
                 <div className="flex flex-col items-center justify-center py-6">
                     <div className="w-24 h-24 rounded-[32px] bg-[#1c1c1e] border-2 border-white/10 overflow-hidden shadow-2xl relative group">
                         {profile.profile_img ? (
@@ -281,7 +293,6 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="space-y-6">
-                    {/* Basic Identity */}
                     <div className="space-y-4">
                         <label className="text-[11px] font-black text-blue-500 uppercase tracking-[0.2em] px-1 flex items-center gap-2">
                             기본 정보 (IDENTITY)
@@ -302,18 +313,20 @@ export default function SettingsPage() {
                             placeholder="실명(골프백 네임텍의 이름)"
                         />
 
-
-                         {/* Gender & Age Range Grid */}
                         <div className="grid grid-cols-2 gap-4">
-                            {/* Gender */}
                             <div className={`border rounded-2xl p-4 transition-colors ${
                                 isGenderEmpty 
                                     ? 'bg-blue-500/5 border-blue-500/30' 
                                     : 'bg-[#1c1c1e] border-white/5'
                                 }`}>
                                 <div className="flex justify-between items-center mb-3">
-                                    <label className={`block text-[10px] font-bold uppercase tracking-wider ${isGenderEmpty ? 'text-blue-400' : 'text-white/30'}`}>성별</label>
-                                    {isGenderEmpty ? (
+                                    <label className={`block text-[10px] font-bold uppercase tracking-wider ${isGenderEmpty ? 'text-blue-400' : 'text-white/30'}`}>
+                                        성별
+                                        {isGenderFixed && <span className="text-[9px] text-white/30 ml-1">(변경 불가)</span>}
+                                    </label>
+                                    {isGenderFixed ? (
+                                        <Lock size={14} className="text-white/20" />
+                                    ) : isGenderEmpty ? (
                                         <span className="relative flex h-1.5 w-1.5">
                                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
                                           <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-blue-500"></span>
@@ -322,19 +335,30 @@ export default function SettingsPage() {
                                         <Check size={14} className="text-emerald-500" />
                                     )}
                                 </div>
-                                <div className="flex gap-2">
+                                <div className="flex gap-2 relative">
                                     {['male', 'female'].map((g) => (
                                         <button
                                             key={g}
-                                            onClick={() => setProfile({ ...profile, gender: g })}
-                                            className={`flex-1 py-3 px-2 rounded-xl text-sm font-bold transition-all ${profile.gender === g
-                                                ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50'
-                                                : isGenderEmpty ? 'bg-blue-500/10 text-blue-200 hover:bg-blue-500/20' : 'bg-white/5 text-white/40 hover:bg-white/10'
-                                                }`}
+                                            onClick={() => !isGenderFixed && setProfile({ ...profile, gender: g })}
+                                            disabled={isGenderFixed}
+                                            className={`flex-1 py-3 px-2 rounded-xl text-sm font-bold transition-all ${
+                                                profile.gender === g
+                                                    ? isGenderFixed 
+                                                        ? 'bg-white/10 text-white/50 cursor-not-allowed' 
+                                                        : 'bg-blue-600 text-white shadow-lg shadow-blue-900/50'
+                                                    : isGenderFixed 
+                                                        ? 'bg-white/5 text-transparent cursor-not-allowed opacity-20' 
+                                                        : isGenderEmpty 
+                                                            ? 'bg-blue-500/10 text-blue-200 hover:bg-blue-500/20' 
+                                                            : 'bg-white/5 text-white/40 hover:bg-white/10'
+                                            }`}
                                         >
                                             {g === 'male' ? '남성' : '여성'}
                                         </button>
                                     ))}
+                                    {isGenderFixed && (
+                                        <div className="absolute inset-0 cursor-not-allowed bg-transparent" />
+                                    )}
                                 </div>
                             </div>
 
@@ -441,50 +465,12 @@ export default function SettingsPage() {
                             <span className="w-full h-px bg-white/5 block"></span>
                         </label>
 
-                        <div className="group relative">
-                            <div className={`absolute left-6 top-1/2 -translate-y-1/2 transition-colors ${!profile.job ? 'text-blue-400' : 'text-white/20 group-focus-within:text-emerald-500'}`}>
-                                <Briefcase size={20} />
-                            </div>
-                            <select
-                                className={`w-full rounded-2xl py-4 !pl-16 pr-12 font-bold text-white outline-none transition-all shadow-inner border appearance-none ${
-                                    !profile.job 
-                                        ? 'bg-blue-500/5 border-blue-500/30 focus:border-blue-500 focus:bg-blue-500/10' 
-                                        : 'bg-[#1c1c1e] border-white/5 focus:border-emerald-500/50'
-                                }`}
-                                value={profile.job}
-                                onChange={(e) => setProfile({ ...profile, job: e.target.value })}
-                            >
-                                <option value="" disabled>관심분야 선택</option>
-                                <option value="경영/사무">경영/사무</option>
-                                <option value="IT/정보통신">IT/정보통신</option>
-                                <option value="마케팅/디자인">마케팅/디자인</option>
-                                <option value="영업/금융">영업/금융</option>
-                                <option value="서비스/교육">서비스/교육</option>
-                                <option value="전문/특수직">전문/특수직</option>
-                                <option value="건설/기술">건설/기술</option>
-                                <option value="자영업/프리랜서">자영업/프리랜서</option>
-                                <option value="기타">기타</option>
-                            </select>
-                            
-                            {/* Custom Arrow */}
-                            <div className="absolute right-12 top-1/2 -translate-y-1/2 pointer-events-none text-white/30">
-                                ▼
-                            </div>
-
-                            {/* Status Indicator */}
-                            <div className={`absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none flex items-center`}>
-                                {!profile.job ? (
-                                    <div className="flex items-center gap-2">
-                                        <span className="relative flex h-2 w-2">
-                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-                                        </span>
-                                    </div>
-                                ) : (
-                                    <Check size={18} className="text-emerald-500" />
-                                )}
-                            </div>
-                        </div>
+                        <SettingsInput 
+                            icon={Briefcase} 
+                            value={profile.job} 
+                            onChange={(e) => setProfile({ ...profile, job: e.target.value })} 
+                            placeholder="구체적인 직업을 작성해주세요"
+                        />
                         <div className="group relative">
                             <div className={`absolute left-6 top-1/2 -translate-y-1/2 transition-colors ${!profile.mbti ? 'text-blue-400' : 'text-white/20 group-focus-within:text-emerald-500'}`}>
                                 <GraduationCap size={20} />

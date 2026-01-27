@@ -70,7 +70,7 @@ export async function joinEvent(eventId: string, groupNo: number = 1) {
     if (!user) throw new Error('Unauthorized')
 
     // Check if full (Global check)
-    const { data: event } = await supabase.from('events').select('max_participants, title').eq('id', eventId).single()
+    const { data: event } = await supabase.from('events').select('max_participants, title, host_id').eq('id', eventId).single()
     
     // Check if already joined
     const { data: existingParticipant } = await supabase
@@ -220,6 +220,45 @@ export async function joinEvent(eventId: string, groupNo: number = 1) {
                     `'${event.title}' ${groupNo}번방에 새로운 동반자가 참여했습니다!`, 
                     inviteUrl
                 )
+            ))
+        }
+
+        // --- Kakao Notification (Send to Me) ---
+        // Notify Host, Room Members, and Pre-reservers
+        const kakaoTargets = new Set<string>()
+        
+        // 1. Host
+        if (event.host_id && event.host_id !== user.id) {
+            kakaoTargets.add(event.host_id)
+        }
+
+        // 2. Room Members (Already fetched above as roomMembers)
+        if (roomMembers) {
+            roomMembers.forEach(m => {
+                if (m.user_id !== user.id) kakaoTargets.add(m.user_id)
+            })
+        }
+
+        // 3. Pre-reservers
+        const { data: preReservers } = await supabase
+            .from('pre_reservations')
+            .select('user_id')
+            .eq('event_id', eventId)
+        
+        if (preReservers) {
+            preReservers.forEach(p => {
+                if (p.user_id !== user.id) kakaoTargets.add(p.user_id)
+            })
+        }
+
+        if (kakaoTargets.size > 0) {
+            const { sendKakaoMeMessage } = await import('@/utils/kakao-client')
+            const message = `'${event.title}' ${groupNo}번방에 새로운 동반자(${user.user_metadata?.nickname || '회원'})가 참여했습니다!`
+            const link = `/rounds/${eventId}` // Or specific room link
+
+            // Process in background (don't await strictly to block response? Vercel server actions might kill it if we don't await. Better to await Promise.all)
+            await Promise.all(Array.from(kakaoTargets).map(targetId => 
+                sendKakaoMeMessage(targetId, message, link)
             ))
         }
     }

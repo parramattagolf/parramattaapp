@@ -54,11 +54,11 @@ create table public.relationships (
 
 -- BLOCKS TABLE
 create table public.blocks (
-  id uuid default uuid_generate_v4() primary key,
+  id uuid default uuid_generate_v4() primary ke에y,
   blocker_id uuid references public.users(id) not null,
   blocked_id uuid references public.users(id) not null,
   reason text,
-  created_at timestamptz default now(),
+  created_at timestamptz default now(),에
   
   unique(blocker_id, blocked_id)
 );
