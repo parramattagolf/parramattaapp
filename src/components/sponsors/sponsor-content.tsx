@@ -162,14 +162,8 @@ function SponsorItem({ sponsor, isActive }: { sponsor: Sponsor, isActive: boolea
             </div>
             <div className="flex flex-col items-end gap-1">
                 <div className="text-[10px] font-black text-amber-400 bg-amber-400/10 border border-amber-400/20 px-2 py-0.5 rounded-md uppercase tracking-widest shadow-[0_0_10px_rgba(251,191,36,0.15)]">
-                    Official
+                    {sponsor.memberCount || 0}명
                 </div>
-                {/* Member Count Badge */}
-                {(sponsor.memberCount || 0) > 0 && (
-                    <div className="text-[10px] font-bold text-white/50">
-                        {sponsor.memberCount}명
-                    </div>
-                )}
             </div>
         </Link>
     )
