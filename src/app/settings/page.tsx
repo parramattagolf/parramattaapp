@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/utils/supabase/client'
 import PremiumSubHeader from '@/components/premium-sub-header'
 import Image from 'next/image'
-import { Save, User, Briefcase, GraduationCap, Trophy, Hash, MapPin, Activity, Check, Lock, Gift, Bell } from 'lucide-react'
+import { Save, User, Briefcase, GraduationCap, Trophy, Hash, MapPin, Activity, Check, Lock, Gift, Bell, AlertCircle } from 'lucide-react'
+import confetti from 'canvas-confetti'
 
 // Reusable Input Component for consistent styling
 function SettingsInput({ 
@@ -90,6 +91,7 @@ export default function SettingsPage() {
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [showGiftModal, setShowGiftModal] = useState(false)
+    const [isFromRedirect, setIsFromRedirect] = useState(false)
     const [profile, setProfile] = useState({
         nickname: '',
         real_name: '',
@@ -142,6 +144,9 @@ export default function SettingsPage() {
             if (params.get('gift_notice') === 'true' && (!data || !data.onboarding_reward_received)) {
                 setShowGiftModal(true)
             }
+            if (params.get('missing_info') === 'true') {
+                setIsFromRedirect(true)
+            }
         }
 
         fetchProfile()
@@ -166,9 +171,9 @@ export default function SettingsPage() {
             job: profile.job,
             mbti: profile.mbti,
             golf_experience: profile.golf_experience,
-            gender: profile.gender,
             age_range: profile.age_range,
             district: profile.district,
+            updated_at: new Date().toISOString()
         }
 
         // Only add handicap if it's a valid number
@@ -200,9 +205,29 @@ export default function SettingsPage() {
                 profile.handicap !== '';
 
             if (isComplete && !profile.onboarding_reward_received) {
-                await supabase.rpc('reward_onboarding_completion', { target_user_id: user.id })
-                alert('🎉 축하합니다! 프로필 완성 보너스 100포인트와 매너점수 100점이 적립되었습니다.')
-                // Update local state to prevent duplicate reward
+                // Award 100 points, 100 manner points and upgrade to yellow if red
+                const { data: userData } = await supabase.from('users').select('membership_level, points, manner_score').eq('id', user.id).single()
+                
+                const updates: any = {
+                    onboarding_reward_received: true,
+                    points: (userData?.points || 0) + 100,
+                    manner_score: (userData?.manner_score || 0) + 100
+                }
+
+                if (userData?.membership_level === 'red' || !userData?.membership_level) {
+                    updates.membership_level = 'yellow'
+                }
+
+                await supabase.from('users').update(updates).eq('id', user.id)
+                
+                confetti({
+                    particleCount: 150,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    colors: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#ec4899']
+                })
+
+                alert('🎉 축하합니다! 모든 정보를 입력하여 매너점수 100점과 100포인트가 보너스로 지급되었습니다. 회원 등급이 YELLOW로 상향되었습니다!')
                 setProfile(prev => ({ ...prev, onboarding_reward_received: true }))
             } else {
                 alert('정보가 성공적으로 저장되었습니다.')
@@ -228,6 +253,17 @@ export default function SettingsPage() {
             <PremiumSubHeader title="" backHref="/my" />
 
             <div className="pt-20 px-6 space-y-8">
+                {isFromRedirect && (
+                    <div className="bg-blue-500/10 border border-blue-500/20 rounded-2xl p-4 flex items-start gap-3 animate-fade-in">
+                        <AlertCircle className="text-blue-400 shrink-0 mt-0.5" size={20} />
+                        <div>
+                            <h4 className="text-sm font-bold text-white">회원 정보가 누락되었습니다</h4>
+                            <p className="text-xs text-blue-200/60 mt-1 leading-relaxed">
+                                원활한 서비스 이용을 위해 필수 정보를 입력해주세요. 모든 정보 입력 시 <span className="text-blue-400 font-bold">매너점수 100점</span>과 <span className="text-blue-400 font-bold">YELLOW 등급</span> 혜택이 지급됩니다!
+                            </p>
+                        </div>
+                    </div>
+                )}
                 {/* Profile Image Preview */}
                 <div className="flex flex-col items-center justify-center py-6">
                     <div className="w-24 h-24 rounded-[32px] bg-[#1c1c1e] border-2 border-white/10 overflow-hidden shadow-2xl relative group">

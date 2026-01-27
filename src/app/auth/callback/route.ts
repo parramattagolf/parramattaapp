@@ -120,8 +120,36 @@ export async function GET(request: Request) {
           })
       }
 
-      // Profile completeness check removed per user request.
-      // Users can fill in details (real_name, etc.) later in their settings page.
+      // Check for profile completeness: real_name, gender, age_range, district, job, mbti
+      // Points and manner_score are not required for completeness but are rewards.
+      const isComplete = (profile?.real_name || nicknameFromMeta) && 
+                         (profile?.gender || meta?.kakao_account?.gender) && 
+                         (profile?.age_range || meta?.kakao_account?.age_range) && 
+                         (profile?.district) && 
+                         (profile?.job) && 
+                         (profile?.mbti);
+      
+      // However, since we might have just updated or inserted, let's check the current state 
+      // or the data we just prepared. 
+      // Actually, it's safer to check the database again or just logic based on what we know.
+      // For now, let's redirection logic:
+      const { data: latestProfile } = await supabase
+        .from('users')
+        .select('real_name, gender, age_range, district, job, mbti')
+        .eq('id', data.user.id)
+        .single();
+
+      const actuallyComplete = latestProfile && 
+                               latestProfile.real_name && 
+                               latestProfile.gender && 
+                               latestProfile.age_range && 
+                               latestProfile.district && 
+                               latestProfile.job && 
+                               latestProfile.mbti;
+
+      if (!actuallyComplete) {
+        return NextResponse.redirect(`${origin}/settings?missing_info=true`);
+      }
       
       return NextResponse.redirect(`${origin}${next}`)
     } else {
