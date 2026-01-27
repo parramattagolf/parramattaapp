@@ -23,12 +23,12 @@ interface Member {
 
 export default function MembersListContainer({ members, sponsors }: { members: Member[], sponsors: any[] }) {
     const [sortBy, setSortBy] = useState<'manner' | 'points' | 'business'>('manner')
-    const [visibleCount, setVisibleCount] = useState(5)
+    const [visibleCount, setVisibleCount] = useState(10)
 
     // Reset visible count when sort changes
     const handleSortChange = (newSort: 'manner' | 'points' | 'business') => {
         setSortBy(newSort)
-        setVisibleCount(5)
+        setVisibleCount(10)
     }
 
     const filteredMembers = members.filter(member => {
@@ -123,7 +123,7 @@ export default function MembersListContainer({ members, sponsors }: { members: M
                 {visibleCount < sortedMembers.length && (
                     <div className="flex justify-center mt-8 mb-8">
                         <button
-                            onClick={() => setVisibleCount(prev => prev + 5)}
+                            onClick={() => setVisibleCount(prev => prev + 10)}
                             className="px-6 py-3 bg-[#1c1c1e] border border-white/5 rounded-full text-sm font-bold text-white/50 hover:text-white hover:bg-white/5 transition-all active:scale-95 flex items-center gap-2"
                         >
                             <span>더보기</span>
