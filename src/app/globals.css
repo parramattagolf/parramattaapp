@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: var(--font-kakao), "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+}
+
 /* ============================================
    PARRAMATTA GOLF - LPGA Style Brand System
    Primary: Navy (#002D56)
