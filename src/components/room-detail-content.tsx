@@ -417,24 +417,30 @@ export default function RoomDetailContent({
 
 
 
-      {/* Action Buttons for joined users */}
+      {/* Action Buttons for all users (guarded) */}
       <div className="flex items-center mb-6 gap-2 w-full">
-        {localIsJoined && (
           <>
             <button
-              onClick={() => setIsInviteOpen(true)}
+              onClick={() => {
+                if (!localIsJoined) return alert("참가자만 이용할 수 있습니다.");
+                setIsInviteOpen(true);
+              }}
               className="flex-1 text-[15px] bg-blue-600 text-white py-4 rounded-2xl font-black border border-white/10 active:scale-95 transition-all shadow-[0_4px_12px_rgba(37,99,235,0.3)] tracking-tight hover:bg-blue-500"
             >
               초대하기
             </button>
             <button
-              onClick={() => setIsMoveRoomOpen(true)}
+              onClick={() => {
+                if (!localIsJoined) return alert("참가자만 이용할 수 있습니다.");
+                setIsMoveRoomOpen(true);
+              }}
               className="flex-1 text-[15px] bg-yellow-500 text-black py-4 rounded-2xl font-black border border-yellow-500/20 active:scale-95 transition-all shadow-[0_4px_12px_rgba(234,179,8,0.3)] tracking-tight hover:bg-yellow-400"
             >
               방옮기기
             </button>
             <button
               onClick={async () => {
+                if (!localIsJoined) return alert("참가자만 이용할 수 있습니다.");
                 if (
                   confirm(
                     "정말 방을 나가시겠습니까?\n(다시 재신청은 가능합니다)",
@@ -458,7 +464,6 @@ export default function RoomDetailContent({
               방나가기
             </button>
           </>
-        )}
       </div>
 
       {/* Slots Grid */}
