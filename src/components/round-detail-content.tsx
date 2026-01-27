@@ -168,16 +168,16 @@ export default function RoundDetailContent({ event, participants, isHost, isJoin
                         .map((roomIndex) => {
                             const roomSlots = slots.slice(roomIndex * 4, (roomIndex + 1) * 4)
                             return (
-                                <div key={roomIndex} className="bg-[#1c1c1e] p-4 rounded-[30px] border border-white/5 shadow-xl relative overflow-hidden">
-                                    <div className="relative mt-2">
-                                        <button
-                                            type="button"
-                                            onClick={() => navigateToRoom(roomIndex + 1)}
-                                            className="absolute -top-3 right-0 z-20 bg-green-500 text-white text-lg font-black px-4 py-2 rounded-[12px] shadow-[0_4px_10px_rgba(34,197,94,0.4)] active:scale-95 transition-all"
-                                        >
-                                            {roomIndex + 1}번방
-                                        </button>
+                                <div key={roomIndex} className="bg-[#1c1c1e] p-4 rounded-[30px] border border-white/5 shadow-xl relative">
+                                    <button
+                                        type="button"
+                                        onClick={() => navigateToRoom(roomIndex + 1)}
+                                        className="absolute -top-3 right-6 z-20 bg-green-500 text-white text-[15px] font-black px-3 py-1.5 rounded-[10px] shadow-[0_4px_10px_rgba(34,197,94,0.4)] active:scale-95 transition-all"
+                                    >
+                                        {roomIndex + 1}번방
+                                    </button>
 
+                                    <div className="relative mt-2">
                                         <div className="grid grid-cols-4 gap-2">
                                             {roomSlots.map((slot, idx) => {
                                                 const heldSlot = heldSlots.find(h => h.group_no === roomIndex + 1 && h.slot_index === idx)
