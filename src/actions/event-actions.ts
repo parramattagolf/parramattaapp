@@ -69,6 +69,19 @@ export async function joinEvent(eventId: string, groupNo: number = 1) {
 
     // Check if full (Global check)
     const { data: event } = await supabase.from('events').select('max_participants, title').eq('id', eventId).single()
+    
+    // Check if already joined
+    const { data: existingParticipant } = await supabase
+        .from('participants')
+        .select('id')
+        .eq('event_id', eventId)
+        .eq('user_id', user.id)
+        .single()
+
+    if (existingParticipant) {
+        throw new Error('이미 참가 중인 라운딩입니다.')
+    }
+
     const { count: totalCount } = await supabase.from('participants').select('*', { count: 'exact' }).eq('event_id', eventId)
 
     if (event && totalCount !== null && totalCount >= event.max_participants) {
@@ -199,20 +212,18 @@ export async function leaveEvent(eventId: string) {
         .eq('user_id', user.id)
         .single()
 
-    const { error } = await supabase
-        .from('participants')
-        .delete()
-        .eq('event_id', eventId)
-        .eq('user_id', user.id)
-
-    if (error) throw new Error('Failed to leave')
-
     // Release all held slots by this user
     await supabase
         .from('held_slots')
         .delete()
         .eq('event_id', eventId)
         .eq('held_by', user.id)
+
+    const { error } = await supabase
+        .from('participants')
+        .delete()
+        .eq('event_id', eventId)
+        .eq('user_id', user.id)
 
     // Host Succession
     if (participant?.group_no) {
