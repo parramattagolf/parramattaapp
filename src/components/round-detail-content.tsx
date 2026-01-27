@@ -211,11 +211,6 @@ export default function RoundDetailContent({ event, participants, isHost, isJoin
                                                                 </div>
                                                                 <div className="text-center w-full px-1 relative z-10">
                                                                     <div className="font-black text-[10px] text-white truncate tracking-tighter leading-none">{slot.user?.nickname}</div>
-                                                                    {slot.payment_status !== 'paid' && (
-                                                                        <div className="mt-1 bg-red-500/10 px-1.5 py-0.5 rounded-full inline-flex items-center gap-1">
-                                                                            <div className="w-1 h-1 bg-red-500 rounded-full animate-pulse"></div>
-                                                                        </div>
-                                                                    )}
                                                                 </div>
                                                                 {roomHosts[roomIndex + 1] === slot.user_id && (
                                                                     <div className="absolute top-1 left-1 bg-yellow-400 text-black text-[7px] font-black px-1 py-0.5 rounded-[3px] z-20 shadow-sm">방장</div>

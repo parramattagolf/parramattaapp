@@ -125,7 +125,7 @@ export default async function MyPage() {
         .eq('status', 'accepted')
 
     return (
-        <div className="min-h-screen bg-[var(--color-bg)] pb-24 font-sans pt-24">
+        <div className="min-h-screen bg-[var(--color-bg)] pb-24 font-sans pt-16">
             {/* Profile Header */}
             <div className="bg-[var(--color-bg)]">
                 <div className="px-gutter py-8">

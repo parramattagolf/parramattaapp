@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Flag } from 'lucide-react'
+import { FlagTriangleRight } from 'lucide-react'
 
 interface Member {
     id: string;
@@ -74,7 +74,7 @@ export default function MembersListContainer({ members, sponsors }: { members: M
                             sortBy === 'points' ? 'text-white' : 'text-white/40'
                         }`}
                     >
-                        포인트
+                        프로
                         {sortBy === 'points' && (
                             <div className="absolute bottom-0 left-0 w-full h-[2px] bg-pink-500 shadow-[0_0_10px_rgba(236,72,153,0.5)]" />
                         )}
@@ -85,7 +85,7 @@ export default function MembersListContainer({ members, sponsors }: { members: M
                             sortBy === 'business' ? 'text-white' : 'text-white/40'
                         }`}
                     >
-                        비즈니스
+                        비지니스
                         {sortBy === 'business' && (
                             <div className="absolute bottom-0 left-0 w-full h-[2px] bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)]" />
                         )}
@@ -167,16 +167,15 @@ function MemberItem({ member, isParticipant, priority = false, sortBy }: { membe
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                     <div className="font-bold text-[var(--color-text-primary)] truncate">{member.nickname}</div>
-                    {/* Membership Level Badge */}
-                    {sortBy === 'business' && member.membership_level && (
-                        <span className={`text-[9px] font-black px-1.5 py-0.5 rounded uppercase ${
-                            member.membership_level === 'vip' ? 'bg-gradient-to-r from-amber-400 to-yellow-200 text-black border border-amber-400' :
-                            member.membership_level === 'black' ? 'bg-black text-white border border-white/30' :
-                            'bg-gray-700 text-white/50'
-                        }`}>
-                            {member.membership_level}
-                        </span>
+                    {/* Flags moved next to nickname */}
+                    {member.isPreBooked && (
+                        <FlagTriangleRight size={14} className="text-blue-500 fill-current animate-pulse ml-1" />
                     )}
+                    {isParticipant && (
+                        <FlagTriangleRight size={14} className="text-green-500 fill-current animate-pulse ml-1" />
+                    )}
+
+                    {/* Membership Level Badge REMOVED per user request for Business Tab */}
                 </div>
                 <div className="flex items-center gap-2 mt-0.5">
                     {member.distance && (
@@ -185,32 +184,15 @@ function MemberItem({ member, isParticipant, priority = false, sortBy }: { membe
                         </span>
                     )}
 
-                     {(sortBy === 'business' || member.hasBusinessInfo) && member.hasBusinessInfo && (
-                        <div className="flex items-center gap-1">
-                            {/* Show JOB if available and not in business tab */}
-                            {member.job && sortBy !== 'business' && (
-                                <span className="text-[10px] font-medium text-white/70 bg-white/5 px-1.5 py-0.5 rounded">
-                                    {member.job}
-                                </span>
-                            )}
-                        </div>
-                    )}
+                {/* Job Info REMOVED per user request for Points Tab (it was only showing in Points tab previously) */}
                 </div>
             </div>
 
-            {/* Flags in the Center */}
-            <div className="flex items-center justify-center gap-1.5">
-                {member.isPreBooked && (
-                    <Flag size={20} className="text-blue-500 fill-current animate-pulse" />
-                )}
-                {isParticipant && (
-                    <Flag size={20} className="text-green-500 fill-current animate-pulse" />
-                )}
-            </div>
+            {/* Old Flags Container Removed (Empty flex item to maintain layout balance if needed, or just removed) */}
 
             <div className="flex flex-col items-end min-w-[30px] justify-center">
                 {sortBy === 'manner' && (member.manner_score || 0) > 0 && (
-                    <span className="text-xl font-black text-[var(--color-text-primary)] italic tracking-tighter">
+                    <span className="text-xl font-black text-green-500 font-mono tracking-tighter shadow-[0_0_10px_rgba(34,197,94,0.3)]">
                         {member.manner_score}
                     </span>
                 )}
