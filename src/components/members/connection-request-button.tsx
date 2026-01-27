@@ -43,10 +43,10 @@ export default function ConnectionRequestButton({
     const isViewerRed = (viewerMembershipLevel === 'RED' || !viewerMembershipLevel);
 
     const handleRequest = async () => {
-        if (isRedMember) {
+        if (isViewerRed) {
             const confirmed = window.confirm('회원정보를 다 작성하지 않아 1촌 신청을 할 수 없습니다.\n회원정보 수정 페이지로 이동하시겠습니까?')
             if (confirmed) {
-                router.push('/my/profile/edit') // Assuming this route exists
+                router.push('/settings')
             }
             return
         }
