@@ -14,6 +14,7 @@ import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Lock, Unlock, AlertCircle, HelpCircle } from "lucide-react";
+import confetti from "canvas-confetti";
 
 interface Participant {
   id: string;
@@ -234,6 +235,14 @@ export default function RoomDetailContent({
     try {
       const roomNumber = roomIndex + 1;
       await joinEvent(event.id, roomNumber);
+      
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#3b82f6', '#10b981', '#fbbf24']
+      });
+
       router.refresh();
     } catch (error) {
       console.error(error);
@@ -336,7 +345,6 @@ export default function RoomDetailContent({
   const EventTimer = ({ targetDate, label, infoText, showSeconds = false }: { targetDate: Date; label: string; infoText?: string; showSeconds?: boolean }) => {
     const [timeLeft, setTimeLeft] = useState("");
     const [isExpired, setIsExpired] = useState(false);
-    const [showInfo, setShowInfo] = useState(false);
 
     useEffect(() => {
       const calculateTimeLeft = () => {
@@ -375,22 +383,20 @@ export default function RoomDetailContent({
     return (
       <div className="w-full">
         <div 
-          className={`w-full py-2 flex items-center justify-between ${isExpired ? 'text-red-500' : 'text-blue-100'} cursor-pointer`}
-          onClick={() => infoText && setShowInfo(!showInfo)}
+          className={`w-full py-2 flex items-center justify-between ${isExpired ? 'text-red-500' : 'text-blue-100'}`}
         >
            <div className="flex items-center gap-3">
               <div className={`w-2 h-2 rounded-full ${isExpired ? 'bg-red-500' : 'bg-blue-400 animate-pulse'}`} />
               <div className="flex items-center gap-1.5">
                 <span className="text-[14px] font-bold text-white/50">{label}</span>
-                {infoText && <HelpCircle size={14} className="text-white/30" />}
               </div>
            </div>
            <span className={`text-[15px] font-black tracking-widest tabular-nums ${isExpired ? 'text-red-400' : 'text-blue-300'}`}>
               {timeLeft}
            </span>
         </div>
-        {showInfo && infoText && (
-          <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 mb-2 text-center animate-in fade-in slide-in-from-top-1 duration-200">
+        {infoText && (
+          <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 mb-2 text-center">
             <p className="text-[13px] text-blue-300 font-bold tracking-tight">
               {infoText}
             </p>
@@ -448,6 +454,30 @@ export default function RoomDetailContent({
                 ) {
                   try {
                     const result = await leaveEvent(event.id);
+                    
+                    // Rain Effect
+                    const duration = 3000; 
+                    const end = Date.now() + duration;
+                    const colors = ['#aaccff', '#55aaff', '#ffffff', '#1e3a8a'];
+
+                    (function frame() {
+                      confetti({
+                        particleCount: 2,
+                        angle: 270,
+                        spread: 0,
+                        origin: { x: Math.random(), y: -0.1 },
+                        colors: colors,
+                        gravity: 2,
+                        drift: 0,
+                        ticks: 400,
+                        shapes: ['circle']
+                      });
+
+                      if (Date.now() < end) {
+                        requestAnimationFrame(frame);
+                      }
+                    }());
+
                     if (result.message) {
                       alert(result.message);
                     }
@@ -610,20 +640,50 @@ export default function RoomDetailContent({
       {/* Deadlines Timer */}
       {event.start_date && (
          <div className="mt-8 space-y-1">
-            <EventTimer 
-               label="매너예약" 
-               targetDate={new Date(new Date(event.start_date).getTime() - 14 * 24 * 60 * 60 * 1000)} 
-               infoText="마감 전 예약 시 매너점수 10점 적립!"
-            />
-            <EventTimer 
-               label="임박예약" 
-               targetDate={new Date(new Date(event.start_date).getTime() - 10 * 24 * 60 * 60 * 1000)} 
-            />
-            <EventTimer 
-               label="결제 마감까지" 
-               targetDate={new Date(new Date(event.start_date).getTime() - 7 * 24 * 60 * 60 * 1000)} 
-               showSeconds={true}
-            />
+             {(() => {
+                const now = new Date().getTime();
+                const start = new Date(event.start_date).getTime();
+                const day = 24 * 60 * 60 * 1000;
+                
+                const d14 = start - 14 * day;
+                const d10 = start - 10 * day;
+                const d7 = start - 7 * day;
+
+                if (now < d14) {
+                   return (
+                      <EventTimer 
+                         label="14일전 매너예약" 
+                         targetDate={new Date(d14)} 
+                         infoText="기간 내 예약 시 매너점수 10점 시상! 취소시 패널티"
+                      />
+                   );
+                } else if (now < d10) {
+                   return (
+                      <EventTimer 
+                         label="10일전 임박예약" 
+                         targetDate={new Date(d10)} 
+                         infoText="기간 내 예약 시 매너점수 3점 시상! 취소시 패널티"
+                      />
+                   );
+                } else if (now < d7) {
+                   return (
+                      <EventTimer 
+                         label="7일전 결제마감" 
+                         targetDate={new Date(d7)} 
+                         showSeconds={true}
+                         infoText="기간 후 조편성 임의 배정 취소시 패널티"
+                      />
+                   );
+                } else {
+                   return (
+                      <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 text-center">
+                         <p className="text-sm text-red-400 font-bold">
+                            예약 및 결제가 마감되었습니다.
+                         </p>
+                      </div>
+                   );
+                }
+             })()}
          </div>
       )}
 
@@ -667,13 +727,12 @@ export default function RoomDetailContent({
               </div>
             </div>
 
-            {/* Caution */}
+                {/* Caution */}
             <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4 mb-6">
               <p className="text-[13px] text-red-400 font-bold mb-2">
                 ⚠️ 주의사항
               </p>
               <ul className="text-[12px] text-white/60 space-y-1">
-                <li>• 신청 후 개인 사정으로 불참 시 꼭 알려주세요</li>
                 <li>• 무단 불참(노쇼) 시 서비스 이용이 제한될 수 있습니다</li>
               </ul>
             </div>

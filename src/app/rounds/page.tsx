@@ -58,7 +58,23 @@ export default async function RoundsPage({ searchParams }: { searchParams: Promi
   // Filter based on the view
   const filteredList = view === 'past'
     ? baseFilteredList.filter(e => new Date(e.start_date) < now && e.is_public)
-    : baseFilteredList.filter(e => new Date(e.start_date) >= now && e.is_public)
+    : baseFilteredList.filter(e => {
+        const startDate = new Date(e.start_date)
+        // Show pending events if they are future AND valid (payment deadline not passed)
+        // Deadline logic: "7일전 결제마감이 종료되면... 사라진다"
+        // So if (now > startDate - 7days) -> expired -> hide
+        // Equivalent: if (startDate < now + 7days) -> expired -> hide
+        // Correction: User said "after 7-day payment deadline ends... it disappears".
+        // Deadline is (Start - 7 days).
+        // If Now > Deadline, hide.
+        // So we keep if Now <= Deadline.
+        // Deadline = Start - 7.
+        // Keep if Now <= Start - 7 <=> Start >= Now + 7.
+        // So we only show events where startDate >= (Now + 7days).
+        
+        const deadline = new Date(startDate.getTime() - 7 * 24 * 60 * 60 * 1000)
+        return startDate >= now && e.is_public && now <= deadline
+    })
 
   // Fetch participant counts and pre-reservation counts for all events
   const eventWithCounts = await Promise.all(

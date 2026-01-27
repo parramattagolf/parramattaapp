@@ -651,6 +651,43 @@ export default function SettingsPage() {
                         </>
                     )}
                 </button>
+
+                {/* Account Deletion Section */}
+                <div className="border-t border-white/5 pt-8 mt-12 mb-12">
+                   <h3 className="text-sm font-bold text-red-500 mb-4 uppercase tracking-widest">Danger Zone</h3>
+                   <div className="bg-red-500/5 border border-red-500/20 rounded-2xl p-5 space-y-4">
+                      <div>
+                         <h4 className="text-[13px] font-bold text-red-400">회원탈퇴 안내</h4>
+                         <p className="text-[12px] text-red-400/60 mt-1 leading-relaxed">
+                            회원탈퇴 버튼을 누르면 모든 데이터가 삭제되어 영구적으로 복구가 불가능합니다.<br/>
+                            신중하게 결정해주세요.
+                         </p>
+                      </div>
+                      <button
+                         onClick={async () => {
+                             if (confirm("정말로 탈퇴하시겠습니까? 이 작업은 되돌릴 수 없습니다.\n모든 데이터가 영구적으로 삭제됩니다.")) {
+                                 try {
+                                     setLoading(true);
+                                     const { deleteAccount } = await import('@/actions/user-actions');
+                                     await deleteAccount();
+                                     alert('회원탈퇴가 완료되었습니다.');
+                                     
+                                     // Force logout client-side to be sure
+                                     await supabase.auth.signOut();
+                                     router.push('/login');
+                                     router.refresh();
+                                 } catch (e) {
+                                     alert('탈퇴 처리 중 오류가 발생했습니다: ' + (e instanceof Error ? e.message : 'Unknown error'));
+                                     setLoading(false);
+                                 }
+                             }
+                         }}
+                         className="w-full bg-red-500/10 text-red-500 font-bold py-3 rounded-xl border border-red-500/20 hover:bg-red-500/20 active:scale-95 transition-all text-sm"
+                      >
+                         회원탈퇴
+                      </button>
+                   </div>
+                </div>
             </div>
             
             <GiftModal isOpen={showGiftModal} onClose={() => setShowGiftModal(false)} />
