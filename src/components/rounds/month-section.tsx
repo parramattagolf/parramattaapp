@@ -1,8 +1,9 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, getDay, isWithinInterval, startOfDay } from 'date-fns'
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, getDay } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { Calendar, List } from 'lucide-react'
 
@@ -60,6 +61,14 @@ export default function MonthSection({ month, events, view }: MonthSectionProps)
     const [mode, setMode] = useState<'list' | 'calendar'>('list')
     const [randomVideoId, setRandomVideoId] = useState<string | null>(null)
 
+    const router = useRouter()
+
+    const handleEventClick = (e: React.MouseEvent, eventId: string) => {
+        e.preventDefault()
+        // eslint-disable-next-line
+        router.push(`/rounds/${eventId}?t=${Date.now()}`)
+    }
+
     useEffect(() => {
         const fetchRandomVideo = async () => {
             try {
@@ -110,6 +119,7 @@ export default function MonthSection({ month, events, view }: MonthSectionProps)
                         <Link
                             key={event.id}
                             href={`/rounds/${event.id}`}
+                            onClick={(e) => handleEventClick(e, event.id)}
                             className={`block transition-all duration-150 active:scale-[0.96] ${view === 'past' ? 'opacity-60 grayscale' : ''}`}
                         >
                             {(() => {
@@ -303,6 +313,7 @@ export default function MonthSection({ month, events, view }: MonthSectionProps)
                                                 <Link
                                                     key={ind.id}
                                                     href={`/rounds/${ind.id}`}
+                                                    onClick={(e) => handleEventClick(e, ind.id)}
                                                     className="w-full h-1.5 flex items-center justify-center relative active:opacity-70"
                                                 >
                                                     {ind.isSingleDay ? (

@@ -2,14 +2,28 @@
 
 import { useEffect } from 'react'
 import { registerServiceWorker, subscribeUserToPush } from '@/lib/push-notifications'
+import { createClient } from '@/utils/supabase/client'
 
 export default function PushNotificationManager() {
   useEffect(() => {
     async function setup() {
       await registerServiceWorker()
-      // Only subscribe if already granted. Otherwise wait for user gesture in Settings.
-      if (Notification.permission === 'granted') {
+      
+      const supabase = createClient()
+      const { data: { session } } = await supabase.auth.getSession()
+
+      if (session?.user && Notification.permission === 'granted') {
         await subscribeUserToPush()
+      }
+
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+        if (event === 'SIGNED_IN' && session?.user && Notification.permission === 'granted') {
+          await subscribeUserToPush()
+        }
+      })
+
+      return () => {
+        subscription.unsubscribe()
       }
     }
     setup()
