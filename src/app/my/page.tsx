@@ -293,7 +293,7 @@ export default async function MyPage() {
                         <span className="text-[14px] font-bold text-[var(--color-text-primary)]">나의 라운딩</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <span className="text-[13px] font-bold text-blue-400">{rounds?.length || 0}건</span>
+                        <span className="text-[13px] font-bold text-red-500">{rounds?.length || 0}건</span>
                         <span className="text-[var(--color-text-desc)] text-xs">→</span>
                     </div>
                 </Link>
@@ -304,7 +304,7 @@ export default async function MyPage() {
                         <span className="text-[14px] font-bold text-[var(--color-text-primary)]">나의 인맥</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <span className="text-[13px] font-bold text-emerald-400">{friendCount || 0}명</span>
+                        <span className="text-[13px] font-bold text-red-500">{friendCount || 0}명</span>
                         <span className="text-[var(--color-text-desc)] text-xs">→</span>
                     </div>
                 </Link>
@@ -315,7 +315,7 @@ export default async function MyPage() {
                         <span className="text-[14px] font-bold text-[var(--color-text-primary)]">나의 스폰서</span>
                     </div>
                     <div className="flex items-center gap-2">
-                        <span className="text-[13px] font-bold text-yellow-500">{badges.length}개</span>
+                        <span className="text-[13px] font-bold text-red-500">{badges.length}개</span>
                         <span className="text-[var(--color-text-desc)] text-xs">→</span>
                     </div>
                 </Link>
