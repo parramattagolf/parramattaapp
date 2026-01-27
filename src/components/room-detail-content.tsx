@@ -69,8 +69,8 @@ export default function RoomDetailContent({
   participants,
   currentUser: authUser,
   roomHostId,
-  isRoomHost,
-  isJoined,
+  // isRoomHost, // Unused
+  // isJoined,   // Unused
   roomIndex,
 }: {
   event: Event;
@@ -94,19 +94,36 @@ export default function RoomDetailContent({
 
 
 
+  const [localUser, setLocalUser] = useState<User | null>(authUser);
+  
+  // Recalculate isJoined based on localUser
+  const localIsJoined = participants.some(p => p.user_id === localUser?.id);
+  const localIsRoomHost = localUser?.id === roomHostId;
+
   useEffect(() => {
-    if (authUser) {
+    const syncUser = async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+            // Map Supabase user to our User interface if needed, or just cast/use
+            setLocalUser(user as User);
+        }
+    };
+    syncUser();
+  }, [supabase]);
+
+  useEffect(() => {
+    if (localUser) {
       const fetchUser = async () => {
         const { data } = await supabase
           .from("users")
           .select("id, is_admin")
-          .eq("id", authUser.id)
+          .eq("id", localUser.id)
           .single();
         if (data) setUserData(data);
       };
       fetchUser();
     }
-  }, [authUser, supabase]);
+  }, [localUser, supabase]);
 
   // Define fetchHeldSlots as a useCallback to be reused
   const fetchHeldSlots = useCallback(async () => {
@@ -253,9 +270,9 @@ export default function RoomDetailContent({
     }
 
     // Check if user can hold/release (anyone joined can hold if it's empty, holder or admin can release)
-    const canHoldSlot = isJoined || userData?.is_admin;
+    const canHoldSlot = localIsJoined || userData?.is_admin;
     const heldSlot = heldSlots.find(s => s.group_no === roomIndex + 1 && s.slot_index === slotIndex);
-    const isHolder = heldSlot?.held_by === authUser?.id;
+    const isHolder = heldSlot?.held_by === localUser?.id;
     const canReleaseSlot = isHolder || userData?.is_admin;
 
     if (isHeld) {
@@ -265,7 +282,7 @@ export default function RoomDetailContent({
     } else {
       if (canHoldSlot) {
         setHoldConfirmSlot(slotIndex);
-      } else if (!isJoined) {
+      } else if (!localIsJoined) {
         handleJoinClick();
       }
     }
@@ -402,7 +419,7 @@ export default function RoomDetailContent({
 
       {/* Action Buttons for joined users */}
       <div className="flex items-center mb-6 gap-2 w-full">
-        {isJoined && (
+        {localIsJoined && (
           <>
             <button
               onClick={() => setIsInviteOpen(true)}
@@ -456,7 +473,7 @@ export default function RoomDetailContent({
           );
           const isHeld = !!heldSlot;
           const isInvitedHere = isInvitedToSlot(heldSlot);
-          const canJoinThisSlot = !isJoined && (!isHeld || isInvitedHere);
+          const canJoinThisSlot = !localIsJoined && (!isHeld || isInvitedHere);
 
 
           return (
@@ -521,7 +538,7 @@ export default function RoomDetailContent({
 
                   </div>
 
-                  {isRoomHost && slot.user_id !== authUser?.id && (
+                    {localIsRoomHost && slot.user_id !== localUser?.id && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -556,7 +573,7 @@ export default function RoomDetailContent({
                       초대됨 - 클릭하여 참가
                     </span>
                   )}
-                  {(heldSlot?.held_by === authUser?.id || userData?.is_admin) && (
+                  {(heldSlot?.held_by === localUser?.id || userData?.is_admin) && (
                     <span className="text-[9px] text-white/30 absolute bottom-3 uppercase font-black tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
                       Click to release
                     </span>
@@ -573,7 +590,7 @@ export default function RoomDetailContent({
                     <span className="text-[13px] font-black text-white/30 tracking-tight">
                       조인하기
                     </span>
-                    {(isJoined || userData?.is_admin) && !isHeld && (
+                    {(localIsJoined || userData?.is_admin) && !isHeld && (
                       <span className="text-[11px] text-yellow-500/50 mt-1 flex items-center gap-1 font-bold">
                         <Lock size={12} /> 홀드 가능
                       </span>
