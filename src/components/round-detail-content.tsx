@@ -173,7 +173,7 @@ export default function RoundDetailContent({ event, participants, isHost, isJoin
                                         <button
                                             type="button"
                                             onClick={() => navigateToRoom(roomIndex + 1)}
-                                            className="absolute -top-2.5 right-0 z-20 bg-green-500 text-white text-[9px] font-black px-2 py-0.5 rounded-[6px] shadow-[0_4px_10px_rgba(34,197,94,0.4)] active:scale-95 transition-all"
+                                            className="absolute -top-3 right-0 z-20 bg-green-500 text-white text-lg font-black px-4 py-2 rounded-[12px] shadow-[0_4px_10px_rgba(34,197,94,0.4)] active:scale-95 transition-all"
                                         >
                                             {roomIndex + 1}번방
                                         </button>
