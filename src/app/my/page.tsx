@@ -117,6 +117,13 @@ export default async function MyPage() {
         .or(`receiver_id.eq.${user.id},type.eq.global`)
         .eq('is_read', false)
 
+    // Get friend count (My Network)
+    const { count: friendCount } = await supabase
+        .from('relationships')
+        .select('*', { count: 'exact', head: true })
+        .or(`user_id.eq.${user.id},friend_id.eq.${user.id}`)
+        .eq('status', 'accepted')
+
     return (
         <div className="min-h-screen bg-[var(--color-bg)] pb-24 font-sans pt-24">
             {/* Profile Header */}
@@ -287,6 +294,17 @@ export default async function MyPage() {
                     </div>
                     <div className="flex items-center gap-2">
                         <span className="text-[13px] font-bold text-blue-400">{rounds?.length || 0}건</span>
+                        <span className="text-[var(--color-text-desc)] text-xs">→</span>
+                    </div>
+                </Link>
+
+                <Link href="/members" className="flex items-center justify-between p-4 bg-[var(--color-gray-100)] rounded-xl border border-[var(--color-divider)] active:bg-[var(--color-surface-hover)]">
+                    <div className="flex items-center gap-3">
+                        <span className="text-lg">👥</span>
+                        <span className="text-[14px] font-bold text-[var(--color-text-primary)]">나의 인맥</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <span className="text-[13px] font-bold text-emerald-400">{friendCount || 0}명</span>
                         <span className="text-[var(--color-text-desc)] text-xs">→</span>
                     </div>
                 </Link>
