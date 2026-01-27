@@ -210,9 +210,9 @@ function MemberItem({ member, isParticipant, priority = false, sortBy }: { membe
                         <span className="text-xl font-black text-green-500 font-mono tracking-tighter shadow-[0_0_10px_rgba(34,197,94,0.3)]">
                             {member.manner_score}
                         </span>
-                        {member.golf_experience && (
+                        {(member.points || 0) > 0 && (
                             <span className="text-[10px] font-bold text-pink-500 mt-0.5">
-                                {member.golf_experience}
+                                {member.points?.toLocaleString()} P
                             </span>
                         )}
                     </div>
