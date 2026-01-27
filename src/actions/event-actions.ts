@@ -4,6 +4,8 @@ import { createClient } from '@/utils/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 
+const SLOT_HOLD_DURATION_MS = 1 * 60 * 60 * 1000 // 1 hour
+
 export async function createEvent(formData: FormData) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -101,7 +103,7 @@ export async function joinEvent(eventId: string, groupNo: number = 1) {
         .select('invited_user_id, id')
         .eq('event_id', eventId)
         .eq('group_no', groupNo)
-        .gt('created_at', new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString()) // Only last 1 hour
+        .gt('created_at', new Date(Date.now() - SLOT_HOLD_DURATION_MS).toISOString()) // Only last 1 hour
 
     const heldCount = heldSlots?.length || 0
     const currentCount = groupCount || 0
@@ -259,7 +261,7 @@ export async function leaveEvent(eventId: string) {
         .eq('event_id', eventId)
         .eq('held_by', user.id)
 
-    const { error } = await supabase
+    await supabase
         .from('participants')
         .delete()
         .eq('event_id', eventId)
@@ -824,7 +826,7 @@ export async function getHeldSlots(eventId: string) {
             holder:users!held_slots_held_by_fkey(nickname)
         `)
         .eq('event_id', eventId)
-        .gt('created_at', new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString()) // 1 hour expiry logic on server-side
+        .gt('created_at', new Date(Date.now() - SLOT_HOLD_DURATION_MS).toISOString()) // 1 hour expiry logic on server-side
 
     if (!holds || holds.length === 0) return []
 
@@ -875,7 +877,7 @@ export async function canJoinSlot(eventId: string, groupNo: number, slotIndex: n
         .eq('event_id', eventId)
         .eq('group_no', groupNo)
         .eq('slot_index', slotIndex)
-        .gt('created_at', new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString()) // Check if still valid
+        .gt('created_at', new Date(Date.now() - SLOT_HOLD_DURATION_MS).toISOString()) // Check if still valid
         .single()
 
     if (!hold) return true // Not held, anyone can join
