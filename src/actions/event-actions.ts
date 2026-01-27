@@ -101,6 +101,7 @@ export async function joinEvent(eventId: string, groupNo: number = 1) {
         .select('invited_user_id, id')
         .eq('event_id', eventId)
         .eq('group_no', groupNo)
+        .gt('created_at', new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString()) // Only last 1 hour
 
     const heldCount = heldSlots?.length || 0
     const currentCount = groupCount || 0
@@ -771,7 +772,7 @@ export async function holdSlot(eventId: string, groupNo: number, slotIndex: numb
             receiver_id: user.id,
             type: 'system',
             title: '슬롯 홀드 알림',
-            content: `'${eventData.title}' ${groupNo}번방 슬롯을 홀드했습니다. 6시간 내에 '초대하기'를 통해 친구를 불러주세요. 이 홀드가 해제되거나 만료되면 다시 홀드할 수 없습니다.`,
+            content: `'${eventData.title}' ${groupNo}번방 슬롯을 홀드했습니다. 1시간 내에 '초대하기'를 통해 친구를 불러주세요. 이 홀드가 해제되거나 만료되면 다시 홀드할 수 없습니다.`,
             is_read: false
         })
     }
@@ -823,6 +824,7 @@ export async function getHeldSlots(eventId: string) {
             holder:users!held_slots_held_by_fkey(nickname)
         `)
         .eq('event_id', eventId)
+        .gt('created_at', new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString()) // 1 hour expiry logic on server-side
 
     if (!holds || holds.length === 0) return []
 
@@ -873,6 +875,7 @@ export async function canJoinSlot(eventId: string, groupNo: number, slotIndex: n
         .eq('event_id', eventId)
         .eq('group_no', groupNo)
         .eq('slot_index', slotIndex)
+        .gt('created_at', new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString()) // Check if still valid
         .single()
 
     if (!hold) return true // Not held, anyone can join

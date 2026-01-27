@@ -12,7 +12,7 @@ export default function HoldTimer({ createdAt }: HoldTimerProps) {
     useEffect(() => {
         const updateTimer = () => {
             const createdTime = new Date(createdAt).getTime()
-            const expireTime = createdTime + (6 * 60 * 60 * 1000) // 6 hours
+            const expireTime = createdTime + (1 * 60 * 60 * 1000) // 1 hour
             const now = new Date().getTime()
             const diff = expireTime - now
 
