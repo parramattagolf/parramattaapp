@@ -38,6 +38,8 @@ export const metadata: Metadata = {
 
 import { Toaster } from 'sonner'
 
+import ScrollToTop from '@/components/scroll-to-top'
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -49,6 +51,7 @@ export default function RootLayout({
         {/* Mobile Layout Container */}
         <div className="flex justify-center min-h-screen overflow-x-hidden">
           <main className="w-full max-w-[500px] bg-[var(--color-bg)] min-h-screen relative flex flex-col overflow-x-hidden">
+            <ScrollToTop />
             {/* Top Navigation */}
             <TopNav />
             <NotificationListener />

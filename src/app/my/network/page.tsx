@@ -12,6 +12,7 @@ export default function NetworkPage() {
     const [loading, setLoading] = useState(true)
     const [network, setNetwork] = useState<any[]>([])
     const [activeTab, setActiveTab] = useState(1)
+    const [sortBy, setSortBy] = useState<'manner' | 'points'>('manner')
 
     useEffect(() => {
         const fetchNetwork = async () => {
@@ -34,7 +35,7 @@ export default function NetworkPage() {
                 if (memberIds.length > 0) {
                     const { data: profiles } = await supabase
                         .from('members')
-                        .select('id, nickname, real_name, profile_img, job, manner_score, golf_experience')
+                        .select('id, nickname, real_name, profile_img, job, manner_score, golf_experience, points')
                         .in('id', memberIds)
                     
                     if (profiles) {
@@ -59,7 +60,13 @@ export default function NetworkPage() {
 
     const filteredList = network
         .filter(member => member.distance === activeTab)
-        .sort((a, b) => (b.manner_score || 0) - (a.manner_score || 0))
+        .sort((a, b) => {
+            if (sortBy === 'manner') {
+                return (b.manner_score || 0) - (a.manner_score || 0)
+            } else {
+                return (b.points || 0) - (a.points || 0)
+            }
+        })
 
     if (loading) {
         return (
@@ -81,7 +88,35 @@ export default function NetworkPage() {
         <div className="min-h-screen bg-[#121212] pb-24 font-sans">
             <PremiumSubHeader title="" backHref="/my" />
 
-            <div className="pt-24 px-5">
+            {/* Sort Tabs - Top Fixed */}
+            <div className="fixed top-14 left-0 right-0 z-40 bg-[#121212]/95 backdrop-blur-md border-b border-white/5">
+                <div className="flex">
+                    <button 
+                        onClick={() => setSortBy('manner')}
+                        className={`flex-1 py-3 text-sm font-bold transition-all relative ${
+                            sortBy === 'manner' ? 'text-white' : 'text-white/40'
+                        }`}
+                    >
+                        매너
+                        {sortBy === 'manner' && (
+                            <div className="absolute bottom-0 left-0 w-full h-[2px] bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
+                        )}
+                    </button>
+                    <button 
+                        onClick={() => setSortBy('points')}
+                        className={`flex-1 py-3 text-sm font-bold transition-all relative ${
+                            sortBy === 'points' ? 'text-white' : 'text-white/40'
+                        }`}
+                    >
+                        포인트
+                        {sortBy === 'points' && (
+                            <div className="absolute bottom-0 left-0 w-full h-[2px] bg-pink-500 shadow-[0_0_10px_rgba(236,72,153,0.5)]" />
+                        )}
+                    </button>
+                </div>
+            </div>
+
+            <div className="pt-32 px-5">
                 {/* Stats Summary Card */}
                 <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-3xl p-6 mb-8 shadow-[0_20px_40px_rgba(37,99,235,0.2)]">
                     <div className="flex items-center gap-3 mb-4">
@@ -139,6 +174,12 @@ export default function NetworkPage() {
                                             <Shield size={10} />
                                             <span>Manner {member.manner_score}</span>
                                         </div>
+                                        {member.points > 0 && (
+                                            <div className="flex items-center gap-1 text-[10px] text-pink-500 font-bold">
+                                                <span>P</span>
+                                                <span>{member.points.toLocaleString()}</span>
+                                            </div>
+                                        )}
                                         {member.golf_experience && (
                                             <div className="flex items-center gap-1 text-[10px] text-blue-400 font-bold">
                                                 <Star size={10} />

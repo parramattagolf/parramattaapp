@@ -9,7 +9,10 @@ interface MemberDetailHeaderProps {
     targetUserId: string;
     isOwnProfile: boolean;
     distance: number;
-    isPending: boolean;
+    connectionStatus: 'none' | 'pending_sent' | 'pending_received' | 'accepted' | 'rejected';
+    rejectionCount: number;
+    viewerMembershipLevel: string | null;
+    targetUserMembershipLevel: string | null;
 }
 
 export default function MemberDetailHeader({ 
@@ -17,7 +20,10 @@ export default function MemberDetailHeader({
     targetUserId, 
     isOwnProfile, 
     distance, 
-    isPending 
+    connectionStatus,
+    rejectionCount,
+    viewerMembershipLevel,
+    targetUserMembershipLevel
 }: MemberDetailHeaderProps) {
     const router = useRouter()
 
@@ -30,8 +36,11 @@ export default function MemberDetailHeader({
                 !isOwnProfile && (
                     <ConnectionRequestButton 
                         targetUserId={targetUserId} 
-                        isAlreadyFriend={distance === 1} 
-                        isPending={isPending} 
+                        distance={distance}
+                        connectionStatus={connectionStatus}
+                        rejectionCount={rejectionCount}
+                        viewerMembershipLevel={viewerMembershipLevel}
+                        targetUserMembershipLevel={targetUserMembershipLevel}
                     />
                 )
             }

@@ -239,6 +239,18 @@ export async function leaveEvent(eventId: string) {
         .eq('user_id', user.id)
         .single()
 
+    // Increment cancel_count for the user
+    const { data: userData } = await supabase
+        .from('users')
+        .select('cancel_count')
+        .eq('id', user.id)
+        .single()
+    
+    await supabase
+        .from('users')
+        .update({ cancel_count: (userData?.cancel_count || 0) + 1 })
+        .eq('id', user.id)
+
     // Release all held slots by this user
     await supabase
         .from('held_slots')

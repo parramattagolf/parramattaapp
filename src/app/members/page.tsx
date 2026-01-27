@@ -1,8 +1,7 @@
-import Image from 'next/image'
 import { createClient } from '@/utils/supabase/server'
 import Link from 'next/link'
-import { Flag } from 'lucide-react'
 import PremiumSubHeader from '@/components/premium-sub-header'
+import MembersListContainer from './members-list-container'
 
 export const dynamic = 'force-dynamic'
 
@@ -52,7 +51,7 @@ export default async function MembersPage() {
     // Simplifying: Fetch from RPC with deeper depth to catch most network, or fetch all users and merge distance.
     
     // Let's try fetching all users as base, and merged with distance info from RPC.
-    const { data: usersData } = await supabase.from('users').select('*')
+    const { data: usersData } = await supabase.from('users').select('*, user_badges(id)')
     const { data: networkData } = await supabase.rpc('get_member_list_with_distance', { 
         query_user_id: user.id, 
         max_depth: 10 
@@ -73,14 +72,20 @@ export default async function MembersPage() {
         profile_img: string | null;
         gender: string | null;
         manner_score: number | null;
+        points: number | null;
+        user_badges: { id: string }[];
+        job: string | null;
+        membership_level: string | null;
     }
 
-    // Attach distance and filter self
+    // Attach distance
     let allMembers = (usersData || [] as unknown as BaseUser[])
-        .filter(m => m.id !== user.id)
         .map(m => ({
             ...m,
-            distance: networkMap.get(m.id)
+            distance: networkMap.get(m.id),
+            hasBusinessInfo: (m.user_badges && m.user_badges.length > 0) || 
+                            (!!m.job && m.job !== '미입력' && m.job !== '정보없음') || 
+                            (!!m.membership_level && m.membership_level !== 'red')
         }))
 
     // Calculate Percentiles
@@ -135,92 +140,20 @@ export default async function MembersPage() {
         ...others
     ]
 
+    // 5. Fetch Sponsors for ad cards
+    const { data: sponsorsData } = await supabase
+        .from('sponsors')
+        .select('id, name, logo_url, description')
+        .limit(20)
+
     return (
         <div className="min-h-screen bg-[var(--color-bg)] pb-24 font-sans pt-24">
             <PremiumSubHeader 
-                title={<span className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>인맥</span>} 
-                rightElement={<Link href="/members/search" className="text-blue-500 font-bold text-sm">인맥찾기</Link>}
+                title={<span className="flex items-center gap-2"><div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse"></div>멤버</span>} 
             />
 
-            <div className="">
-                {combinedMembers.map((member, index) => {
-                    return (
-                        <div key={member.id}>
-                            <MemberItem member={member} isParticipant={member.isParticipant} priority={index < 4} />
-                        </div>
-                    );
-                })}
-            </div>
+            <MembersListContainer members={combinedMembers} sponsors={sponsorsData || []} />
         </div>
     )
 }
 
-interface Member {
-    id: string;
-    nickname: string;
-    profile_img: string | null;
-    gender: string | null;
-    distance?: number;
-    isParticipant: boolean;
-    isPreBooked: boolean;
-    percentile: number;
-}
-
-function MemberItem({ member, isParticipant, priority = false }: { member: Member, isParticipant: boolean, priority?: boolean }) {
-    return (
-        <Link
-            href={`/members/${member.id}`}
-            className="flex items-center gap-4 py-4 px-gutter active:bg-[var(--color-surface-hover)] transition-colors"
-        >
-            <div className={`w-12 h-12 rounded-full bg-[var(--color-gray-100)] overflow-hidden shrink-0 transition-all box-border ${member.gender === 'male' ? 'border-4 border-blue-500 ring-2 ring-blue-500/20' :
-                member.gender === 'female' ? 'border-4 border-red-500 ring-2 ring-red-500/20' :
-                    'border border-[var(--color-divider)]'
-                }`}>
-                {member.profile_img ? (
-                    <div className="relative w-full h-full">
-                        <Image 
-                            src={member.profile_img} 
-                            alt={member.nickname} 
-                            fill 
-                            className="object-cover" 
-                            unoptimized 
-                            priority={priority}
-                        />
-                    </div>
-                ) : (
-                    <div className="w-full h-full flex items-center justify-center text-xl">👤</div>
-                )}
-            </div>
-            <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                    <div className="font-bold text-[var(--color-text-primary)] truncate">{member.nickname}</div>
-                </div>
-                <div className="flex items-center gap-2 mt-0.5">
-                    {member.distance ? (
-                         <span className="text-[10px] font-black text-white/40 bg-white/5 px-1.5 py-0.5 rounded flex items-center gap-1">
-                            🔗 {member.distance}촌
-                        </span>
-                    ) : (
-                        <span className="text-[10px] font-black text-blue-400 bg-blue-400/10 px-1.5 py-0.5 rounded flex items-center gap-1">
-                            ➕ 1촌신청
-                        </span>
-                    )}
-                </div>
-            </div>
-
-            {/* Flags in the Center */}
-            <div className="flex items-center justify-center gap-1.5">
-                {member.isPreBooked && (
-                    <Flag size={20} className="text-blue-500 fill-current animate-pulse" />
-                )}
-                {isParticipant && (
-                    <Flag size={20} className="text-green-500 fill-current animate-pulse" />
-                )}
-            </div>
-
-            <div className="flex flex-col items-end min-w-[60px]">
-                <span className="text-xl font-black text-blue-500 italic tracking-tighter">{member.percentile}%</span>
-            </div>
-        </Link>
-    )
-}

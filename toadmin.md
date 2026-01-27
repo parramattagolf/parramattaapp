@@ -90,6 +90,22 @@ This document serves as the **single source of truth** for building the Parramat
 
 ---
 
+### F. Friend Request & Rejection Logic
+
+- **Access Control**: 
+    - **Sender**: Only `YELLOW` grade and above can send requests.
+    - **Receiver**: Requests to `RED` users are blocked. Button is replaced with "Untrustworthy Member" warning.
+    - `RED` users are blocked with an alert redirecting to profile edit.
+- **Status Flow**:
+    1.  **Request** -> `Pending`
+    2.  **Reject** -> `Rejected` (Count: 1). Button becomes `Red` ("Re-request").
+    3.  **Re-Request** -> `Pending`
+    4.  **Reject Again** -> `Rejected` (Count: 2). Button becomes `Black` ("Rejected Permanently").
+- **Display**: Labels for `2nd` and `3rd` degree connections are shown.
+
+
+---
+
 ## 2. Admin Web Structure & Features
 
 ### Key Philosophy

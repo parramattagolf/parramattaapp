@@ -162,9 +162,6 @@ export default function MyRoundsPage() {
                                     className="block bg-[#1c1c1e] border border-white/5 rounded-3xl overflow-hidden active:scale-[0.98] transition-all"
                                 >
                                     <div className="flex p-4 gap-4">
-                                        <div className="w-20 h-20 rounded-2xl bg-white/5 overflow-hidden border border-white/10 shrink-0 relative">
-                                            <div className="w-full h-full flex items-center justify-center text-2xl bg-gradient-to-br from-white/10 to-white/5">⛳</div>
-                                        </div>
                                         <div className="flex-1 min-w-0 flex flex-col justify-center">
                                             <div className="flex items-center gap-2 mb-1">
                                                 {isPre ? (

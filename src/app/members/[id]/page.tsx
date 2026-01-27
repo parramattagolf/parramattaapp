@@ -29,10 +29,15 @@ interface Badge {
     } | null;
 }
 
-const MetricBar = ({ label, value, colorClass }: { label: string; value: number; colorClass: string }) => (
+const MetricBar = ({ label, value, colorClass, displayValue }: { label: string; value: number; colorClass: string; displayValue?: string | number }) => (
     <div className="flex flex-col gap-2 py-1 px-1">
         <div className="flex justify-between items-end bg-transparent px-0.5 mb-1">
-            <span className="text-[13px] font-black text-white/90 tracking-tight">{label}</span>
+            <div className="flex items-end gap-1.5">
+                <span className="text-[13px] font-black text-white/90 tracking-tight">{label}</span>
+                {displayValue !== undefined && (
+                    <span className="text-[11px] font-bold text-white/50 mb-[1px]">{displayValue}</span>
+                )}
+            </div>
         </div>
         
         <div className="h-[2px] w-full bg-white/5 rounded-full relative overflow-visible">
@@ -168,7 +173,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
     // Calculate Global Averages for Stats Bar
     const { data: globalUsers } = await supabase
         .from('users')
-        .select('manner_score, points, handicap, host_count, invite_count, age_range, golf_experience')
+        .select('manner_score, points, handicap, host_count, invite_count, age_range, golf_experience, cancel_count')
 
     const stats = {
         manner: { min: 0, avg: 100, max: 300 },
@@ -178,6 +183,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
         invite: { min: 0, avg: 3, max: 30 },
         experience: { min: 1, avg: 5, max: 15 },
         age: { min: 20, avg: 40, max: 70 },
+        cancel: { min: 0, avg: 1, max: 10 },
         preRes: { min: 0, avg: 2, max: 20 },
         join: { min: 0, avg: 8, max: 80 }
     }
@@ -193,6 +199,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
         const invites = getValid(globalUsers.map(u => u.invite_count))
         const exps = getValid(globalUsers.map(u => getExperienceValue(u.golf_experience)))
         const ages = getValid(globalUsers.map(u => getAgeValue(u.age_range)))
+        const cancels = getValid(globalUsers.map(u => u.cancel_count))
         
         if (manners.length) {
             stats.manner.avg = getAvg(manners)
@@ -222,6 +229,10 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
         if (ages.length) {
             stats.age.avg = getAvg(ages)
             stats.age.max = Math.max(...ages, 70)
+        }
+        if (cancels.length) {
+            stats.cancel.avg = getAvg(cancels)
+            stats.cancel.max = Math.max(...cancels, 10)
         }
     }
 
@@ -267,7 +278,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
         .filter(r => r.event && new Date(r.event.start_date) > new Date())
         .sort((a, b) => new Date(a.event.start_date).getTime() - new Date(b.event.start_date).getTime())
         
-
+    
 
     // 3. Get Pre-reservations (Interest / Interest expressed)
     const { data: preReservationData } = await supabase
@@ -321,19 +332,52 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
 
     const isOwnProfile = currentUser?.id === id
 
-    // Check pending sent request (only if not own profile)
-    let isPending = false
+    // Check pending/rejected status
+    let connectionStatus: 'none' | 'pending_sent' | 'pending_received' | 'accepted' | 'rejected' = 'none'
+    let rejectionCount = 0
+
     if (!isOwnProfile && currentUser) {
-        const { data: relationship } = await supabase
+        // Check exact relationship row
+        // We need to check both directions to know if *I* sent or *They* sent
+        const { data: rel } = await supabase
             .from('relationships')
-            .select('status')
-            .eq('user_id', currentUser.id)
-            .eq('friend_id', id)
+            .select('user_id, friend_id, status, rejection_count')
+            .or(`and(user_id.eq.${currentUser.id},friend_id.eq.${id}),and(user_id.eq.${id},friend_id.eq.${currentUser.id})`)
             .maybeSingle()
         
-        isPending = relationship?.status === 'pending'
+        if (rel) {
+            if (rel.status === 'accepted') {
+                connectionStatus = 'accepted'
+            } else if (rel.status === 'pending') {
+                if (rel.user_id === currentUser.id) {
+                    connectionStatus = 'pending_sent'
+                } else {
+                    connectionStatus = 'pending_received'
+                }
+            } else if (rel.status === 'rejected') {
+                connectionStatus = 'rejected'
+                rejectionCount = rel.rejection_count || 0
+                // If I rejected them, I can still see "Reject" state? Or should I just see "None" and be able to send? 
+                // Using "rejected" usually implies *I* was rejected by *Them* (for the button state "1촌재신청" to appear).
+                // If *I* rejected *Them*, I probably shouldn't see "Re-request". But the Button is for "Sending a Request".
+                // If I rejected them, I can send a request to them? Yes.
+                // The Button logic handles "Sending".
+                // So if rel.user_id === id (They sent, I rejected), then for ME, it's effectively 'none' (I can request).
+                // BUT, if *I* sent (rel.user_id === currentUser.id) and *They* rejected, then status is 'rejected'.
+                
+                if (rel.user_id !== currentUser.id) {
+                    // They sent, I rejected. 
+                    // I can send friend request to them.
+                    connectionStatus = 'none' 
+                    rejectionCount = 0 // Reset for my view
+                }
+            }
+        }
     }
-
+    
+    // Get viewer membership level
+    const { data: viewerData } = await supabase.from('users').select('membership_level').eq('id', currentUser?.id).single()
+    const viewerLevel = viewerData?.membership_level
 
     return (
         <div className="min-h-screen bg-[var(--color-bg)] pb-32 font-sans">
@@ -342,7 +386,10 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
                 targetUserId={id} 
                 isOwnProfile={isOwnProfile} 
                 distance={distance} 
-                isPending={isPending} 
+                connectionStatus={connectionStatus}
+                rejectionCount={rejectionCount}
+                viewerMembershipLevel={viewerLevel}
+                targetUserMembershipLevel={profile.membership_level}
             />
 
             <div className="pt-16" />
@@ -372,55 +419,87 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
 
             {/* Member Stats - Normalized Relative Bars (Average is exactly in the center) */}
             <div className="px-gutter mt-10 space-y-10">
-                <div className="space-y-2">
-                    <MannerPulseGraph history={mannerHistory || []} />
-                    <MetricBar 
-                        label="구력" 
-                        value={getRelativePosition(getExperienceValue(profile.golf_experience), stats.experience.min, stats.experience.avg, stats.experience.max)} 
-                        colorClass="bg-blue-400 shadow-[0_0_10px_rgba(96,165,250,0.5)]"
-                    />
-                </div>
+                <MannerPulseGraph history={mannerHistory || []} />
+
                 <MetricBar 
-                    label="핸디" 
-                    value={getRelativePosition(getHandicapValue(profile.handicap), stats.handicap.min, stats.handicap.avg, stats.handicap.max)} 
-                    colorClass="bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.5)]"
-                />
-                <MetricBar 
-                    label="나이" 
-                    value={getRelativePosition(getAgeValue(profile.age_range), stats.age.min, stats.age.avg, stats.age.max)} 
-                    colorClass="bg-purple-400 shadow-[0_0_10px_rgba(192,132,252,0.5)]"
-                />
-                <MetricBar 
-                    label="매너점수" 
+                    label="매너" 
                     value={getRelativePosition(getMannerValue(profile.manner_score), stats.manner.min, stats.manner.avg, stats.manner.max)} 
                     colorClass="bg-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.5)]"
+                    displayValue={profile.manner_score ?? 100}
                 />
                 <MetricBar 
                     label="포인트" 
                     value={getRelativePosition(getPointValue(profile.points), stats.points.min, stats.points.avg, stats.points.max)} 
                     colorClass="bg-pink-400 shadow-[0_0_10px_rgba(244,114,182,0.5)]"
+                    displayValue={profile.points?.toLocaleString() ?? 0}
                 />
                 
-                <MetricBar 
-                    label="방장" 
-                    value={getRelativePosition(getCountValue(profile.host_count), stats.host.min, stats.host.avg, stats.host.max)} 
-                    colorClass="bg-red-400 shadow-[0_0_10px_rgba(248,113,113,0.5)]"
-                />
-                <MetricBar 
-                    label="초대" 
-                    value={getRelativePosition(getCountValue(profile.invite_count), stats.invite.min, stats.invite.avg, stats.invite.max)} 
-                    colorClass="bg-orange-400 shadow-[0_0_10px_rgba(251,146,60,0.5)]"
-                />
-                <MetricBar 
-                    label="사전예약" 
-                    value={getRelativePosition(getCountValue(preReservations.length), stats.preRes.min, stats.preRes.avg, stats.preRes.max)} 
-                    colorClass="bg-indigo-400 shadow-[0_0_10px_rgba(129,140,248,0.5)]"
-                />
-                <MetricBar 
-                    label="조인참가" 
-                    value={getRelativePosition(getCountValue(friendlyRounds.length), stats.join.min, stats.join.avg, stats.join.max)} 
-                    colorClass="bg-teal-400 shadow-[0_0_10px_rgba(45,212,191,0.5)]"
-                />
+                {profile.golf_experience && (
+                    <MetricBar 
+                        label="구력" 
+                        value={getRelativePosition(getExperienceValue(profile.golf_experience), stats.experience.min, stats.experience.avg, stats.experience.max)} 
+                        colorClass="bg-blue-400 shadow-[0_0_10px_rgba(96,165,250,0.5)]"
+                        displayValue={profile.golf_experience}
+                    />
+                )}
+                
+                {profile.handicap !== null && (
+                    <MetricBar 
+                        label="핸디" 
+                        value={getRelativePosition(getHandicapValue(profile.handicap), stats.handicap.min, stats.handicap.avg, stats.handicap.max)} 
+                        colorClass="bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,0.5)]"
+                        displayValue={profile.handicap}
+                    />
+                )}
+                {profile.age_range && (
+                    <MetricBar 
+                        label="나이" 
+                        value={getRelativePosition(getAgeValue(profile.age_range), stats.age.min, stats.age.avg, stats.age.max)} 
+                        colorClass="bg-purple-400 shadow-[0_0_10px_rgba(192,132,252,0.5)]"
+                        displayValue={profile.age_range}
+                    />
+                )}
+                
+                {(profile.host_count || 0) > 0 && (
+                    <MetricBar 
+                        label="방장" 
+                        value={getRelativePosition(getCountValue(profile.host_count), stats.host.min, stats.host.avg, stats.host.max)} 
+                        colorClass="bg-red-400 shadow-[0_0_10px_rgba(248,113,113,0.5)]"
+                        displayValue={`${profile.host_count}회`}
+                    />
+                )}
+                {(profile.invite_count || 0) > 0 && (
+                    <MetricBar 
+                        label="초대" 
+                        value={getRelativePosition(getCountValue(profile.invite_count), stats.invite.min, stats.invite.avg, stats.invite.max)} 
+                        colorClass="bg-orange-400 shadow-[0_0_10px_rgba(251,146,60,0.5)]"
+                        displayValue={`${profile.invite_count}회`}
+                    />
+                )}
+                {preReservations.length > 0 && (
+                    <MetricBar 
+                        label="사전예약" 
+                        value={getRelativePosition(getCountValue(preReservations.length), stats.preRes.min, stats.preRes.avg, stats.preRes.max)} 
+                        colorClass="bg-indigo-400 shadow-[0_0_10px_rgba(129,140,248,0.5)]"
+                        displayValue={`${preReservations.length}건`}
+                    />
+                )}
+                {friendlyRounds.length > 0 && (
+                    <MetricBar 
+                        label="예약확정" 
+                        value={getRelativePosition(getCountValue(friendlyRounds.length), stats.join.min, stats.join.avg, stats.join.max)} 
+                        colorClass="bg-teal-400 shadow-[0_0_10px_rgba(45,212,191,0.5)]"
+                        displayValue={`${friendlyRounds.length}건`}
+                    />
+                )}
+                {(profile.cancel_count || 0) > 0 && (
+                    <MetricBar 
+                        label="예약취소" 
+                        value={getRelativePosition(getCountValue(profile.cancel_count), stats.cancel.min, stats.cancel.avg, stats.cancel.max)} 
+                        colorClass="bg-red-600 shadow-[0_0_10px_rgba(220,38,38,0.5)]"
+                        displayValue={`${profile.cancel_count || 0}회`}
+                    />
+                )}
             </div>
 
 

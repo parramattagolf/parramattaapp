@@ -103,7 +103,6 @@ function TopNavContent() {
     pathname.startsWith('/rounds/') ||
     pathname.startsWith('/sponsors/') ||
     pathname.startsWith('/settings') ||
-    pathname.startsWith('/my/network') ||
     pathname.startsWith('/my/rounds') ||
     pathname.startsWith('/notifications')
 
@@ -121,7 +120,7 @@ function TopNavContent() {
 
   const getTitle = () => {
     if (pathname === '/rounds') return '라운딩'
-    if (pathname === '/members') return '인맥'
+    if (pathname === '/members') return '멤버'
     if (pathname === '/sponsors') return '스폰서'
     if (pathname === '/notifications') return '알림'
     if (pathname === '/my') return nickname ? `${nickname}님` : '회원님'
@@ -161,14 +160,7 @@ function TopNavContent() {
 
       <div className="flex items-center gap-2">
 
-        {pathname === '/members' && (
-          <Link
-            href="/members/search"
-            className="text-[13px] font-bold text-blue-500 hover:text-blue-400 transition-colors uppercase tracking-tight active:scale-95 mr-2"
-          >
-            인맥찾기
-          </Link>
-        )}        {pathname === '/sponsors' && (
+        {pathname === '/sponsors' && (
           <Link 
             href="/sponsors?tab=tournaments"
             className="flex items-center gap-1.5 mr-2 px-3 py-1.5 bg-amber-400/10 border border-amber-400/20 rounded-full shadow-[0_0_15px_rgba(251,191,36,0.1)] active:scale-95 transition-all cursor-pointer"

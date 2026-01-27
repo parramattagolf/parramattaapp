@@ -102,11 +102,7 @@ export default async function MyPage() {
     // Get badges
     const badges = await getUserBadges(user.id)
 
-    // Get network stats
-    const { data: friends } = await supabase.rpc('get_member_list_with_distance', { viewer_id: user.id })
-    const networkStats = {
-        total: (friends as { distance: number | null }[] | null)?.filter((f) => f.distance && f.distance < 999).length || 0,
-    }
+
 
     // Get rounds
     const { data: rounds } = await supabase
@@ -294,16 +290,7 @@ export default async function MyPage() {
                         <span className="text-[var(--color-text-desc)] text-xs">→</span>
                     </div>
                 </Link>
-                <Link href="/my/network" className="flex items-center justify-between p-4 bg-[var(--color-gray-100)] rounded-xl border border-[var(--color-divider)] active:bg-[var(--color-surface-hover)]">
-                    <div className="flex items-center gap-3">
-                        <span className="text-lg">🤝</span>
-                        <span className="text-[14px] font-bold text-[var(--color-text-primary)]">나의 인맥</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <span className="text-[13px] font-bold text-blue-400">{networkStats.total}명</span>
-                        <span className="text-[var(--color-text-desc)] text-xs">→</span>
-                    </div>
-                </Link>
+
                 <Link href="/my/sponsors" className="flex items-center justify-between p-4 bg-[var(--color-gray-100)] rounded-xl border border-[var(--color-divider)] active:bg-[var(--color-surface-hover)]">
                     <div className="flex items-center gap-3">
                         <span className="text-lg">🏆</span>
