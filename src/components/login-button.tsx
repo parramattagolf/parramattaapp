@@ -9,6 +9,7 @@ export default function LoginButton() {
       provider: 'kakao',
       options: {
         redirectTo: `${location.origin}/auth/callback`,
+        scopes: 'talk_message',
       },
     })
   }

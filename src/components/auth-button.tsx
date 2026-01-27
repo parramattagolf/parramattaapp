@@ -13,6 +13,7 @@ export function AuthButton({ user }: { user: any }) {
       provider: 'kakao',
       options: {
         redirectTo: `${location.origin}/auth/callback`,
+        scopes: 'talk_message',
       },
     })
   }

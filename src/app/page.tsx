@@ -32,6 +32,7 @@ function LoginContent() {
         provider: 'kakao',
         options: {
           redirectTo: `${location.origin}/auth/callback?next=/rounds`,
+          scopes: 'talk_message',
         },
       })
       if (error) throw error

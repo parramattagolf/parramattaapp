@@ -367,10 +367,10 @@ export default function RoomDetailContent({
         const m = String(minutes).padStart(2, '0');
         const s = String(seconds).padStart(2, '0');
 
-        if (showSeconds) {
-          setTimeLeft(`${d}일 ${h}시간 ${m}분 ${s}초`);
+        if (days > 0) {
+           setTimeLeft(`${d}일 ${h}시간 ${m}분 ${s}초`);
         } else {
-          setTimeLeft(`${d}일 ${h}시간 ${m}분`);
+           setTimeLeft(`${h}시간 ${m}분 ${s}초`);
         }
       };
 
@@ -383,21 +383,21 @@ export default function RoomDetailContent({
     return (
       <div className="w-full">
         <div 
-          className={`w-full py-2 flex items-center justify-between ${isExpired ? 'text-red-500' : 'text-blue-100'}`}
+          className={`w-full py-2 flex items-center justify-between ${isExpired ? 'text-red-500' : 'text-emerald-100'}`}
         >
            <div className="flex items-center gap-3">
-              <div className={`w-2 h-2 rounded-full ${isExpired ? 'bg-red-500' : 'bg-blue-400 animate-pulse'}`} />
+              <div className={`w-2 h-2 rounded-full ${isExpired ? 'bg-red-500' : 'bg-emerald-400 animate-pulse'}`} />
               <div className="flex items-center gap-1.5">
                 <span className="text-[14px] font-bold text-white/50">{label}</span>
               </div>
            </div>
-           <span className={`text-[15px] font-black tracking-widest tabular-nums ${isExpired ? 'text-red-400' : 'text-blue-300'}`}>
+           <span className={`text-[15px] font-black tracking-widest tabular-nums ${isExpired ? 'text-red-400' : 'text-emerald-300'}`}>
               {timeLeft}
            </span>
         </div>
         {infoText && (
-          <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 mb-2 text-center">
-            <p className="text-[13px] text-blue-300 font-bold tracking-tight">
+          <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 mb-2 text-center">
+            <p className="text-[13px] text-emerald-300 font-bold tracking-tight">
               {infoText}
             </p>
           </div>
