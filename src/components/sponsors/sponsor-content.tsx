@@ -12,6 +12,7 @@ interface Sponsor {
     name: string;
     logo_url?: string;
     description?: string;
+    memberCount?: number;
 }
 
 interface SponsorContentProps {
@@ -163,6 +164,12 @@ function SponsorItem({ sponsor, isActive }: { sponsor: Sponsor, isActive: boolea
                 <div className="text-[10px] font-black text-amber-400 bg-amber-400/10 border border-amber-400/20 px-2 py-0.5 rounded-md uppercase tracking-widest shadow-[0_0_10px_rgba(251,191,36,0.15)]">
                     Official
                 </div>
+                {/* Member Count Badge */}
+                {(sponsor.memberCount || 0) > 0 && (
+                    <div className="text-[10px] font-bold text-white/50">
+                        {sponsor.memberCount}명
+                    </div>
+                )}
             </div>
         </Link>
     )

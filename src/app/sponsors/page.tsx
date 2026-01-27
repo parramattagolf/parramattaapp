@@ -34,11 +34,40 @@ export default async function SponsorsPage({ searchParams }: { searchParams: Pro
     const prioritySponsors = allSponsors.filter(s => activeSponsorIds.includes(s.id))
     const regularSponsors = allSponsors.filter(s => !activeSponsorIds.includes(s.id))
 
+    // 4. Fetch member counts (unique users per sponsor)
+    const { data: badges } = await supabase
+        .from('user_badges')
+        .select('sponsor_id, user_id')
+
+    const memberCounts: Record<string, Set<string>> = {}
+    
+    badges?.forEach(badge => {
+        if (!badge.sponsor_id) return
+        if (!memberCounts[badge.sponsor_id]) {
+            memberCounts[badge.sponsor_id] = new Set()
+        }
+        memberCounts[badge.sponsor_id].add(badge.user_id)
+    })
+
+    const getMemberCount = (sponsorId: string) => {
+        return memberCounts[sponsorId]?.size || 0
+    }
+
+    const prioritySponsorsWithCount = prioritySponsors.map(s => ({
+        ...s,
+        memberCount: getMemberCount(s.id)
+    }))
+
+    const regularSponsorsWithCount = regularSponsors.map(s => ({
+        ...s,
+        memberCount: getMemberCount(s.id)
+    }))
+
     return (
         <div className={`min-h-screen bg-[var(--color-bg)] font-sans ${isTournaments ? 'pt-0 pb-0' : 'pt-14 pb-24'}`}>
             <SponsorContent 
-                prioritySponsors={prioritySponsors}
-                regularSponsors={regularSponsors}
+                prioritySponsors={prioritySponsorsWithCount}
+                regularSponsors={regularSponsorsWithCount}
             />
         </div>
     )
