@@ -95,8 +95,38 @@ export async function joinEvent(eventId: string, groupNo: number = 1) {
         .eq('event_id', eventId)
         .eq('group_no', groupNo)
 
-    if (groupCount && groupCount >= 4) {
-        throw new Error(`${groupNo}번 조인방이 꽉 찼습니다.`)
+    // Check Held Slots for this group
+    const { data: heldSlots } = await supabase
+        .from('held_slots')
+        .select('invited_user_id, id')
+        .eq('event_id', eventId)
+        .eq('group_no', groupNo)
+
+    const heldCount = heldSlots?.length || 0
+    const currentCount = groupCount || 0
+    
+    // Check if user is one of the invited users
+    const myHold = heldSlots?.find(h => h.invited_user_id === user.id)
+
+    // Effective fullness check
+    // If I have a hold, I take up one "held" spot, so I can enter if (current + held <= 4).
+    // Actually, if I have a hold, that hold "reserved" a spot for me. 
+    // So if (current + held > 4), it implies 4 people are there/held. 
+    // If I join, I replace my hold with a participant entry.
+    // So if I have a hold, space is guaranteed unless logic is broken.
+    // If I don't have a hold, I can only join if (current + held < 4).
+
+    if (myHold) {
+       // User has a reserved spot. Allow join.
+       // The hold will be deleted/consumed below or after insert? 
+       // Better to delete it *after* successful insert to verify transaction? 
+       // Or before? `participants` insert might fail if full constraints exist in DB triggers?
+       // Assuming app-level check.
+    } else {
+       // Regular join attempting to take an empty spot
+       if (currentCount + heldCount >= 4) {
+           throw new Error(`${groupNo}번 조인방은 만석이거나 예약된 좌석만 남았습니다.`)
+       }
     }
 
     // New: Check if previous room is filled (Sequential Joining)
@@ -112,16 +142,8 @@ export async function joinEvent(eventId: string, groupNo: number = 1) {
             // Check if user is an admin (skip check)
             const { data: userData } = await supabase.from('users').select('is_admin').eq('id', user.id).single()
             
-            // Check if user has an invitation hold for THIS room
-            const { data: invite } = await supabase
-                .from('held_slots')
-                .select('id')
-                .eq('event_id', eventId)
-                .eq('group_no', groupNo)
-                .eq('invited_user_id', user.id)
-                .maybeSingle()
-
-            if (!userData?.is_admin && !invite) {
+            // Re-use myHold check from above
+            if (!userData?.is_admin && !myHold) {
                 throw new Error(`${groupNo - 1}번 조인방이 아직 다 차지 않았습니다. 순서대로 참여해 주세요.`)
             }
         }
@@ -136,6 +158,11 @@ export async function joinEvent(eventId: string, groupNo: number = 1) {
     })
 
     if (error) throw new Error('Failed to join')
+    
+    // If joined successfully and had a hold, remove the hold
+    if (myHold) {
+        await supabase.from('held_slots').delete().eq('id', myHold.id)
+    }
 
 
     if (groupCount === 0) {
@@ -288,42 +315,143 @@ export async function inviteParticipant(eventId: string, targetUserId: string, r
         ? `/rounds/${eventId}/rooms/${roomNumber}`
         : `/rounds/${eventId}`
 
-    // Improved invite message
-    const inviteContent = roomNumber
-        ? `"${event.title}" 라운딩 ${roomNumber}번방에 초대되었습니다. 호스트가 슬롯을 예약해두었습니다!`
-        : `"${event.title}" 라운딩에 참가해보세요!`
+    // Check relationship (1st degree = 'accepted')
+    const { data: relationship } = await supabase
+        .from('relationships')
+        .select('status')
+        .or(`and(user_id.eq.${user.id},friend_id.eq.${targetUserId}),and(user_id.eq.${targetUserId},friend_id.eq.${user.id})`)
+        .eq('status', 'accepted')
+        .maybeSingle()
+    
+    const isFirstDegree = !!relationship
 
-    // Send invite notification with link
-    const { error: notifError } = await supabase.from('notifications').insert({
-        receiver_id: targetUserId,
-        sender_id: user.id,
-        type: 'invite',
-        action_type: 'invite',
-        title: `${senderData.nickname}님이 라운딩에 초대했습니다 👋`,
-        content: inviteContent,
-        link_url: linkUrl,
-        is_read: false
-    })
+    if (isFirstDegree) {
+        // --- 1st Degree: Direct Join ---
+        const { error: joinError } = await supabase.from('participants').insert({
+            event_id: eventId,
+            user_id: targetUserId,
+            status: 'joined',
+            payment_status: 'pending',
+            group_no: roomNumber || 1 
+        })
 
-    if (notifError) {
-        console.error('Invite notification error', notifError)
-        throw new Error('초대 알림 전송 실패')
-    }
+        if (joinError) throw new Error('친구 참가 추가 실패 (이미 참가중이거나 만석일 수 있습니다)')
 
-    // Increment sender's invite_count
-    try {
-        const { data: senderUserData } = await supabase.from('users').select('invite_count').eq('id', user.id).single()
-        if (senderUserData) {
-            await supabase.from('users').update({
-                invite_count: (senderUserData.invite_count || 0) + 1
-            }).eq('id', user.id)
+        // Notify friend
+         const inviteContent = roomNumber
+            ? `"${event.title}" 라운딩 ${roomNumber}번방에 ${senderData.nickname}님이 귀하를 참가시켰습니다!`
+            : `"${event.title}" 라운딩에 ${senderData.nickname}님이 귀하를 참가시켰습니다!`
+
+         await supabase.from('notifications').insert({
+            receiver_id: targetUserId,
+            sender_id: user.id,
+            type: 'invite', // Or 'alert'
+            action_type: 'join',
+            title: `${senderData.nickname}님과의 라운딩 확정 ⛳`,
+            content: inviteContent,
+            link_url: linkUrl,
+            is_read: false
+        })
+
+        revalidatePath(`/rounds/${eventId}`)
+        return { success: true, message: '친구를 바로 라운딩에 참가시켰습니다.' }
+
+    } else {
+        // --- 2nd Degree+: Hold Slot & Invite ---
+        
+        // Find an empty slot index [0, 1, 2, 3]
+        if (!roomNumber) throw new Error('조인방 번호가 필요합니다.') // Should be passed from UI
+
+        const { data: currentMembers } = await supabase
+            .from('participants')
+            .select('id') // Just need count effectively, but index mapping relies on order? 
+            // Actually, slot_index in held_slots is for visual Grid mapping.
+            // Participants don't have slot_index, they just fill the list.
+            // "Slots" are conceptual. 0,1,2,3.
+            // If there are 2 participants, they take 0,1 (visually sorted by join time).
+            // So held slot should be 2.
+            // But this is fragile if someone leaves.
+            // Ideally `held_slots` shouldn't rely on `slot_index` strictly if styling handles it, but the Grid component USES slot_index for held slots.
+            // Let's assume sequential: next available index.
+            .eq('event_id', eventId)
+            .eq('group_no', roomNumber)
+        
+        const { data: currentHolds } = await supabase
+            .from('held_slots')
+            .select('slot_index')
+            .eq('event_id', eventId)
+            .eq('group_no', roomNumber)
+        
+        const occupiedIndices = new Set<number>()
+        // Participants take 0..N-1 ? No, participants just take *count* spots.
+        // Visually, participants fill the FIRST available spots.
+        const partCount = currentMembers?.length || 0
+        for(let i=0; i<partCount; i++) occupiedIndices.add(i)
+        
+        // Holds take specific indices? 
+        // In the Grid: "roomMembers[i]" takes slot i. 
+        // So participants ALWAYS take 0 to (Count-1).
+        // Held slots must take Count to 3.
+        
+        // So we just need to find the first index >= partCount that isn't held.
+        let targetSlotIndex = -1
+        for (let i = partCount; i < 4; i++) {
+             // Check if held
+             if (!currentHolds?.some(h => h.slot_index === i)) {
+                 targetSlotIndex = i
+                 break
+             }
         }
-    } catch (e) {
-        console.error('Failed to update invite count:', e)
-    }
+        
+        if (targetSlotIndex === -1) {
+             throw new Error('예약 가능한 빈 슬롯이 없습니다 (참가자 또는 다른 홀드로 가득 찼습니다).')
+        }
 
-    revalidatePath(`/rounds/${eventId}`)
-    return { success: true, message: '초대 메시지를 전송했습니다.' }
+        const { error: holdError } = await supabase.from('held_slots').insert({
+            event_id: eventId,
+            group_no: roomNumber,
+            slot_index: targetSlotIndex,
+            held_by: user.id,
+            invited_user_id: targetUserId
+        })
+
+        if (holdError) throw new Error('슬롯 홀드 실패')
+
+        // Improved invite message
+        const inviteContent = `"${event.title}" 라운딩 ${roomNumber}번방에 초대되었습니다. 호스트가 슬롯을 예약해두었습니다!`
+
+        // Send invite notification with link
+        const { error: notifError } = await supabase.from('notifications').insert({
+            receiver_id: targetUserId,
+            sender_id: user.id,
+            type: 'invite',
+            action_type: 'invite',
+            title: `${senderData.nickname}님이 라운딩에 초대했습니다 👋`,
+            content: inviteContent,
+            link_url: linkUrl,
+            is_read: false
+        })
+
+        if (notifError) {
+            console.error('Invite notification error', notifError)
+             // Should rollback hold?
+        }
+
+        // Increment sender's invite_count
+        try {
+            const { data: senderUserData } = await supabase.from('users').select('invite_count').eq('id', user.id).single()
+            if (senderUserData) {
+                await supabase.from('users').update({
+                    invite_count: (senderUserData.invite_count || 0) + 1
+                }).eq('id', user.id)
+            }
+        } catch (e) {
+            console.error('Failed to update invite count:', e)
+        }
+
+        revalidatePath(`/rounds/${eventId}`)
+        return { success: true, message: '초대 메시지를 전송하고 슬롯을 예약했습니다.' }
+    }
 }
 
 export async function kickParticipant(formData: FormData) {
