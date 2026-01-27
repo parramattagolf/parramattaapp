@@ -19,6 +19,8 @@ interface Member {
     hasBusinessInfo: boolean;
     job: string | null;
     membership_level: string | null;
+    pro?: boolean;
+    golf_experience?: string | null;
 }
 
 export default function MembersListContainer({ members, sponsors }: { members: Member[], sponsors: any[] }) {
@@ -29,11 +31,15 @@ export default function MembersListContainer({ members, sponsors }: { members: M
     const handleSortChange = (newSort: 'manner' | 'points' | 'business') => {
         setSortBy(newSort)
         setVisibleCount(10)
+        window.scrollTo({ top: 0, behavior: 'smooth' })
     }
 
     const filteredMembers = members.filter(member => {
         if (sortBy === 'business') {
             return member.hasBusinessInfo
+        }
+        if (sortBy === 'points') {
+            return member.pro === true
         }
         return true
     })
@@ -108,10 +114,17 @@ export default function MembersListContainer({ members, sponsors }: { members: M
                         />
                     );
 
-                    // Add Sponsor Ad Card after every 5 members
-                    if ((index + 1) % 5 === 0 && sponsors.length > 0) {
-                        const sponsorIndex = (Math.floor((index + 1) / 5) - 1) % sponsors.length;
+                    // Add Sponsor Ad Card
+                    // Logic: Show every 5th member OR if total list is less than 5, show at the end
+                    const showAd = ((index + 1) % 5 === 0) || (visibleMembers.length < 5 && index === visibleMembers.length - 1);
+
+                    if (showAd && sponsors.length > 0) {
+                        // Pseudo-random selection based on index to ensure stability (avoid hydration mismatch) but look random
+                        // Using prime numbers for better distribution
+                        const randomOffset = (index * 7 + 3); 
+                        const sponsorIndex = randomOffset % sponsors.length;
                         const sponsor = sponsors[sponsorIndex];
+                        
                         elements.push(
                             <SponsorAdCard key={`ad-${index}`} sponsor={sponsor} />
                         );
@@ -166,16 +179,21 @@ function MemberItem({ member, isParticipant, priority = false, sortBy }: { membe
             </div>
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                    <div className="font-bold text-[var(--color-text-primary)] truncate">{member.nickname}</div>
-                    {/* Flags moved next to nickname */}
-                    {member.isPreBooked && (
+                    {sortBy !== 'business' ? (
+                        <div className="font-bold text-[var(--color-text-primary)] truncate">{member.nickname}</div>
+                    ) : (
+                        member.job && (
+                            <div className="font-bold text-amber-500 truncate">{member.job}</div>
+                        )
+                    )}
+                    
+                    {/* Flags (Hidden in Business Tab) */}
+                    {member.isPreBooked && sortBy !== 'business' && (
                         <FlagTriangleRight size={14} className="text-blue-500 fill-current animate-pulse ml-1" />
                     )}
-                    {isParticipant && (
+                    {isParticipant && sortBy !== 'business' && (
                         <FlagTriangleRight size={14} className="text-green-500 fill-current animate-pulse ml-1" />
                     )}
-
-                    {/* Membership Level Badge REMOVED per user request for Business Tab */}
                 </div>
                 <div className="flex items-center gap-2 mt-0.5">
                     {member.distance && (
@@ -183,29 +201,28 @@ function MemberItem({ member, isParticipant, priority = false, sortBy }: { membe
                             🔗 {member.distance}촌
                         </span>
                     )}
-
-                {/* Job Info REMOVED per user request for Points Tab (it was only showing in Points tab previously) */}
                 </div>
             </div>
 
-            {/* Old Flags Container Removed (Empty flex item to maintain layout balance if needed, or just removed) */}
-
             <div className="flex flex-col items-end min-w-[30px] justify-center">
                 {sortBy === 'manner' && (member.manner_score || 0) > 0 && (
-                    <span className="text-xl font-black text-green-500 font-mono tracking-tighter shadow-[0_0_10px_rgba(34,197,94,0.3)]">
-                        {member.manner_score}
+                    <div className="flex flex-col items-end">
+                        <span className="text-xl font-black text-green-500 font-mono tracking-tighter shadow-[0_0_10px_rgba(34,197,94,0.3)]">
+                            {member.manner_score}
+                        </span>
+                        {(member.points || 0) > 0 && (
+                            <span className="text-[10px] font-bold text-pink-500 mt-0.5">
+                                {member.points?.toLocaleString()} P
+                            </span>
+                        )}
+                    </div>
+                )}
+                {sortBy === 'points' && member.golf_experience && (
+                    <span className="text-sm font-bold text-cyan-400 font-mono tracking-tight">
+                        {member.golf_experience}
                     </span>
                 )}
-                {sortBy === 'points' && (member.points || 0) > 0 && (
-                    <span className="text-xl font-black text-pink-500 italic tracking-tighter">
-                        {member.points?.toLocaleString()}
-                    </span>
-                )}
-                {sortBy === 'business' && member.job && (
-                     <span className="text-[12px] font-black text-amber-500 bg-amber-500/10 px-2 py-1 rounded-md border border-amber-500/20 whitespace-nowrap">
-                        {member.job}
-                    </span>
-                )}
+                {/* Business Job Badge Removed (Moved to left as text) */}
             </div>
         </Link>
     )

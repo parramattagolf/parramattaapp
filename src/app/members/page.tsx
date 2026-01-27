@@ -51,7 +51,7 @@ export default async function MembersPage() {
     // Simplifying: Fetch from RPC with deeper depth to catch most network, or fetch all users and merge distance.
     
     // Let's try fetching all users as base, and merged with distance info from RPC.
-    const { data: usersData } = await supabase.from('users').select('*, user_badges(id)')
+    const { data: usersData } = await supabase.from('users').select('*, user_badges(id), pro')
     const { data: networkData } = await supabase.rpc('get_member_list_with_distance', { 
         query_user_id: user.id, 
         max_depth: 10 
@@ -76,6 +76,7 @@ export default async function MembersPage() {
         user_badges: { id: string }[];
         job: string | null;
         membership_level: string | null;
+        golf_experience: string | null;
     }
 
     // Attach distance
@@ -83,9 +84,7 @@ export default async function MembersPage() {
         .map(m => ({
             ...m,
             distance: networkMap.get(m.id),
-            hasBusinessInfo: (m.user_badges && m.user_badges.length > 0) || 
-                            (!!m.job && m.job !== '미입력' && m.job !== '정보없음') || 
-                            (!!m.membership_level && m.membership_level !== 'red')
+            hasBusinessInfo: (!!m.job && m.job.length >= 5 && !['미입력', '정보없음', '회사원', '직장인', '공무원', '사업가', '자영업', '프리랜서', '학생', '주부', '무직'].includes(m.job))
         }))
 
     // Calculate Percentiles
