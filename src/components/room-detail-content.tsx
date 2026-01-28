@@ -13,7 +13,7 @@ import InviteModal from "@/components/invite-modal";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Lock, Unlock, AlertCircle } from "lucide-react";
+import { Lock, Unlock, AlertCircle, CheckCircle } from "lucide-react";
 import confetti from "canvas-confetti";
 
 interface Participant {
@@ -90,6 +90,7 @@ export default function RoomDetailContent({
   const [isMoveRoomOpen, setIsMoveRoomOpen] = useState(false);
   const [isMoving, setIsMoving] = useState(false);
   const [holdConfirmSlot, setHoldConfirmSlot] = useState<number | null>(null);
+  const [isPaymentGuideOpen, setIsPaymentGuideOpen] = useState(false);
   const router = useRouter();
   const supabase = createClient();
 
@@ -243,6 +244,7 @@ export default function RoomDetailContent({
         colors: ['#3b82f6', '#10b981', '#fbbf24']
       });
 
+      setIsPaymentGuideOpen(true);
       router.refresh();
     } catch (error) {
       console.error(error);
@@ -397,9 +399,9 @@ export default function RoomDetailContent({
         </div>
         
         {infoText && (
-          <div className="bg-[#1c1c1e] border border-green-500/30 rounded-full px-6 py-3.5 mt-2 mb-4 text-center shadow-lg shadow-black/20">
-            <p className="text-[14px] text-green-500 font-black tracking-tight flex items-center justify-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+          <div className="w-full py-1 text-center mt-1 mb-2">
+            <p className="text-[13px] text-green-500/90 font-bold tracking-tight flex items-center justify-center gap-1.5">
+              <span className="w-1 h-1 rounded-full bg-green-500/80 animate-pulse" />
               {infoText}
             </p>
           </div>
@@ -933,6 +935,43 @@ export default function RoomDetailContent({
                   </p>
                </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Payment Guide Modal */}
+      {isPaymentGuideOpen && (
+        <div
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[300] flex items-center justify-center p-6"
+          onClick={() => setIsPaymentGuideOpen(false)}
+        >
+          <div
+            className="bg-[#1c1c1e] rounded-3xl p-6 max-w-sm w-full border border-green-500/30 shadow-2xl relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+             <button 
+                onClick={() => setIsPaymentGuideOpen(false)} 
+                className="absolute top-4 right-4 text-white/30 hover:text-white"
+             >
+                &times;
+             </button>
+
+            <div className="text-center mb-6 pt-2">
+              <CheckCircle size={48} className="text-green-500 mx-auto mb-4 animate-bounce" />
+              <h3 className="text-xl font-black text-white mb-2">예약 완료! ⛳</h3>
+              <p className="text-white/80 text-[15px] font-bold leading-relaxed px-2">
+                카카오톡으로 발송된<br />
+                <span className="text-green-400">결제 안내 메세지</span>를 확인하시고<br />
+                결제를 완료해주세요.
+              </p>
+            </div>
+
+            <button
+              onClick={() => setIsPaymentGuideOpen(false)}
+              className="w-full py-3.5 rounded-xl bg-green-600 text-white font-black active:scale-95 transition-all shadow-lg shadow-green-900/20"
+            >
+              확인
+            </button>
           </div>
         </div>
       )}

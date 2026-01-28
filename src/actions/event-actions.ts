@@ -339,7 +339,7 @@ export async function joinEvent(eventId: string, groupNo: number = 1) {
                 .join(', ') || '없음'
 
             const { sendKakaoMeMessage } = await import('@/utils/kakao-client')
-            const message = `[조인 완료] '${event.title}' 라운딩 조인이 완료되었습니다. ⛳\n\n주제: ${event.title}\n일정: ${startStr}\n기간: ${durationStr}\n장소: ${event.location || '장소 확인 필요'}\n골프장: ${event.course_name || '확인 필요'}\n가격: ${costStr}\n\n동반자 리스트: ${memberNicknames}`
+            const message = `[조인 완료] '${event.title}' 라운딩 조인이 완료되었습니다. ⛳\n\n아래 결제 안내를 확인하시고 결제를 완료하여 예약을 확정해 주세요.\n\n주제: ${event.title}\n일정: ${startStr}\n기간: ${durationStr}\n장소: ${event.location || '장소 확인 필요'}\n골프장: ${event.course_name || '확인 필요'}\n가격: ${costStr}\n\n동반자 리스트: ${memberNicknames}`
             
             // Link to external payment URL if available, otherwise fallback to room detail
             const paymentUrl = event.payment_url
