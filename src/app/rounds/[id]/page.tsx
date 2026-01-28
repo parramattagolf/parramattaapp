@@ -1,5 +1,5 @@
 import { createClient } from '@/utils/supabase/server'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import PremiumSubHeader from '@/components/premium-sub-header'
 
 
@@ -60,6 +60,9 @@ export default async function RoundDetailPage({ params, searchParams }: { params
         .order('created_at', { ascending: true })
 
     const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+        return redirect(`/?next=${encodeURIComponent(`/rounds/${id}`)}`)
+    }
     const currentUserParticipant = participants?.find(p => p.user_id === user?.id)
     const currentUserPreReservation = preReservations?.find(p => p.user_id === user?.id)
 

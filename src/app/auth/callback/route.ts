@@ -179,7 +179,7 @@ export async function GET(request: Request) {
                                latestProfile.mbti;
 
       if (!actuallyComplete) {
-        return NextResponse.redirect(`${origin}/settings?missing_info=true`);
+        return NextResponse.redirect(`${origin}/settings?missing_info=true&next=${encodeURIComponent(next)}`);
       }
       
       return NextResponse.redirect(`${origin}${next}`)

@@ -28,10 +28,11 @@ function LoginContent() {
   const handleKakaoLogin = async () => {
     try {
       setLoading(true)
+      const nextParam = searchParams.get('next') || '/rounds'
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'kakao',
         options: {
-          redirectTo: `${location.origin}/auth/callback?next=/rounds`,
+          redirectTo: `${location.origin}/auth/callback?next=${encodeURIComponent(nextParam)}`,
           scopes: 'talk_message',
         },
       })

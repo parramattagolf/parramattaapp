@@ -1,5 +1,5 @@
 import { createClient } from '@/utils/supabase/server'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 
 
 import RoomDetailContent from '@/components/room-detail-content'
@@ -36,6 +36,9 @@ export default async function RoomDetailPage({ params, searchParams }: { params:
         .eq('event_id', id)
 
     const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+        return redirect(`/?next=${encodeURIComponent(`/rounds/${id}/rooms/${roomNumber}`)}`)
+    }
     const isJoined = participants?.some(p => p.user_id === user?.id)
 
     // 3. Get Room Host

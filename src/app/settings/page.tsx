@@ -157,6 +157,9 @@ export default function SettingsPage() {
                     if (params.get('missing_info') === 'true') {
                         setIsFromRedirect(true)
                     }
+                    if (params.get('next')) {
+                        // Store next in state if needed or just use current URL params
+                    }
                 }
             } catch (err) {
                 console.error('Unexpected error in settings page:', err)
@@ -248,7 +251,13 @@ export default function SettingsPage() {
             } else {
                 alert('정보가 성공적으로 저장되었습니다.')
             }
-            router.push('/my')
+            const params = new URLSearchParams(window.location.search)
+            const nextParam = params.get('next')
+            if (nextParam) {
+                router.push(nextParam)
+            } else {
+                router.push('/my')
+            }
         }
         setSaving(false)
     }

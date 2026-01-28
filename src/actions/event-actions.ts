@@ -70,7 +70,11 @@ export async function joinEvent(eventId: string, groupNo: number = 1) {
     if (!user) throw new Error('Unauthorized')
 
     // Check if full (Global check)
-    const { data: event } = await supabase.from('events').select('max_participants, title, host_id').eq('id', eventId).single()
+    const { data: event } = await supabase
+        .from('events')
+        .select('max_participants, title, host_id, start_date, end_date, location, course_name, cost, payment_url')
+        .eq('id', eventId)
+        .single()
     
     // Check if already joined
     const { data: existingParticipant } = await supabase
@@ -161,6 +165,42 @@ export async function joinEvent(eventId: string, groupNo: number = 1) {
     })
 
     if (error) throw new Error('Failed to join')
+
+    // --- Manner Score Reward (+10) for 14-day early join ---
+    if (event?.start_date) {
+        const start = new Date(event.start_date)
+        const now = new Date()
+        const d14Limit = start.getTime() - (14 * 24 * 60 * 60 * 1000)
+
+        if (now.getTime() < d14Limit) {
+            try {
+                await supabase.rpc('update_user_scores', {
+                    target_user_id: user.id,
+                    manner_delta: 10
+                })
+
+                const { data: u } = await supabase.from('users').select('manner_score').eq('id', user.id).single()
+                const newScore = u?.manner_score ?? 110
+
+                await supabase.from('manner_score_history').insert({
+                    user_id: user.id,
+                    amount: 10,
+                    description: `'${event.title}' 14일전 매너예약 보너스 시상!`,
+                    score_snapshot: newScore
+                })
+
+                await supabase.from('notifications').insert({
+                    receiver_id: user.id,
+                    type: 'system',
+                    title: '매너점수 10점을 획득했습니다! 🏅',
+                    content: `'${event.title}' 14일전 매너예약 보너스가 지급되었습니다.`,
+                    is_read: false
+                })
+            } catch (e) {
+                console.error('Failed to award 14-day manner bonus:', e)
+            }
+        }
+    }
     
     // If joined successfully and had a hold, remove the hold
     if (myHold) {
@@ -225,41 +265,92 @@ export async function joinEvent(eventId: string, groupNo: number = 1) {
 
         // --- Kakao Notification (Send to Me) ---
         // Notify Host, Room Members, and Pre-reservers
-        const kakaoTargets = new Set<string>()
-        
-        // 1. Host
-        if (event.host_id && event.host_id !== user.id) {
-            kakaoTargets.add(event.host_id)
-        }
-
-        // 2. Room Members (Already fetched above as roomMembers)
-        if (roomMembers) {
-            roomMembers.forEach(m => {
-                if (m.user_id !== user.id) kakaoTargets.add(m.user_id)
+        try {
+            const start = new Date(event.start_date)
+            const end = new Date(event.end_date || event.start_date)
+            
+            const startStr = start.toLocaleString('ko-KR', { 
+                month: 'long', 
+                day: 'numeric', 
+                weekday: 'short'
             })
-        }
 
-        // 3. Pre-reservers
-        const { data: preReservers } = await supabase
-            .from('pre_reservations')
-            .select('user_id')
-            .eq('event_id', eventId)
-        
-        if (preReservers) {
-            preReservers.forEach(p => {
-                if (p.user_id !== user.id) kakaoTargets.add(p.user_id)
-            })
-        }
+            // Calculate duration (e.g., "당일", "1박2일")
+            const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
+            const durationStr = diffDays <= 1 
+                ? (start.toDateString() === end.toDateString() ? '당일' : '1박2일')
+                : `${diffDays}박${diffDays + 1}일`
+            
+            const costStr = event.cost 
+                ? new Intl.NumberFormat('ko-KR').format(Number(event.cost)) + '원'
+                : '가격 정보 없음'
 
-        if (kakaoTargets.size > 0) {
+            const kakaoTargets = new Set<string>()
+            
+            // 1. Host
+            if (event.host_id && event.host_id !== user.id) {
+                kakaoTargets.add(event.host_id)
+            }
+
+            // 2. Room Members
+            if (roomMembers) {
+                roomMembers.forEach(m => {
+                    if (m.user_id !== user.id) kakaoTargets.add(m.user_id)
+                })
+            }
+
+            // 3. Pre-reservers (Notify all pre-reservers about new join)
+            const { data: preReservers } = await supabase
+                .from('pre_reservations')
+                .select('user_id')
+                .eq('event_id', eventId)
+            
+            if (preReservers) {
+                preReservers.forEach(p => {
+                    if (p.user_id !== user.id) kakaoTargets.add(p.user_id)
+                })
+            }
+
+            if (kakaoTargets.size > 0) {
+                const { sendKakaoMeMessage } = await import('@/utils/kakao-client')
+                const message = `[새로운 동반자] '${event.title}' ${groupNo}번방에 새로운 동반자가 참여했습니다! ⛳\n\n주제: ${event.title}\n일정: ${startStr}\n기간: ${durationStr}\n장소: ${event.location || '장소 확인 필요'}\n골프장: ${event.course_name || '확인 필요'}\n가격: ${costStr}\n동반자: ${user.user_metadata?.nickname || '회원'}`
+                const link = `/rounds/${eventId}/rooms/${groupNo}`
+
+                // Process independently to avoid one failure blocking everything
+                await Promise.all(Array.from(kakaoTargets).map(targetId => 
+                    sendKakaoMeMessage(targetId, message, link, '조인방 확인하기').catch(e => 
+                        console.error(`Failed to notify target ${targetId}:`, e)
+                    )
+                ))
+            }
+
+            // 4. Notify joining user (Send to Me)
+            const { data: allMembers } = await supabase
+                .from('participants')
+                .select('user:users(nickname)')
+                .eq('event_id', eventId)
+                .eq('group_no', groupNo)
+            
+            const memberNicknames = allMembers
+                ?.map(m => {
+                    const u = m.user as unknown as { nickname: string } | null
+                    return u?.nickname || '회원'
+                })
+                .join(', ') || '없음'
+
             const { sendKakaoMeMessage } = await import('@/utils/kakao-client')
-            const message = `'${event.title}' ${groupNo}번방에 새로운 동반자(${user.user_metadata?.nickname || '회원'})가 참여했습니다!`
-            const link = `/rounds/${eventId}` // Or specific room link
-
-            // Process in background (don't await strictly to block response? Vercel server actions might kill it if we don't await. Better to await Promise.all)
-            await Promise.all(Array.from(kakaoTargets).map(targetId => 
-                sendKakaoMeMessage(targetId, message, link)
-            ))
+            const message = `[조인 완료] '${event.title}' 라운딩 조인이 완료되었습니다. ⛳\n\n주제: ${event.title}\n일정: ${startStr}\n기간: ${durationStr}\n장소: ${event.location || '장소 확인 필요'}\n골프장: ${event.course_name || '확인 필요'}\n가격: ${costStr}\n\n동반자 리스트: ${memberNicknames}`
+            
+            // Link to external payment URL if available, otherwise fallback to room detail
+            const paymentUrl = event.payment_url
+            const link = paymentUrl || `/rounds/${eventId}/rooms/${groupNo}`
+            const buttonText = paymentUrl ? '결제 완료하기' : '조인방 상세보기'
+            
+            await sendKakaoMeMessage(user.id, message, link, buttonText).catch(e => 
+                console.error('Failed to notify joining user:', e)
+            )
+        } catch (e) {
+            console.error('Notification system failure:', e)
         }
     }
 
@@ -273,13 +364,59 @@ export async function leaveEvent(eventId: string) {
 
     if (!user) throw new Error('Unauthorized')
 
-    // Find group_no for handleHostSuccession
+    // Find participant info for penalty and succession logic
     const { data: participant } = await supabase
         .from('participants')
-        .select('group_no')
+        .select('group_no, joined_at')
         .eq('event_id', eventId)
         .eq('user_id', user.id)
         .single()
+    
+    const { data: event } = await supabase
+        .from('events')
+        .select('title, start_date')
+        .eq('id', eventId)
+        .single()
+
+    let penaltyMessage = ''
+
+    // --- Manner Score Penalty (-15) for leaving 14-day early join ---
+    if (participant && event?.start_date) {
+        const start = new Date(event.start_date)
+        const joined = new Date(participant.joined_at)
+        const d14Limit = start.getTime() - (14 * 24 * 60 * 60 * 1000)
+
+        if (joined.getTime() < d14Limit) {
+            try {
+                await supabase.rpc('update_user_scores', {
+                    target_user_id: user.id,
+                    manner_delta: -15
+                })
+
+                const { data: u } = await supabase.from('users').select('manner_score').eq('id', user.id).single()
+                const newScore = u?.manner_score ?? 85
+
+                await supabase.from('manner_score_history').insert({
+                    user_id: user.id,
+                    amount: -15,
+                    description: `'${event.title}' 14일전 매너예약 취소 패널티`,
+                    score_snapshot: newScore
+                })
+
+                await supabase.from('notifications').insert({
+                    receiver_id: user.id,
+                    type: 'system',
+                    title: '매너점수 15점이 감점되었습니다. ⚠️',
+                    content: `'${event.title}' 14일전 매너예약 취소로 인한 패널티가 적용되었습니다.`,
+                    is_read: false
+                })
+                
+                penaltyMessage = '\n(14일전 매너예약 취소 패널티 -15점)'
+            } catch (e) {
+                console.error('Failed to apply 14-day manner penalty:', e)
+            }
+        }
+    }
 
     // Increment cancel_count for the user
     const { data: userData } = await supabase
@@ -329,7 +466,7 @@ export async function leaveEvent(eventId: string) {
     }
 
     revalidatePath(`/rounds/${eventId}`)
-    return { success: true, message: '조인이 취소되었습니다.' }
+    return { success: true, message: `조인이 취소되었습니다.${penaltyMessage}` }
 }
 
 export async function inviteParticipant(eventId: string, targetUserId: string, roomNumber?: number) {
@@ -648,7 +785,7 @@ export async function preReserveEvent(eventId: string) {
 
             // 2. Internal Notification
             await supabase.from('notifications').insert({
-                user_id: user.id,
+                receiver_id: user.id,
                 type: 'system',
                 title: '매너점수 1점을 획득했습니다! 🏅',
                 content: `${eventTitle}사전예약에 참여해주셔서 감사합니다.`,
@@ -657,6 +794,46 @@ export async function preReserveEvent(eventId: string) {
         } catch (e) {
             console.error('Failed to log manner score or notify', e)
         }
+    }
+    
+    // 3. Kakao Notification (Send to Me)
+    try {
+        const { data: event } = await supabase
+            .from('events')
+            .select('title, start_date, end_date, location, course_name, cost')
+            .eq('id', eventId)
+            .single()
+
+        if (event) {
+            const start = new Date(event.start_date)
+            const end = new Date(event.end_date || event.start_date)
+
+            const dateStr = event.start_date 
+                ? start.toLocaleDateString('ko-KR', { 
+                    year: 'numeric',
+                    month: 'long', 
+                    day: 'numeric', 
+                    weekday: 'short'
+                  })
+                : '일정 확인 필요'
+            
+            // Calculate duration (e.g., "당일", "1박2일")
+            const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
+            const durationStr = diffDays <= 1 
+                ? (start.toDateString() === end.toDateString() ? '당일' : '1박2일')
+                : `${diffDays}박${diffDays + 1}일`
+            
+            const costStr = event.cost 
+                ? new Intl.NumberFormat('ko-KR').format(Number(event.cost)) + '원'
+                : '가격 정보 없음'
+
+            const { sendKakaoMeMessage } = await import('@/utils/kakao-client')
+            const message = `[사전예약 완료] '${event.title}' 라운딩 사전예약이 완료되었습니다. ⛳\n\n주제: ${event.title}\n일정: ${dateStr}\n기간: ${durationStr}\n장소: ${event.location || '장소 확인 필요'}\n골프장: ${event.course_name || '확인 필요'}\n가격: ${costStr}\n\n보너스 매너점수 1점이 지급되었습니다.`
+            const link = `/rounds/${eventId}`
+            await sendKakaoMeMessage(user.id, message, link, '라운딩 정보 보기')
+        }
+    } catch (e) {
+        console.error('Failed to send Kakao pre-reservation message:', e)
     }
 
     revalidatePath(`/rounds/${eventId}`)
@@ -705,7 +882,7 @@ export async function cancelPreReservation(eventId: string) {
 
             // 2. Internal Notification
             await supabase.from('notifications').insert({
-                user_id: user.id,
+                receiver_id: user.id,
                 type: 'system',
                 title: '매너점수 1점이 회수되었습니다. ⚠️',
                 content: `${eventTitle}사전예약 취소로 인해 지급되었던 보너스 점수가 차감되었습니다.`,

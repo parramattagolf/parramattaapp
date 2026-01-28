@@ -1,4 +1,5 @@
 import { createClient } from '@/utils/supabase/server'
+import { headers } from 'next/headers'
 
 const KAKAO_API_BASE = 'https://kapi.kakao.com'
 const KAKAO_AUTH_BASE = 'https://kauth.kakao.com'
@@ -85,7 +86,12 @@ export async function sendKakaoMeMessage(
       accessToken = newData.access_token
       
       // Update DB
-      const updates: any = {
+      const updates: {
+        access_token: string,
+        updated_at: string,
+        expires_at: string,
+        refresh_token?: string
+      } = {
         access_token: newData.access_token,
         updated_at: new Date().toISOString(),
         expires_at: new Date(Date.now() + newData.expires_in * 1000).toISOString()
@@ -116,16 +122,28 @@ export async function sendKakaoMeMessage(
   return true
 }
 
+
 async function callSendMemo(accessToken: string, text: string, linkUrl: string, buttonText: string) {
   // Construct Template
-  // Using 'text' template for simplicity, or 'feed' if we need image.
-  // Requirement: "Room info and link". Text template is fine.
+  // Using 'text' template.
   
-  // Note: linkUrl usually needs to be absolute AND domain must be registered in Kakao Dev Console.
-  // If localhost, it might fail if not registered.
-  // Ideally use the full URL from environment.
-  const origin = process.env.NEXT_PUBLIC_SITE_URL || 'https://parramattaapp.vercel.app' // Fallback
-  const fullUrl = linkUrl.startsWith('http') ? linkUrl : `${origin}${linkUrl}`
+  // Link handling
+  let origin = process.env.NEXT_PUBLIC_SITE_URL
+  if (!origin) {
+    try {
+      const headerList = await headers()
+      const host = headerList.get('host')
+      if (host) {
+        const protocol = host.includes('localhost') ? 'http' : 'https'
+        origin = `${protocol}://${host}`
+      }
+    } catch {
+      // headers() might not be available in all contexts
+    }
+  }
+  
+  const finalOrigin = origin || 'https://parramattaapp.vercel.app'
+  const fullUrl = linkUrl.startsWith('http') ? linkUrl : `${finalOrigin}${linkUrl}`
 
   const templateObject = {
     object_type: 'text',
@@ -134,7 +152,15 @@ async function callSendMemo(accessToken: string, text: string, linkUrl: string, 
       web_url: fullUrl,
       mobile_web_url: fullUrl,
     },
-    button_title: buttonText,
+    buttons: [
+      {
+        title: buttonText,
+        link: {
+          web_url: fullUrl,
+          mobile_web_url: fullUrl,
+        },
+      }
+    ],
   }
 
   return await fetch(`${KAKAO_API_BASE}/v2/api/talk/memo/default/send`, {

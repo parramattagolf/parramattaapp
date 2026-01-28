@@ -13,7 +13,7 @@ import InviteModal from "@/components/invite-modal";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Lock, Unlock, AlertCircle, HelpCircle } from "lucide-react";
+import { Lock, Unlock, AlertCircle } from "lucide-react";
 import confetti from "canvas-confetti";
 
 interface Participant {
@@ -395,9 +395,11 @@ export default function RoomDetailContent({
               {timeLeft}
            </span>
         </div>
+        
         {infoText && (
-          <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3 mb-2 text-center">
-            <p className="text-[13px] text-emerald-300 font-bold tracking-tight">
+          <div className="bg-[#1c1c1e] border border-green-500/30 rounded-full px-6 py-3.5 mt-2 mb-4 text-center shadow-lg shadow-black/20">
+            <p className="text-[14px] text-green-500 font-black tracking-tight flex items-center justify-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
               {infoText}
             </p>
           </div>
@@ -423,77 +425,86 @@ export default function RoomDetailContent({
 
 
 
-      {/* Action Buttons for all users (guarded) */}
+      {/* Action Buttons */}
       <div className="flex items-center mb-6 gap-2 w-full">
-          <>
-            <button
-              onClick={() => {
-                if (!localIsJoined) return alert("참가자만 이용할 수 있습니다.");
-                setIsInviteOpen(true);
-              }}
-              className="flex-1 text-[15px] bg-blue-600 text-white py-4 rounded-2xl font-black border border-white/10 active:scale-95 transition-all shadow-[0_4px_12px_rgba(37,99,235,0.3)] tracking-tight hover:bg-blue-500"
-            >
-              초대하기
-            </button>
-            <button
-              onClick={() => {
-                if (!localIsJoined) return alert("참가자만 이용할 수 있습니다.");
-                setIsMoveRoomOpen(true);
-              }}
-              className="flex-1 text-[15px] bg-yellow-500 text-black py-4 rounded-2xl font-black border border-yellow-500/20 active:scale-95 transition-all shadow-[0_4px_12px_rgba(234,179,8,0.3)] tracking-tight hover:bg-yellow-400"
-            >
-              방옮기기
-            </button>
-            <button
-              onClick={async () => {
-                if (!localIsJoined) return alert("참가자만 이용할 수 있습니다.");
-                if (
-                  confirm(
-                    "정말 방을 나가시겠습니까?\n(다시 재신청은 가능합니다)",
-                  )
-                ) {
-                  try {
-                    const result = await leaveEvent(event.id);
-                    
-                    // Rain Effect
-                    const duration = 3000; 
-                    const end = Date.now() + duration;
-                    const colors = ['#aaccff', '#55aaff', '#ffffff', '#1e3a8a'];
+        <button
+          onClick={() => {
+            if (!localIsJoined) return alert("참가자만 이용할 수 있습니다.");
+            setIsInviteOpen(true);
+          }}
+          className={`flex-1 text-[15px] py-4 rounded-2xl font-black border transition-all active:scale-95 tracking-tight ${
+            localIsJoined
+              ? "bg-blue-600 text-white border-white/10 shadow-[0_4px_12px_rgba(37,99,235,0.3)] hover:bg-blue-500"
+              : "bg-[#1c1c1e] text-green-500 border-green-500 shadow-none hover:bg-green-500/5"
+          }`}
+        >
+          초대하기
+        </button>
+        <button
+          onClick={() => {
+            if (!localIsJoined) return alert("참가자만 이용할 수 있습니다.");
+            setIsMoveRoomOpen(true);
+          }}
+          className={`flex-1 text-[15px] py-4 rounded-2xl font-black border transition-all active:scale-95 tracking-tight ${
+            localIsJoined
+              ? "bg-yellow-500 text-black border-yellow-500/20 shadow-[0_4px_12px_rgba(234,179,8,0.3)] hover:bg-yellow-400"
+              : "bg-[#1c1c1e] text-green-500 border-green-500 shadow-none hover:bg-green-500/5"
+          }`}
+        >
+          방옮기기
+        </button>
+        <button
+          onClick={async () => {
+            if (!localIsJoined) return alert("참가자만 이용할 수 있습니다.");
+            if (
+              confirm(
+                "정말 방을 나가시겠습니까?\n(다시 재신청은 가능합니다)",
+              )
+            ) {
+              try {
+                const result = await leaveEvent(event.id);
+                
+                const duration = 3000; 
+                const end = Date.now() + duration;
+                const colors = ['#aaccff', '#55aaff', '#ffffff', '#1e3a8a'];
 
-                    (function frame() {
-                      confetti({
-                        particleCount: 2,
-                        angle: 270,
-                        spread: 0,
-                        origin: { x: Math.random(), y: -0.1 },
-                        colors: colors,
-                        gravity: 2,
-                        drift: 0,
-                        ticks: 400,
-                        shapes: ['circle']
-                      });
+                (function frame() {
+                  confetti({
+                    particleCount: 2,
+                    angle: 270,
+                    spread: 0,
+                    origin: { x: Math.random(), y: -0.1 },
+                    colors: colors,
+                    gravity: 2,
+                    drift: 0,
+                    ticks: 400,
+                    shapes: ['circle']
+                  });
 
-                      if (Date.now() < end) {
-                        requestAnimationFrame(frame);
-                      }
-                    }());
-
-                    if (result.message) {
-                      alert(result.message);
-                    }
-                    if (result.redirectUrl) {
-                      router.push(result.redirectUrl);
-                    }
-                  } catch {
-                    alert("방 나가기 실패");
+                  if (Date.now() < end) {
+                    requestAnimationFrame(frame);
                   }
+                }());
+
+                if (result.message) {
+                  alert(result.message);
                 }
-              }}
-              className="flex-1 text-[15px] bg-red-600 text-white py-4 rounded-2xl font-black border border-red-500/20 active:scale-95 transition-all shadow-[0_4px_12px_rgba(239,68,68,0.3)] tracking-tight hover:bg-red-500"
-            >
-              방나가기
-            </button>
-          </>
+                if (result.redirectUrl) {
+                  router.push(result.redirectUrl);
+                }
+              } catch {
+                alert("방 나가기 실패");
+              }
+            }
+          }}
+          className={`flex-1 text-[15px] py-4 rounded-2xl font-black border transition-all active:scale-95 tracking-tight ${
+            localIsJoined
+              ? "bg-red-600 text-white border-red-500/20 shadow-[0_4px_12px_rgba(239,68,68,0.3)] hover:bg-red-500"
+              : "bg-[#1c1c1e] text-green-500 border-green-500 shadow-none hover:bg-green-500/5"
+          }`}
+        >
+          방나가기
+        </button>
       </div>
 
       {/* Slots Grid */}
@@ -621,7 +632,7 @@ export default function RoomDetailContent({
                     </span>
                   </div>
                   <div className="flex flex-col items-center mt-3">
-                    <span className="text-[13px] font-black text-white/30 tracking-tight">
+                    <span className={`text-[13px] font-black tracking-tight ${localIsJoined ? 'text-white/30' : 'text-green-500'}`}>
                       조인하기
                     </span>
                     {(localIsJoined || userData?.is_admin) && !isHeld && (
