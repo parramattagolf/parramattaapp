@@ -53,6 +53,7 @@ interface Event {
   start_date?: string;
   course_name?: string;
   location?: string;
+  payment_url?: string;
 }
 
 interface HeldSlot {
